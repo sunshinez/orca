@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Dispatch, SetStateAction } from 'react'
 import type { GlobalSettings } from '../../../../shared/types'
 import type { EffectiveTerminalAppearance } from '@/lib/terminal-theme'
@@ -39,24 +40,29 @@ export function DarkTerminalThemeSection({
   previewProps,
   darkPreviewAppearance
 }: DarkTerminalThemeSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
+  const modeLabel = systemPrefersDark
+    ? t('settings.terminal.darkTheme.modeDark')
+    : t('settings.terminal.darkTheme.modeLight')
+
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="space-y-6">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Dark Theme</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.darkTheme.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Choose the theme used for terminal panes in dark mode.
+            {t('settings.terminal.darkTheme.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Dark Theme"
-          description="Choose the terminal theme used in dark mode."
+          title={t('settings.terminal.darkTheme.themeLabel')}
+          description={t('settings.terminal.darkTheme.themeDescription')}
           keywords={['terminal', 'theme', 'dark', 'preview']}
         >
           <ThemePicker
-            label="Dark Theme"
-            description="Choose the terminal theme used in dark mode."
+            label={t('settings.terminal.darkTheme.themeLabel')}
+            description={t('settings.terminal.darkTheme.themeDescription')}
             selectedTheme={settings.terminalThemeDark}
             query={themeSearchDark}
             onQueryChange={setThemeSearchDark}
@@ -65,13 +71,13 @@ export function DarkTerminalThemeSection({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Dark Divider Color"
-          description="Controls the split divider line between panes in dark mode."
+          title={t('settings.terminal.darkTheme.dividerColorLabel')}
+          description={t('settings.terminal.darkTheme.dividerColorDescription')}
           keywords={['terminal', 'divider', 'dark', 'color']}
         >
           <ColorField
-            label="Dark Divider Color"
-            description="Controls the split divider line between panes in dark mode."
+            label={t('settings.terminal.darkTheme.dividerColorLabel')}
+            description={t('settings.terminal.darkTheme.dividerColorDescription')}
             value={settings.terminalDividerColorDark}
             fallback="#3f3f46"
             onChange={(value) => updateSettings({ terminalDividerColorDark: value })}
@@ -80,11 +86,11 @@ export function DarkTerminalThemeSection({
       </div>
 
       <TerminalThemePreview
-        title="Dark Mode Preview"
+        title={t('settings.terminal.darkTheme.previewTitle')}
         description={
           settings.theme === 'system'
-            ? `System mode is currently ${systemPrefersDark ? 'Dark' : 'Light'}.`
-            : `Orca is currently in ${settings.theme} mode.`
+            ? t('settings.terminal.darkTheme.previewDescriptionSystem', { mode: modeLabel })
+            : t('settings.terminal.darkTheme.previewDescriptionFixed', { mode: settings.theme })
         }
         appearance={darkPreviewAppearance}
         dividerThicknessPx={previewProps.dividerThicknessPx}
@@ -103,18 +109,22 @@ export function LightTerminalThemeSection({
   previewProps,
   lightPreviewAppearance
 }: LightTerminalThemeSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
+
   return (
     <section className="space-y-4">
       <SearchableSetting
-        title="Use Separate Theme In Light Mode"
-        description="When disabled, light mode reuses the dark terminal theme."
+        title={t('settings.terminal.lightTheme.useSeparateTitle')}
+        description={t('settings.terminal.lightTheme.useSeparateDescription')}
         keywords={['terminal', 'light mode', 'theme']}
         className="flex items-center justify-between gap-4 px-1 py-2"
       >
         <div className="space-y-0.5">
-          <p className="text-sm font-medium">Use Separate Theme In Light Mode</p>
+          <p className="text-sm font-medium">
+            {t('settings.terminal.lightTheme.useSeparateTitle')}
+          </p>
           <p className="text-xs text-muted-foreground">
-            When disabled, light mode reuses the dark terminal theme.
+            {t('settings.terminal.lightTheme.useSeparateDescription')}
           </p>
         </div>
         <button
@@ -148,20 +158,20 @@ export function LightTerminalThemeSection({
           <div className="grid gap-6 pt-2 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold">Light Theme</h3>
+                <h3 className="text-sm font-semibold">{t('settings.terminal.lightTheme.title')}</h3>
                 <p className="text-xs text-muted-foreground">
-                  Configure the optional light-mode terminal appearance.
+                  {t('settings.terminal.lightTheme.description')}
                 </p>
               </div>
 
               <SearchableSetting
-                title="Light Theme"
-                description="Choose the theme used when Orca is in light mode."
+                title={t('settings.terminal.lightTheme.themeLabel')}
+                description={t('settings.terminal.lightTheme.themeDescription')}
                 keywords={['terminal', 'theme', 'light', 'preview']}
               >
                 <ThemePicker
-                  label="Light Theme"
-                  description="Choose the theme used when Orca is in light mode."
+                  label={t('settings.terminal.lightTheme.themeLabel')}
+                  description={t('settings.terminal.lightTheme.themeDescription')}
                   selectedTheme={settings.terminalThemeLight}
                   query={themeSearchLight}
                   onQueryChange={setThemeSearchLight}
@@ -170,13 +180,13 @@ export function LightTerminalThemeSection({
               </SearchableSetting>
 
               <SearchableSetting
-                title="Light Divider Color"
-                description="Controls the split divider line between panes in light mode."
+                title={t('settings.terminal.lightTheme.dividerColorLabel')}
+                description={t('settings.terminal.lightTheme.dividerColorDescription')}
                 keywords={['terminal', 'divider', 'light', 'color']}
               >
                 <ColorField
-                  label="Light Divider Color"
-                  description="Controls the split divider line between panes in light mode."
+                  label={t('settings.terminal.lightTheme.dividerColorLabel')}
+                  description={t('settings.terminal.lightTheme.dividerColorDescription')}
                   value={settings.terminalDividerColorLight}
                   fallback="#d4d4d8"
                   onChange={(value) => updateSettings({ terminalDividerColorLight: value })}
@@ -185,8 +195,8 @@ export function LightTerminalThemeSection({
             </div>
 
             <TerminalThemePreview
-              title="Light Mode Preview"
-              description="Updates live as you change the light theme or divider color."
+              title={t('settings.terminal.lightTheme.previewTitle')}
+              description={t('settings.terminal.lightTheme.previewDescription')}
               appearance={lightPreviewAppearance}
               dividerThicknessPx={previewProps.dividerThicknessPx}
               inactivePaneOpacity={previewProps.inactivePaneOpacity}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import type {
   Repo,
@@ -43,13 +44,14 @@ function getRepoLabel(repo: Pick<Repo, 'displayName' | 'path'>): string {
 
 function getScopeLabel(
   scope: TerminalQuickCommandScope,
-  repoById: Map<string, Pick<Repo, 'displayName' | 'path' | 'badgeColor'>>
+  repoById: Map<string, Pick<Repo, 'displayName' | 'path' | 'badgeColor'>>,
+  t: (key: string) => string
 ): string {
   if (scope.type === 'global') {
-    return 'Global'
+    return t('settings.terminal.quickCommands.scopeGlobal')
   }
   const repo = repoById.get(scope.repoId)
-  return repo ? getRepoLabel(repo) : 'Missing repo'
+  return repo ? getRepoLabel(repo) : t('settings.terminal.quickCommands.missingRepo')
 }
 
 export function TerminalQuickCommandsSection({
@@ -58,6 +60,7 @@ export function TerminalQuickCommandsSection({
   activeRepoId,
   onChange
 }: TerminalQuickCommandsSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [editor, setEditor] = useState<EditorState>(null)
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all')
   const [repoFilterId, setRepoFilterId] = useState(activeRepoId ?? '')
@@ -129,9 +132,9 @@ export function TerminalQuickCommandsSection({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
-          <Label>Saved Commands</Label>
+          <Label>{t('settings.terminal.quickCommands.savedCommandsLabel')}</Label>
           <p className="text-xs text-muted-foreground">
-            Commands are sent as plain terminal input to the active pane.
+            {t('settings.terminal.quickCommands.savedCommandsDescription')}
           </p>
         </div>
         <Button
@@ -141,7 +144,7 @@ export function TerminalQuickCommandsSection({
           onClick={() => setEditor({ mode: 'add', command: createDraftForCurrentFilter() })}
         >
           <Plus />
-          Add Command
+          {t('settings.terminal.quickCommands.addCommand')}
         </Button>
       </div>
 
@@ -156,16 +159,22 @@ export function TerminalQuickCommandsSection({
           }}
           className="justify-start"
         >
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          <ToggleGroupItem value="global">Global</ToggleGroupItem>
+          <ToggleGroupItem value="all">
+            {t('settings.terminal.quickCommands.filterAll')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="global">
+            {t('settings.terminal.quickCommands.filterGlobal')}
+          </ToggleGroupItem>
           <ToggleGroupItem value="repo" disabled={repos.length === 0}>
-            Repository
+            {t('settings.terminal.quickCommands.filterRepository')}
           </ToggleGroupItem>
         </ToggleGroup>
         {scopeFilter === 'repo' && repos.length > 0 ? (
           <Select value={selectedRepoId} onValueChange={changeRepoFilter}>
             <SelectTrigger size="sm" className="min-w-52">
-              <SelectValue placeholder="Choose repository" />
+              <SelectValue
+                placeholder={t('settings.terminal.quickCommands.chooseRepositoryPlaceholder')}
+              />
             </SelectTrigger>
             <SelectContent>
               {repos.map((repo) => (
@@ -185,7 +194,9 @@ export function TerminalQuickCommandsSection({
       <div className="overflow-hidden rounded-lg border border-border/50">
         {visibleCommands.length === 0 ? (
           <div className="px-3 py-6 text-sm text-muted-foreground">
-            {commands.length === 0 ? 'No quick commands saved.' : 'No commands match this scope.'}
+            {commands.length === 0
+              ? t('settings.terminal.quickCommands.noCommandsSaved')
+              : t('settings.terminal.quickCommands.noCommandsMatchScope')}
           </div>
         ) : (
           <div className="divide-y divide-border/50">
@@ -196,24 +207,28 @@ export function TerminalQuickCommandsSection({
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-2">
                       <div className="truncate text-sm font-medium">
-                        {command.label || 'Untitled'}
+                        {command.label || t('settings.terminal.quickCommands.untitled')}
                       </div>
                       <Badge variant="outline" className="max-w-44">
-                        <span className="truncate">{getScopeLabel(scope, repoById)}</span>
+                        <span className="truncate">{getScopeLabel(scope, repoById, t)}</span>
                       </Badge>
                     </div>
                     <div className="truncate font-mono text-xs text-muted-foreground">
-                      {command.command || 'No command text'}
+                      {command.command || t('settings.terminal.quickCommands.noCommandText')}
                     </div>
                   </div>
                   <div className="shrink-0 text-[11px] text-muted-foreground">
-                    {command.appendEnter ? 'Enter' : 'Insert'}
+                    {command.appendEnter
+                      ? t('settings.terminal.quickCommands.enterLabel')
+                      : t('settings.terminal.quickCommands.insertLabel')}
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`Edit ${command.label || 'quick command'}`}
+                    aria-label={t('settings.terminal.quickCommands.editAriaLabel', {
+                      label: command.label || t('settings.terminal.quickCommands.untitled')
+                    })}
                     onClick={() => setEditor({ mode: 'edit', command })}
                   >
                     <Pencil />
@@ -222,7 +237,9 @@ export function TerminalQuickCommandsSection({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`Remove ${command.label || 'quick command'}`}
+                    aria-label={t('settings.terminal.quickCommands.removeAriaLabel', {
+                      label: command.label || t('settings.terminal.quickCommands.untitled')
+                    })}
                     onClick={() => removeCommand(command.id)}
                     className="text-muted-foreground hover:text-destructive"
                   >

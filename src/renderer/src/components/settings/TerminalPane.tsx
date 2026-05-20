@@ -117,10 +117,10 @@ export function TerminalPane({
   const autoDetectedDefault = detectedCategoryToDefault(detectedLayout)
   const detectedLayoutLabel =
     detectedLayout === 'us'
-      ? 'US English — Option sends Alt/Esc sequences'
+      ? t('settings.terminal.advanced.optionAsAltDetectedUs')
       : detectedLayout === 'non-us'
-        ? 'non-US layout — Option composes characters like @, €, [, ]'
-        : 'unknown layout — Option composes characters (safe default)'
+        ? t('settings.terminal.advanced.optionAsAltDetectedNonUs')
+        : t('settings.terminal.advanced.optionAsAltDetectedUnknown')
   const scrollbackMb = Math.max(1, Math.round(settings.terminalScrollbackBytes / 1_000_000))
   const isPreset = SCROLLBACK_PRESETS_MB.includes(
     scrollbackMb as (typeof SCROLLBACK_PRESETS_MB)[number]
@@ -158,9 +158,11 @@ export function TerminalPane({
           <Label>{t('settings.terminal.windowsShell.title')}</Label>
           <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
             {[
-              { label: 'PowerShell', value: 'powershell.exe' },
-              { label: 'Command Prompt', value: 'cmd.exe' },
-              ...(wslAvailable ? [{ label: 'WSL', value: 'wsl.exe' }] : [])
+              { label: t('settings.terminal.windowsShell.powershell'), value: 'powershell.exe' },
+              { label: t('settings.terminal.windowsShell.commandPrompt'), value: 'cmd.exe' },
+              ...(wslAvailable
+                ? [{ label: t('settings.terminal.windowsShell.wsl'), value: 'wsl.exe' }]
+                : [])
             ].map(({ label, value }) => (
               <button
                 key={value}
@@ -176,7 +178,7 @@ export function TerminalPane({
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
-            Shell used when opening a new terminal pane. Takes effect for new terminals.
+            {t('settings.terminal.windowsShell.effectDescription')}
           </p>
         </SearchableSetting>
       </section>
@@ -241,7 +243,7 @@ export function TerminalPane({
                 type="button"
                 variant="outline"
                 size="icon"
-                aria-label="Choose floating terminal directory"
+                aria-label={t('settings.terminal.floating.chooseDirectoryAriaLabel')}
                 onClick={() => void pickFloatingTerminalDirectory()}
               >
                 <FolderOpen className="size-4" />
@@ -267,11 +269,15 @@ export function TerminalPane({
               }}
               className="justify-start"
             >
-              <ToggleGroupItem value="floating-button">Floating Button</ToggleGroupItem>
-              <ToggleGroupItem value="status-bar">Status Bar</ToggleGroupItem>
+              <ToggleGroupItem value="floating-button">
+                {t('settings.terminal.floating.floatingButton')}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="status-bar">
+                {t('settings.terminal.floating.statusBar')}
+              </ToggleGroupItem>
             </ToggleGroup>
             <p className="text-xs text-muted-foreground">
-              The keyboard shortcut works regardless of where the toggle is shown.
+              {t('settings.terminal.floating.keyboardShortcutHint')}
             </p>
           </div>
         </SearchableSetting>
@@ -387,7 +393,7 @@ export function TerminalPane({
         >
           <NumberField
             label={t('settings.terminal.typography.fontWeight')}
-            description="Controls the terminal text font weight."
+            description={t('settings.terminal.typography.fontWeightDescription')}
             value={normalizeTerminalFontWeight(settings.terminalFontWeight)}
             defaultValue={DEFAULT_TERMINAL_FONT_WEIGHT}
             min={TERMINAL_FONT_WEIGHT_MIN}
@@ -409,7 +415,7 @@ export function TerminalPane({
         >
           <NumberField
             label={t('settings.terminal.typography.lineHeight')}
-            description="Controls the terminal line height multiplier."
+            description={t('settings.terminal.typography.lineHeightDescription')}
             value={settings.terminalLineHeight}
             defaultValue={1}
             min={1}
@@ -425,8 +431,8 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Font Ligatures"
-          description='Render programming ligatures (e.g. =>, !=, ===) for fonts that ship them. "Auto" enables ligatures only for known ligature fonts (Fira Code, JetBrains Mono, Cascadia Code, Iosevka, etc.).'
+          title={t('settings.terminal.rendering.fontLigaturesLabel')}
+          description={t('settings.terminal.rendering.fontLigaturesDescription')}
           keywords={[
             'terminal',
             'typography',
@@ -441,7 +447,7 @@ export function TerminalPane({
           ]}
           className="space-y-2"
         >
-          <Label>Font Ligatures</Label>
+          <Label>{t('settings.terminal.rendering.fontLigaturesLabel')}</Label>
           <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
             {(['auto', 'on', 'off'] as const).map((option) => (
               <button
@@ -453,32 +459,36 @@ export function TerminalPane({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {option === 'auto' ? 'Auto' : option === 'on' ? 'On' : 'Off'}
+                {option === 'auto'
+                  ? t('settings.terminal.rendering.fontLigaturesAuto')
+                  : option === 'on'
+                    ? t('settings.terminal.rendering.fontLigaturesOn')
+                    : t('settings.terminal.rendering.fontLigaturesOff')}
               </button>
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
             {settings.terminalLigatures === 'on'
-              ? 'Ligatures are always on. Fonts without ligatures simply render as-is.'
+              ? t('settings.terminal.rendering.ligaturesOnAlways')
               : settings.terminalLigatures === 'off'
-                ? 'Ligatures are always off, even for fonts that ship them.'
+                ? t('settings.terminal.rendering.ligaturesOffAlways')
                 : fontFamilyHasKnownLigatures(settings.terminalFontFamily)
-                  ? `Auto — enabled because "${settings.terminalFontFamily}" is a known ligature font. Switch to "Off" to disable.`
-                  : `Auto — disabled because "${
-                      settings.terminalFontFamily || 'the current font'
-                    }" is not a known ligature font. Switch to "On" to enable anyway.`}
+                  ? t('settings.terminal.rendering.ligaturesAutoEnabled', {
+                      fontFamily: settings.terminalFontFamily
+                    })
+                  : t('settings.terminal.rendering.ligaturesAutoDisabled', {
+                      fontFamily: settings.terminalFontFamily || 'the current font'
+                    })}
           </p>
           {/* Why: surface the resolved state explicitly so the "Auto" label
               isn't ambiguous when a user is staring at it. */}
           <p className="sr-only" aria-live="polite">
-            Ligatures are currently{' '}
             {resolveTerminalLigaturesEnabled(
               settings.terminalLigatures,
               settings.terminalFontFamily
             )
-              ? 'enabled'
-              : 'disabled'}
-            .
+              ? t('settings.terminal.rendering.ligaturesAriaEnabled')
+              : t('settings.terminal.rendering.ligaturesAriaDisabled')}
           </p>
         </SearchableSetting>
       </section>
@@ -494,7 +504,7 @@ export function TerminalPane({
 
         <SearchableSetting
           title={t('settings.terminal.rendering.gpuAcceleration')}
-          description="Controls whether the terminal uses xterm.js WebGL rendering. Auto uses DOM on Linux to avoid driver glyph corruption, and otherwise tries WebGL with DOM fallback."
+          description={t('settings.terminal.rendering.gpuAccelerationDescription')}
           keywords={[
             'terminal',
             'gpu',
@@ -521,16 +531,20 @@ export function TerminalPane({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {option === 'auto' ? 'Auto' : option === 'on' ? 'On' : 'Off'}
+                {option === 'auto'
+                  ? t('settings.terminal.rendering.fontLigaturesAuto')
+                  : option === 'on'
+                    ? t('settings.terminal.rendering.fontLigaturesOn')
+                    : t('settings.terminal.rendering.fontLigaturesOff')}
               </button>
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
             {settings.terminalGpuAcceleration === 'off'
-              ? 'WebGL is disabled; xterm uses the DOM renderer for maximum compatibility.'
+              ? t('settings.terminal.rendering.gpuOff')
               : settings.terminalGpuAcceleration === 'on'
-                ? 'WebGL is always attempted for terminal panes.'
-                : 'Auto uses the DOM renderer on Linux to avoid GPU glyph corruption, and otherwise tries WebGL with DOM fallback.'}
+                ? t('settings.terminal.rendering.gpuOn')
+                : t('settings.terminal.rendering.gpuAuto')}
           </p>
         </SearchableSetting>
       </section>
@@ -551,7 +565,7 @@ export function TerminalPane({
             keywords={['terminal', 'cursor', 'bar', 'block', 'underline']}
             className="space-y-2"
           >
-            <Label>Cursor Shape</Label>
+            <Label>{t('settings.terminal.cursor.shapeLabel')}</Label>
             <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
               {(['bar', 'block', 'underline'] as const).map((option) => (
                 <button
@@ -563,22 +577,26 @@ export function TerminalPane({
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {option}
+                  {option === 'bar'
+                    ? t('settings.terminal.cursor.shapeBar')
+                    : option === 'block'
+                      ? t('settings.terminal.cursor.shapeBlock')
+                      : t('settings.terminal.cursor.shapeUnderline')}
                 </button>
               ))}
             </div>
           </SearchableSetting>
 
           <SearchableSetting
-            title="Blinking Cursor"
-            description="Uses the blinking variant of the selected cursor shape."
+            title={t('settings.terminal.cursor.blinkingLabel')}
+            description={t('settings.terminal.cursor.blinkingDescription')}
             keywords={['terminal', 'cursor', 'blink']}
             className="flex items-center justify-between gap-4 px-1 py-2"
           >
             <div className="space-y-0.5">
-              <Label>Blinking Cursor</Label>
+              <Label>{t('settings.terminal.cursor.blinkingLabel')}</Label>
               <p className="text-xs text-muted-foreground">
-                Uses the blinking variant of the selected cursor shape.
+                {t('settings.terminal.cursor.blinkingDescription')}
               </p>
             </div>
             <button
@@ -602,13 +620,13 @@ export function TerminalPane({
           </SearchableSetting>
 
           <SearchableSetting
-            title="Cursor Opacity"
-            description="Opacity of the terminal cursor."
+            title={t('settings.terminal.cursor.opacityLabel')}
+            description={t('settings.terminal.cursor.opacityDescription')}
             keywords={['terminal', 'cursor', 'opacity', 'transparency']}
           >
             <NumberField
-              label="Cursor Opacity"
-              description="Opacity of the terminal cursor."
+              label={t('settings.terminal.cursor.opacityLabel')}
+              description={t('settings.terminal.cursor.opacityDescription')}
               value={settings.terminalCursorOpacity ?? 1}
               defaultValue={1}
               min={0}
@@ -638,13 +656,13 @@ export function TerminalPane({
 
         <div className="grid gap-4 md:grid-cols-2">
           <SearchableSetting
-            title="Inactive Pane Opacity"
-            description="Opacity applied to panes that are not currently active."
+            title={t('settings.terminal.paneStyling.inactivePaneOpacityLabel')}
+            description={t('settings.terminal.paneStyling.inactivePaneOpacityDescription')}
             keywords={['pane', 'opacity', 'dimming']}
           >
             <NumberField
-              label="Inactive Pane Opacity"
-              description="Opacity applied to panes that are not currently active."
+              label={t('settings.terminal.paneStyling.inactivePaneOpacityLabel')}
+              description={t('settings.terminal.paneStyling.inactivePaneOpacityDescription')}
               value={paneStyleOptions.inactivePaneOpacity}
               defaultValue={0.8}
               min={0}
@@ -659,13 +677,13 @@ export function TerminalPane({
             />
           </SearchableSetting>
           <SearchableSetting
-            title="Divider Thickness"
-            description="Thickness of the pane divider line."
+            title={t('settings.terminal.paneStyling.dividerThicknessLabel')}
+            description={t('settings.terminal.paneStyling.dividerThicknessDescription')}
             keywords={['pane', 'divider', 'thickness']}
           >
             <NumberField
-              label="Divider Thickness"
-              description="Thickness of the pane divider line."
+              label={t('settings.terminal.paneStyling.dividerThicknessLabel')}
+              description={t('settings.terminal.paneStyling.dividerThicknessDescription')}
               value={paneStyleOptions.dividerThicknessPx}
               defaultValue={1}
               min={1}
@@ -687,16 +705,15 @@ export function TerminalPane({
         {isWindows &&
           matchesSettingsSearch(searchQuery, TERMINAL_RIGHT_CLICK_TO_PASTE_SEARCH_ENTRY) && (
             <SearchableSetting
-              title="Right-click to paste"
-              description="On Windows, right-click pastes the clipboard into the terminal. Use Ctrl+right-click to open the context menu."
+              title={t('settings.terminal.paneStyling.rightClickToPasteLabel')}
+              description={t('settings.terminal.paneStyling.rightClickToPasteDescription')}
               keywords={['terminal', 'windows', 'right click', 'paste', 'context menu']}
               className="flex items-center justify-between gap-4 px-1 py-2"
             >
               <div className="space-y-0.5">
-                <Label>Right-click to paste</Label>
+                <Label>{t('settings.terminal.paneStyling.rightClickToPasteLabel')}</Label>
                 <p className="text-xs text-muted-foreground">
-                  On Windows, right-click pastes the clipboard into the terminal. Use
-                  Ctrl+right-click to open the context menu.
+                  {t('settings.terminal.paneStyling.rightClickToPasteDescription')}
                 </p>
               </div>
               <button
@@ -721,16 +738,15 @@ export function TerminalPane({
           )}
 
         <SearchableSetting
-          title="Focus Follows Mouse"
-          description="Hovering a terminal pane activates it without needing to click. Mirrors Ghostty's focus-follows-mouse setting. Selections and window switching stay safe."
+          title={t('settings.terminal.advanced.focusFollowsMouseLabel')}
+          description={t('settings.terminal.advanced.focusFollowsMouseDescription')}
           keywords={['focus', 'follows', 'mouse', 'hover', 'pane', 'ghostty', 'active']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Focus Follows Mouse</Label>
+            <Label>{t('settings.terminal.advanced.focusFollowsMouseLabel')}</Label>
             <p className="text-xs text-muted-foreground">
-              Hovering a terminal pane activates it without needing to click. Mirrors Ghostty&apos;s
-              focus-follows-mouse setting. Selections and window switching stay safe.
+              {t('settings.terminal.advanced.focusFollowsMouseDescription')}
             </p>
           </div>
           <button
@@ -754,8 +770,8 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Copy on Select"
-          description="Automatically copy terminal selections to the clipboard as soon as a selection is made."
+          title={t('settings.terminal.advanced.copyOnSelectLabel')}
+          description={t('settings.terminal.advanced.copyOnSelectDescription')}
           keywords={[
             'clipboard',
             'copy',
@@ -771,10 +787,9 @@ export function TerminalPane({
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Copy on Select</Label>
+            <Label>{t('settings.terminal.advanced.copyOnSelectLabel')}</Label>
             <p className="text-xs text-muted-foreground">
-              Automatically copy terminal selections to the clipboard as soon as a selection is
-              made.
+              {t('settings.terminal.advanced.copyOnSelectDescription')}
             </p>
           </div>
           <button
@@ -798,8 +813,8 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Allow TUI Clipboard Writes (OSC 52)"
-          description="Let terminal programs like tmux, Neovim, and fzf copy to the system clipboard over the PTY (including over SSH). Off by default because untrusted output piped into the terminal could silently overwrite your clipboard."
+          title={t('settings.terminal.advanced.osc52Label')}
+          description={t('settings.terminal.advanced.osc52Description')}
           keywords={[
             'osc 52',
             'osc52',
@@ -816,10 +831,9 @@ export function TerminalPane({
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Allow TUI Clipboard Writes (OSC 52)</Label>
+            <Label>{t('settings.terminal.advanced.osc52Label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Let programs running inside the terminal (tmux, Neovim, fzf, ssh sessions) copy to
-              your system clipboard. Disabled by default for safety.
+              {t('settings.terminal.advanced.osc52ShortDescription')}
             </p>
           </div>
           <button
@@ -879,8 +893,8 @@ export function TerminalPane({
         </div>
 
         <SearchableSetting
-          title="Setup Script Location"
-          description="Where the repository setup script runs when a new workspace is created."
+          title={t('settings.terminal.setupScript.setupScriptLocationLabel')}
+          description={t('settings.terminal.setupScript.setupScriptLocationDescription')}
           keywords={[
             'setup',
             'script',
@@ -895,7 +909,7 @@ export function TerminalPane({
           ]}
           className="space-y-2"
         >
-          <Label>Setup Script Location</Label>
+          <Label>{t('settings.terminal.setupScript.setupScriptLocationLabel')}</Label>
           <ToggleGroup
             type="single"
             value={settings.setupScriptLaunchMode}
@@ -914,29 +928,26 @@ export function TerminalPane({
             <ToggleGroupItem
               value="new-tab"
               className="h-8 px-3 text-xs"
-              aria-label="Run in a new tab"
+              aria-label={t('settings.terminal.setupScript.runInNewTabAriaLabel')}
             >
-              New Tab
+              {t('settings.terminal.setupScript.newTab')}
             </ToggleGroupItem>
             <ToggleGroupItem
               value="split-vertical"
               className="h-8 px-3 text-xs"
-              aria-label="Split vertically"
+              aria-label={t('settings.terminal.setupScript.splitVerticallyAriaLabel')}
             >
-              Split Vertically
+              {t('settings.terminal.setupScript.splitVertical')}
             </ToggleGroupItem>
             <ToggleGroupItem
               value="split-horizontal"
               className="h-8 px-3 text-xs"
-              aria-label="Split horizontally"
+              aria-label={t('settings.terminal.setupScript.splitHorizontallyAriaLabel')}
             >
-              Split Horizontally
+              {t('settings.terminal.setupScript.splitHorizontal')}
             </ToggleGroupItem>
           </ToggleGroup>
-          <p className="text-xs text-muted-foreground">
-            &quot;New Tab&quot; opens the setup command in a background tab titled &quot;Setup&quot;
-            without stealing focus from your main terminal.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('settings.terminal.setupScript.hint')}</p>
         </SearchableSetting>
       </section>
     ) : null,
@@ -959,12 +970,12 @@ export function TerminalPane({
         </div>
 
         <SearchableSetting
-          title="Scrollback Size"
-          description="Maximum terminal scrollback buffer size."
+          title={t('settings.terminal.advanced.scrollbackSizeLabel')}
+          description={t('settings.terminal.advanced.scrollbackSizeDescription')}
           keywords={['terminal', 'scrollback', 'buffer', 'memory']}
           className="space-y-3"
         >
-          <Label>Scrollback Size</Label>
+          <Label>{t('settings.terminal.advanced.scrollbackSizeLabel')}</Label>
           <ToggleGroup
             type="single"
             value={scrollbackToggleValue}
@@ -991,20 +1002,24 @@ export function TerminalPane({
                 key={preset}
                 value={`${preset}`}
                 className="h-8 px-3 text-xs"
-                aria-label={`${preset} megabytes`}
+                aria-label={t('settings.terminal.advanced.scrollbackPresetAriaLabel', { preset })}
               >
                 {preset} MB
               </ToggleGroupItem>
             ))}
-            <ToggleGroupItem value="custom" className="h-8 px-3 text-xs" aria-label="Custom">
-              Custom
+            <ToggleGroupItem
+              value="custom"
+              className="h-8 px-3 text-xs"
+              aria-label={t('settings.terminal.advanced.scrollbackCustom')}
+            >
+              {t('settings.terminal.advanced.scrollbackCustom')}
             </ToggleGroupItem>
           </ToggleGroup>
 
           {scrollbackMode === 'custom' ? (
             <NumberField
-              label="Custom Scrollback"
-              description="Maximum terminal scrollback buffer size."
+              label={t('settings.terminal.advanced.customScrollbackLabel')}
+              description={t('settings.terminal.advanced.customScrollbackDescription')}
               value={scrollbackMb}
               defaultValue={10}
               min={1}
@@ -1021,23 +1036,23 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Word Separators"
-          description="Characters treated as word boundaries for double-click selection."
+          title={t('settings.terminal.advanced.wordSeparatorsLabel')}
+          description={t('settings.terminal.advanced.wordSeparatorsDescription')}
           keywords={['word', 'separator', 'boundary', 'double-click', 'selection']}
           className="space-y-2"
         >
-          <Label>Word Separators</Label>
+          <Label>{t('settings.terminal.advanced.wordSeparatorsLabel')}</Label>
           <Input
             value={settings.terminalWordSeparator ?? ''}
             onChange={(e) => {
               const value = e.target.value
               updateSettings({ terminalWordSeparator: value || undefined })
             }}
-            placeholder={` ()[]{},'"\``}
+            placeholder={t('settings.terminal.advanced.wordSeparatorsPlaceholder')}
             className="max-w-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Characters treated as word boundaries for double-click selection.
+            {t('settings.terminal.advanced.wordSeparatorsDescription')}
           </p>
         </SearchableSetting>
         {showWindowsPowerShellImplementation &&
@@ -1046,8 +1061,8 @@ export function TerminalPane({
           TERMINAL_WINDOWS_POWERSHELL_IMPLEMENTATION_SEARCH_ENTRY
         ) ? (
           <SearchableSetting
-            title="PowerShell Version"
-            description="Choose whether the PowerShell shell option launches Windows PowerShell or PowerShell 7+ for new terminal panes."
+            title={t('settings.terminal.advanced.powershellVersionLabel')}
+            description={t('settings.terminal.advanced.powershellVersionDescription')}
             keywords={[
               'terminal',
               'windows',
@@ -1060,11 +1075,14 @@ export function TerminalPane({
             ]}
             className="space-y-2"
           >
-            <Label>PowerShell Version</Label>
+            <Label>{t('settings.terminal.advanced.powershellVersionLabel')}</Label>
             <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
               {[
-                { label: 'Auto', value: 'auto' },
-                { label: 'Windows PowerShell', value: 'powershell.exe' },
+                { label: t('settings.terminal.advanced.powershellAuto'), value: 'auto' },
+                {
+                  label: t('settings.terminal.advanced.windowsPowershell'),
+                  value: 'powershell.exe'
+                },
                 { label: 'PowerShell 7+', value: 'pwsh.exe', disabled: !pwshAvailable }
               ].map(({ label, value, disabled }) => (
                 <button
@@ -1095,14 +1113,14 @@ export function TerminalPane({
             </div>
             {!pwshAvailable ? (
               <p className="text-xs text-muted-foreground">
-                Auto uses Windows PowerShell now and switches to PowerShell 7+ when installed.{' '}
+                {t('settings.terminal.advanced.pwshNotAvailable')}{' '}
                 <a
                   href="https://github.com/PowerShell/PowerShell/releases/latest"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-foreground"
                 >
-                  Download PowerShell 7+
+                  {t('settings.terminal.advanced.pwshDownload')}
                 </a>
                 .
               </p>
@@ -1111,8 +1129,8 @@ export function TerminalPane({
         ) : null}
         {isMac ? (
           <SearchableSetting
-            title="Option as Alt"
-            description="Controls whether the macOS Option key sends Alt/Esc sequences or composes characters. Mirrors Ghostty's macos-option-as-alt."
+            title={t('settings.terminal.advanced.optionAsAltLabel')}
+            description={t('settings.terminal.advanced.optionAsAltDescription')}
             keywords={[
               'terminal',
               'option',
@@ -1130,7 +1148,7 @@ export function TerminalPane({
             ]}
             className="space-y-2"
           >
-            <Label>Option as Alt</Label>
+            <Label>{t('settings.terminal.advanced.optionAsAltLabel')}</Label>
             <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
               {(['auto', 'true', 'left', 'right', 'false'] as const).map((option) => (
                 <button
@@ -1143,29 +1161,33 @@ export function TerminalPane({
                   }`}
                 >
                   {option === 'auto'
-                    ? 'Auto'
+                    ? t('settings.terminal.advanced.optionAsAltAuto')
                     : option === 'false'
-                      ? 'Off'
+                      ? t('settings.terminal.advanced.optionAsAltNone')
                       : option === 'true'
-                        ? 'Both'
+                        ? t('settings.terminal.advanced.optionAsAltBoth')
                         : option === 'left'
-                          ? 'Left'
-                          : 'Right'}
+                          ? t('settings.terminal.advanced.optionAsAltLeft')
+                          : t('settings.terminal.advanced.optionAsAltRight')}
                 </button>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
               {settings.terminalMacOptionAsAlt === 'auto'
-                ? `Auto — detected: ${detectedLayoutLabel}. ${
-                    autoDetectedDefault === 'true'
-                      ? 'Both Option keys act as Alt, matching macOS power-user readline expectations. Switch to "Off" if you need to type Option-layer characters.'
-                      : 'Option composes your keyboard layout’s special characters (@, €, [, ], etc.). Core readline shortcuts (Option+B/F/D) are handled automatically.'
-                  }`
+                ? autoDetectedDefault === 'true'
+                  ? t('settings.terminal.advanced.optionAsAltAutoUs', {
+                      detected: detectedLayoutLabel
+                    })
+                  : t('settings.terminal.advanced.optionAsAltAutoNonUs', {
+                      detected: detectedLayoutLabel
+                    })
                 : settings.terminalMacOptionAsAlt === 'false'
-                  ? 'Option composes special characters for your keyboard layout. Core readline shortcuts (Option+B/F/D) are handled automatically.'
+                  ? t('settings.terminal.advanced.optionAsAltFalse')
                   : settings.terminalMacOptionAsAlt === 'true'
-                    ? 'Both Option keys send Alt/Esc sequences for full readline and shell support. Special character input via Option is unavailable.'
-                    : `The ${settings.terminalMacOptionAsAlt} Option key sends Alt/Esc sequences; the other composes special characters.`}
+                    ? t('settings.terminal.advanced.optionAsAltTrue')
+                    : t('settings.terminal.advanced.optionAsAltSide', {
+                        side: settings.terminalMacOptionAsAlt
+                      })}
             </p>
           </SearchableSetting>
         ) : null}

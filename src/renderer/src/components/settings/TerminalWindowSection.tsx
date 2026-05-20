@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RotateCw } from 'lucide-react'
 import type { GlobalSettings, TerminalColorOverrides } from '../../../../shared/types'
 import { Button } from '../ui/button'
@@ -12,70 +13,149 @@ type TerminalWindowSectionProps = {
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
-const COLOR_OVERRIDE_GROUPS: {
+function getColorOverrideGroups(t: (key: string) => string): {
   label: string
   keys: { key: keyof TerminalColorOverrides; label: string; description: string }[]
-}[] = [
-  {
-    label: 'Base',
-    keys: [
-      { key: 'foreground', label: 'Foreground', description: 'Main text color' },
-      { key: 'background', label: 'Background', description: 'Terminal background color' },
-      { key: 'cursor', label: 'Cursor', description: 'Cursor color' },
-      {
-        key: 'cursorAccent',
-        label: 'Cursor Text',
-        description: 'Color of text under the cursor (block cursor)'
-      },
-      {
-        key: 'selectionBackground',
-        label: 'Selection Background',
-        description: 'Background color of selected text'
-      },
-      {
-        key: 'selectionForeground',
-        label: 'Selection Foreground',
-        description: 'Text color of selected text'
-      },
-      {
-        key: 'bold',
-        label: 'Bold Text',
-        description: 'Color for bold text. Falls back to the normal color if not set.'
-      }
-    ]
-  },
-  {
-    label: 'ANSI Normal',
-    keys: [
-      { key: 'black', label: 'Black', description: 'ANSI black color' },
-      { key: 'red', label: 'Red', description: 'ANSI red color' },
-      { key: 'green', label: 'Green', description: 'ANSI green color' },
-      { key: 'yellow', label: 'Yellow', description: 'ANSI yellow color' },
-      { key: 'blue', label: 'Blue', description: 'ANSI blue color' },
-      { key: 'magenta', label: 'Magenta', description: 'ANSI magenta color' },
-      { key: 'cyan', label: 'Cyan', description: 'ANSI cyan color' },
-      { key: 'white', label: 'White', description: 'ANSI white color' }
-    ]
-  },
-  {
-    label: 'ANSI Bright',
-    keys: [
-      { key: 'brightBlack', label: 'Bright Black', description: 'ANSI bright black color' },
-      { key: 'brightRed', label: 'Bright Red', description: 'ANSI bright red color' },
-      { key: 'brightGreen', label: 'Bright Green', description: 'ANSI bright green color' },
-      { key: 'brightYellow', label: 'Bright Yellow', description: 'ANSI bright yellow color' },
-      { key: 'brightBlue', label: 'Bright Blue', description: 'ANSI bright blue color' },
-      { key: 'brightMagenta', label: 'Bright Magenta', description: 'ANSI bright magenta color' },
-      { key: 'brightCyan', label: 'Bright Cyan', description: 'ANSI bright cyan color' },
-      { key: 'brightWhite', label: 'Bright White', description: 'ANSI bright white color' }
-    ]
-  }
-]
+}[] {
+  return [
+    {
+      label: t('settings.terminal.window.colorGroupBase'),
+      keys: [
+        {
+          key: 'foreground',
+          label: t('settings.terminal.window.colorForeground'),
+          description: t('settings.terminal.window.colorForegroundDesc')
+        },
+        {
+          key: 'background',
+          label: t('settings.terminal.window.colorBackground'),
+          description: t('settings.terminal.window.colorBackgroundDesc')
+        },
+        {
+          key: 'cursor',
+          label: t('settings.terminal.window.colorCursor'),
+          description: t('settings.terminal.window.colorCursorDesc')
+        },
+        {
+          key: 'cursorAccent',
+          label: t('settings.terminal.window.colorCursorText'),
+          description: t('settings.terminal.window.colorCursorTextDesc')
+        },
+        {
+          key: 'selectionBackground',
+          label: t('settings.terminal.window.colorSelectionBackground'),
+          description: t('settings.terminal.window.colorSelectionBackgroundDesc')
+        },
+        {
+          key: 'selectionForeground',
+          label: t('settings.terminal.window.colorSelectionForeground'),
+          description: t('settings.terminal.window.colorSelectionForegroundDesc')
+        },
+        {
+          key: 'bold',
+          label: t('settings.terminal.window.colorBoldText'),
+          description: t('settings.terminal.window.colorBoldTextDesc')
+        }
+      ]
+    },
+    {
+      label: t('settings.terminal.window.colorGroupAnsiNormal'),
+      keys: [
+        {
+          key: 'black',
+          label: t('settings.terminal.window.colorBlack'),
+          description: t('settings.terminal.window.colorBlackDesc')
+        },
+        {
+          key: 'red',
+          label: t('settings.terminal.window.colorRed'),
+          description: t('settings.terminal.window.colorRedDesc')
+        },
+        {
+          key: 'green',
+          label: t('settings.terminal.window.colorGreen'),
+          description: t('settings.terminal.window.colorGreenDesc')
+        },
+        {
+          key: 'yellow',
+          label: t('settings.terminal.window.colorYellow'),
+          description: t('settings.terminal.window.colorYellowDesc')
+        },
+        {
+          key: 'blue',
+          label: t('settings.terminal.window.colorBlue'),
+          description: t('settings.terminal.window.colorBlueDesc')
+        },
+        {
+          key: 'magenta',
+          label: t('settings.terminal.window.colorMagenta'),
+          description: t('settings.terminal.window.colorMagentaDesc')
+        },
+        {
+          key: 'cyan',
+          label: t('settings.terminal.window.colorCyan'),
+          description: t('settings.terminal.window.colorCyanDesc')
+        },
+        {
+          key: 'white',
+          label: t('settings.terminal.window.colorWhite'),
+          description: t('settings.terminal.window.colorWhiteDesc')
+        }
+      ]
+    },
+    {
+      label: t('settings.terminal.window.colorGroupAnsiBright'),
+      keys: [
+        {
+          key: 'brightBlack',
+          label: t('settings.terminal.window.colorBrightBlack'),
+          description: t('settings.terminal.window.colorBrightBlackDesc')
+        },
+        {
+          key: 'brightRed',
+          label: t('settings.terminal.window.colorBrightRed'),
+          description: t('settings.terminal.window.colorBrightRedDesc')
+        },
+        {
+          key: 'brightGreen',
+          label: t('settings.terminal.window.colorBrightGreen'),
+          description: t('settings.terminal.window.colorBrightGreenDesc')
+        },
+        {
+          key: 'brightYellow',
+          label: t('settings.terminal.window.colorBrightYellow'),
+          description: t('settings.terminal.window.colorBrightYellowDesc')
+        },
+        {
+          key: 'brightBlue',
+          label: t('settings.terminal.window.colorBrightBlue'),
+          description: t('settings.terminal.window.colorBrightBlueDesc')
+        },
+        {
+          key: 'brightMagenta',
+          label: t('settings.terminal.window.colorBrightMagenta'),
+          description: t('settings.terminal.window.colorBrightMagentaDesc')
+        },
+        {
+          key: 'brightCyan',
+          label: t('settings.terminal.window.colorBrightCyan'),
+          description: t('settings.terminal.window.colorBrightCyanDesc')
+        },
+        {
+          key: 'brightWhite',
+          label: t('settings.terminal.window.colorBrightWhite'),
+          description: t('settings.terminal.window.colorBrightWhiteDesc')
+        }
+      ]
+    }
+  ]
+}
 
 export function TerminalWindowSection({
   settings,
   updateSettings
 }: TerminalWindowSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [colorOverridesExpanded, setColorOverridesExpanded] = useState(false)
   // Why: windowBackgroundBlur is only read by createMainWindow() at startup
   // (macOS vibrancy / Windows acrylic both require window creation options),
@@ -108,21 +188,23 @@ export function TerminalWindowSection({
     }
   }
 
+  const colorOverrideGroups = getColorOverrideGroups(t)
+
   return (
     <section className="space-y-4">
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">Window</h3>
-        <p className="text-xs text-muted-foreground">Window appearance and background settings.</p>
+        <h3 className="text-sm font-semibold">{t('settings.terminal.window.title')}</h3>
+        <p className="text-xs text-muted-foreground">{t('settings.terminal.window.description')}</p>
       </div>
 
       <SearchableSetting
-        title="Background Opacity"
-        description="Controls the transparency of the terminal background."
+        title={t('settings.terminal.window.backgroundOpacityLabel')}
+        description={t('settings.terminal.window.backgroundOpacityDescription')}
         keywords={['opacity', 'transparency', 'background', 'alpha']}
       >
         <NumberField
-          label="Background Opacity"
-          description="Controls the transparency of the terminal background. 1 is fully opaque, 0 is fully transparent."
+          label={t('settings.terminal.window.backgroundOpacityLabel')}
+          description={t('settings.terminal.window.backgroundOpacityDescriptionFull')}
           value={settings.terminalBackgroundOpacity ?? 1}
           defaultValue={1}
           min={0}
@@ -136,16 +218,16 @@ export function TerminalWindowSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Window Blur"
-        description="Apply background blur to the terminal window. Requires restart."
+        title={t('settings.terminal.window.windowBlurLabel')}
+        description={t('settings.terminal.window.windowBlurDescription')}
         keywords={['window', 'blur', 'background', 'transparency', 'vibrancy']}
         className="space-y-3 px-1 py-2"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <Label>Window Blur</Label>
+            <Label>{t('settings.terminal.window.windowBlurLabel')}</Label>
             <p className="text-xs text-muted-foreground">
-              Apply background blur to the terminal window. Requires restart.
+              {t('settings.terminal.window.windowBlurDescription')}
             </p>
           </div>
           <button
@@ -168,10 +250,10 @@ export function TerminalWindowSection({
           <div className="flex items-center justify-between gap-3 rounded-md border border-yellow-500/50 bg-yellow-500/10 px-3 py-2.5">
             <div className="min-w-0 flex-1 space-y-0.5">
               <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
-                Restart required
+                {t('settings.terminal.window.restartRequired')}
               </p>
               <p className="text-xs text-muted-foreground">
-                Restart Orca to apply the window blur change.
+                {t('settings.terminal.window.restartDescription')}
               </p>
             </div>
             <Button
@@ -182,20 +264,22 @@ export function TerminalWindowSection({
               onClick={() => void handleRelaunch()}
             >
               <RotateCw className={`size-3 ${relaunchingBlur ? 'animate-spin' : ''}`} />
-              {relaunchingBlur ? 'Restarting…' : 'Restart now'}
+              {relaunchingBlur
+                ? t('settings.terminal.window.restarting')
+                : t('settings.terminal.window.restartNow')}
             </Button>
           </div>
         ) : null}
       </SearchableSetting>
 
       <SearchableSetting
-        title="Horizontal Padding"
-        description="Horizontal padding around the terminal grid in pixels."
+        title={t('settings.terminal.window.horizontalPaddingLabel')}
+        description={t('settings.terminal.window.horizontalPaddingDescription')}
         keywords={['padding', 'horizontal', 'spacing', 'margin']}
       >
         <NumberField
-          label="Horizontal Padding"
-          description="Horizontal padding around the terminal grid in pixels."
+          label={t('settings.terminal.window.horizontalPaddingLabel')}
+          description={t('settings.terminal.window.horizontalPaddingDescription')}
           value={settings.terminalPaddingX ?? 4}
           defaultValue={4}
           min={0}
@@ -207,13 +291,13 @@ export function TerminalWindowSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Vertical Padding"
-        description="Vertical padding around the terminal grid in pixels."
+        title={t('settings.terminal.window.verticalPaddingLabel')}
+        description={t('settings.terminal.window.verticalPaddingDescription')}
         keywords={['padding', 'vertical', 'spacing', 'margin']}
       >
         <NumberField
-          label="Vertical Padding"
-          description="Vertical padding around the terminal grid in pixels."
+          label={t('settings.terminal.window.verticalPaddingLabel')}
+          description={t('settings.terminal.window.verticalPaddingDescription')}
           value={settings.terminalPaddingY ?? 4}
           defaultValue={4}
           min={0}
@@ -225,15 +309,15 @@ export function TerminalWindowSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Hide Mouse While Typing"
-        description="Hide the mouse cursor when typing in the terminal."
+        title={t('settings.terminal.window.hideMouseWhileTypingLabel')}
+        description={t('settings.terminal.window.hideMouseWhileTypingDescription')}
         keywords={['mouse', 'hide', 'typing', 'cursor']}
         className="flex items-center justify-between gap-4 px-1 py-2"
       >
         <div className="space-y-0.5">
-          <Label>Hide Mouse While Typing</Label>
+          <Label>{t('settings.terminal.window.hideMouseWhileTypingLabel')}</Label>
           <p className="text-xs text-muted-foreground">
-            Hide the mouse cursor when typing in the terminal.
+            {t('settings.terminal.window.hideMouseWhileTypingDescription')}
           </p>
         </div>
         <button
@@ -259,8 +343,8 @@ export function TerminalWindowSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Color Overrides"
-        description="Override individual terminal colors."
+        title={t('settings.terminal.window.colorOverridesLabel')}
+        description={t('settings.terminal.window.colorOverridesDescription')}
         keywords={['color', 'override', 'ansi', 'palette', 'theme']}
         className="space-y-3"
       >
@@ -272,7 +356,7 @@ export function TerminalWindowSection({
             <span className={`transition-transform ${colorOverridesExpanded ? 'rotate-90' : ''}`}>
               ▶
             </span>
-            Color Overrides
+            {t('settings.terminal.window.colorOverridesButton')}
           </button>
           <div
             className={`grid overflow-hidden transition-all duration-300 ease-out ${
@@ -280,7 +364,7 @@ export function TerminalWindowSection({
             }`}
           >
             <div className="min-h-0 space-y-4">
-              {COLOR_OVERRIDE_GROUPS.map((group) => (
+              {colorOverrideGroups.map((group) => (
                 <div key={group.label} className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground">{group.label}</p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -309,7 +393,7 @@ export function TerminalWindowSection({
                 size="sm"
                 onClick={() => updateSettings({ terminalColorOverrides: undefined })}
               >
-                Reset all color overrides
+                {t('settings.terminal.window.resetAllColorOverrides')}
               </Button>
             </div>
           </div>

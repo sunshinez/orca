@@ -419,20 +419,145 @@ export const en = {
     terminal: {
       windowsShell: {
         title: 'Windows Shell',
-        description: 'Default shell on Windows.'
+        description: 'Default shell on Windows.',
+        powershell: 'PowerShell',
+        commandPrompt: 'Command Prompt',
+        wsl: 'WSL',
+        effectDescription:
+          'Shell used when opening a new terminal pane. Takes effect for new terminals.'
       },
       floating: {
         title: 'Floating Terminal',
         description: 'Enable floating terminal window.',
         enable: 'Enable',
-        enableDescription: 'Enable Description',
+        enableDescription:
+          'Show a floating terminal window that can be toggled with a global keyboard shortcut.',
         defaultDirectory: 'Default Directory',
-        defaultDirectoryDescription: 'Default Directory Description',
-        toggleLocation: 'Toggle Location'
+        defaultDirectoryDescription: 'Working directory for the floating terminal when it opens.',
+        toggleLocation: 'Toggle Location',
+        chooseDirectoryAriaLabel: 'Choose floating terminal directory',
+        floatingButton: 'Floating Button',
+        statusBar: 'Status Bar',
+        keyboardShortcutHint: 'The keyboard shortcut works regardless of where the toggle is shown.'
       },
       quickCommands: {
         title: 'Quick Commands',
-        description: 'Quick access commands for the terminal.'
+        description: 'Quick access commands for the terminal.',
+        savedCommandsLabel: 'Saved Commands',
+        savedCommandsDescription: 'Commands are sent as plain terminal input to the active pane.',
+        addCommand: 'Add Command',
+        filterAll: 'All',
+        filterGlobal: 'Global',
+        filterRepository: 'Repository',
+        chooseRepositoryPlaceholder: 'Choose repository',
+        noCommandsSaved: 'No quick commands saved.',
+        noCommandsMatchScope: 'No commands match this scope.',
+        untitled: 'Untitled',
+        noCommandText: 'No command text',
+        enterLabel: 'Enter',
+        insertLabel: 'Insert',
+        editAriaLabel: 'Edit {{label}}',
+        removeAriaLabel: 'Remove {{label}}',
+        scopeGlobal: 'Global',
+        missingRepo: 'Missing repo'
+      },
+      darkTheme: {
+        title: 'Dark Theme',
+        description: 'Choose the theme used for terminal panes in dark mode.',
+        themeLabel: 'Dark Theme',
+        themeDescription: 'Choose the terminal theme used in dark mode.',
+        dividerColorLabel: 'Dark Divider Color',
+        dividerColorDescription: 'Controls the split divider line between panes in dark mode.',
+        previewTitle: 'Dark Mode Preview',
+        previewDescriptionSystem: 'System mode is currently {{mode}}.',
+        previewDescriptionFixed: 'Orca is currently in {{mode}} mode.',
+        modeDark: 'Dark',
+        modeLight: 'Light'
+      },
+      lightTheme: {
+        useSeparateTitle: 'Use Separate Theme In Light Mode',
+        useSeparateDescription: 'When disabled, light mode reuses the dark terminal theme.',
+        title: 'Light Theme',
+        description: 'Configure the optional light-mode terminal appearance.',
+        themeLabel: 'Light Theme',
+        themeDescription: 'Choose the theme used when Orca is in light mode.',
+        dividerColorLabel: 'Light Divider Color',
+        dividerColorDescription: 'Controls the split divider line between panes in light mode.',
+        previewTitle: 'Light Mode Preview',
+        previewDescription: 'Updates live as you change the light theme or divider color.'
+      },
+      window: {
+        title: 'Window',
+        description: 'Window appearance and background settings.',
+        backgroundOpacityLabel: 'Background Opacity',
+        backgroundOpacityDescription: 'Controls the transparency of the terminal background.',
+        backgroundOpacityDescriptionFull:
+          'Controls the transparency of the terminal background. 1 is fully opaque, 0 is fully transparent.',
+        windowBlurLabel: 'Window Blur',
+        windowBlurDescription: 'Apply background blur to the terminal window. Requires restart.',
+        restartRequired: 'Restart required',
+        restartDescription: 'Restart Orca to apply the window blur change.',
+        restarting: 'Restarting…',
+        restartNow: 'Restart now',
+        horizontalPaddingLabel: 'Horizontal Padding',
+        horizontalPaddingDescription: 'Horizontal padding around the terminal grid in pixels.',
+        verticalPaddingLabel: 'Vertical Padding',
+        verticalPaddingDescription: 'Vertical padding around the terminal grid in pixels.',
+        hideMouseWhileTypingLabel: 'Hide Mouse While Typing',
+        hideMouseWhileTypingDescription: 'Hide the mouse cursor when typing in the terminal.',
+        colorOverridesLabel: 'Color Overrides',
+        colorOverridesDescription: 'Override individual terminal colors.',
+        colorOverridesButton: 'Color Overrides',
+        resetAllColorOverrides: 'Reset all color overrides',
+        colorGroupBase: 'Base',
+        colorGroupAnsiNormal: 'ANSI Normal',
+        colorGroupAnsiBright: 'ANSI Bright',
+        colorForeground: 'Foreground',
+        colorForegroundDesc: 'Main text color',
+        colorBackground: 'Background',
+        colorBackgroundDesc: 'Terminal background color',
+        colorCursor: 'Cursor',
+        colorCursorDesc: 'Cursor color',
+        colorCursorText: 'Cursor Text',
+        colorCursorTextDesc: 'Color of text under the cursor (block cursor)',
+        colorSelectionBackground: 'Selection Background',
+        colorSelectionBackgroundDesc: 'Background color of selected text',
+        colorSelectionForeground: 'Selection Foreground',
+        colorSelectionForegroundDesc: 'Text color of selected text',
+        colorBoldText: 'Bold Text',
+        colorBoldTextDesc: 'Color for bold text. Falls back to the normal color if not set.',
+        colorBlack: 'Black',
+        colorBlackDesc: 'ANSI black color',
+        colorRed: 'Red',
+        colorRedDesc: 'ANSI red color',
+        colorGreen: 'Green',
+        colorGreenDesc: 'ANSI green color',
+        colorYellow: 'Yellow',
+        colorYellowDesc: 'ANSI yellow color',
+        colorBlue: 'Blue',
+        colorBlueDesc: 'ANSI blue color',
+        colorMagenta: 'Magenta',
+        colorMagentaDesc: 'ANSI magenta color',
+        colorCyan: 'Cyan',
+        colorCyanDesc: 'ANSI cyan color',
+        colorWhite: 'White',
+        colorWhiteDesc: 'ANSI white color',
+        colorBrightBlack: 'Bright Black',
+        colorBrightBlackDesc: 'ANSI bright black color',
+        colorBrightRed: 'Bright Red',
+        colorBrightRedDesc: 'ANSI bright red color',
+        colorBrightGreen: 'Bright Green',
+        colorBrightGreenDesc: 'ANSI bright green color',
+        colorBrightYellow: 'Bright Yellow',
+        colorBrightYellowDesc: 'ANSI bright yellow color',
+        colorBrightBlue: 'Bright Blue',
+        colorBrightBlueDesc: 'ANSI bright blue color',
+        colorBrightMagenta: 'Bright Magenta',
+        colorBrightMagentaDesc: 'ANSI bright magenta color',
+        colorBrightCyan: 'Bright Cyan',
+        colorBrightCyanDesc: 'ANSI bright cyan color',
+        colorBrightWhite: 'Bright White',
+        colorBrightWhiteDesc: 'ANSI bright white color'
       },
       typography: {
         title: 'Typography',
@@ -440,29 +565,128 @@ export const en = {
         fontSize: 'Font Size',
         fontFamily: 'Font Family',
         fontWeight: 'Font Weight',
-        lineHeight: 'Line Height'
+        fontWeightDescription: 'Controls the terminal text font weight.',
+        lineHeight: 'Line Height',
+        lineHeightDescription: 'Controls the terminal line height multiplier.'
       },
       rendering: {
         title: 'Rendering',
         description: 'Terminal rendering engine settings.',
-        gpuAcceleration: 'Gpu Acceleration'
+        gpuAcceleration: 'GPU Acceleration',
+        gpuAccelerationDescription:
+          'Controls whether the terminal uses xterm.js WebGL rendering. Auto uses DOM on Linux to avoid driver glyph corruption, and otherwise tries WebGL with DOM fallback.',
+        gpuOff: 'WebGL is disabled; xterm uses the DOM renderer for maximum compatibility.',
+        gpuOn: 'WebGL is always attempted for terminal panes.',
+        gpuAuto:
+          'Auto uses the DOM renderer on Linux to avoid GPU glyph corruption, and otherwise tries WebGL with DOM fallback.',
+        fontLigaturesLabel: 'Font Ligatures',
+        fontLigaturesDescription:
+          'Render programming ligatures (e.g. =>, !=, ===) for fonts that ship them. "Auto" enables ligatures only for known ligature fonts (Fira Code, JetBrains Mono, Cascadia Code, Iosevka, etc.).',
+        fontLigaturesAuto: 'Auto',
+        fontLigaturesOn: 'On',
+        fontLigaturesOff: 'Off',
+        ligaturesOnAlways: 'Ligatures are always on. Fonts without ligatures simply render as-is.',
+        ligaturesOffAlways: 'Ligatures are always off, even for fonts that ship them.',
+        ligaturesAutoEnabled:
+          'Auto — enabled because "{{fontFamily}}" is a known ligature font. Switch to "Off" to disable.',
+        ligaturesAutoDisabled:
+          'Auto — disabled because "{{fontFamily}}" is not a known ligature font. Switch to "On" to enable anyway.',
+        ligaturesAriaEnabled: 'enabled',
+        ligaturesAriaDisabled: 'disabled'
       },
       cursor: {
         title: 'Cursor',
         description: 'Terminal cursor style and behavior.',
-        shape: 'Shape'
+        shapeLabel: 'Cursor Shape',
+        shapeBar: 'Bar',
+        shapeBlock: 'Block',
+        shapeUnderline: 'Underline',
+        blinkingLabel: 'Blinking Cursor',
+        blinkingDescription: 'Uses the blinking variant of the selected cursor shape.',
+        opacityLabel: 'Cursor Opacity',
+        opacityDescription: 'Opacity of the terminal cursor.'
       },
       paneStyling: {
         title: 'Pane Styling',
-        description: 'Styling options for terminal panes.'
+        description: 'Styling options for terminal panes.',
+        inactivePaneOpacityLabel: 'Inactive Pane Opacity',
+        inactivePaneOpacityDescription: 'Opacity applied to panes that are not currently active.',
+        dividerThicknessLabel: 'Divider Thickness',
+        dividerThicknessDescription: 'Thickness of the pane divider line.',
+        rightClickToPasteLabel: 'Right-click to paste',
+        rightClickToPasteDescription:
+          'On Windows, right-click pastes the clipboard into the terminal. Use Ctrl+right-click to open the context menu.'
       },
       setupScript: {
         title: 'Setup Script',
-        description: 'Script to run when opening a new terminal.'
+        description: 'Script to run when opening a new terminal.',
+        setupScriptLocationLabel: 'Setup Script Location',
+        setupScriptLocationDescription:
+          'Where the repository setup script runs when a new workspace is created.',
+        newTab: 'New Tab',
+        splitVertical: 'Split Vertically',
+        splitHorizontal: 'Split Horizontally',
+        runInNewTabAriaLabel: 'Run in a new tab',
+        splitVerticallyAriaLabel: 'Split vertically',
+        splitHorizontallyAriaLabel: 'Split horizontally',
+        hint: '"New Tab" opens the setup command in a background tab titled "Setup" without stealing focus from your main terminal.'
       },
       advanced: {
         title: 'Advanced',
-        description: 'Advanced terminal configuration options.'
+        description: 'Advanced terminal configuration options.',
+        scrollbackSizeLabel: 'Scrollback Size',
+        scrollbackSizeDescription: 'Maximum terminal scrollback buffer size.',
+        scrollbackPreset: 'Preset',
+        scrollbackCustom: 'Custom',
+        scrollbackPresetAriaLabel: '{{preset}} megabytes',
+        customScrollbackLabel: 'Custom Scrollback',
+        customScrollbackDescription: 'Maximum terminal scrollback buffer size.',
+        wordSeparatorsLabel: 'Word Separators',
+        wordSeparatorsDescription:
+          'Characters treated as word boundaries for double-click selection.',
+        wordSeparatorsPlaceholder: ` ()[]{},'"\``,
+        focusFollowsMouseLabel: 'Focus Follows Mouse',
+        focusFollowsMouseDescription:
+          "Hovering a terminal pane activates it without needing to click. Mirrors Ghostty's focus-follows-mouse setting. Selections and window switching stay safe.",
+        copyOnSelectLabel: 'Copy on Select',
+        copyOnSelectDescription:
+          'Automatically copy terminal selections to the clipboard as soon as a selection is made.',
+        osc52Label: 'Allow TUI Clipboard Writes (OSC 52)',
+        osc52Description:
+          'Let terminal programs like tmux, Neovim, and fzf copy to the system clipboard over the PTY (including over SSH). Off by default because untrusted output piped into the terminal could silently overwrite your clipboard.',
+        osc52ShortDescription:
+          'Let programs running inside the terminal (tmux, Neovim, fzf, ssh sessions) copy to your system clipboard. Disabled by default for safety.',
+        powershellVersionLabel: 'PowerShell Version',
+        powershellVersionDescription:
+          'Choose whether the PowerShell shell option launches Windows PowerShell or PowerShell 7+ for new terminal panes.',
+        powershellAuto: 'Auto',
+        windowsPowershell: 'Windows PowerShell',
+        pwshNotAvailable:
+          'Auto uses Windows PowerShell now and switches to PowerShell 7+ when installed.',
+        pwshDownload: 'Download PowerShell 7+',
+        optionAsAltLabel: 'Option as Alt',
+        optionAsAltDescription:
+          "Controls whether the macOS Option key sends Alt/Esc sequences or composes characters. Mirrors Ghostty's macos-option-as-alt.",
+        optionAsAltAuto: 'Auto',
+        optionAsAltBoth: 'Both',
+        optionAsAltLeft: 'Left',
+        optionAsAltRight: 'Right',
+        optionAsAltNone: 'Off',
+        optionAsAltDetectedUs: 'US English — Option sends Alt/Esc sequences',
+        optionAsAltDetectedNonUs: 'non-US layout — Option composes characters like @, €, [, ]',
+        optionAsAltDetectedUnknown: 'unknown layout — Option composes characters (safe default)',
+        optionAsAltAutoUs:
+          'Auto — detected: {{detected}}. Both Option keys act as Alt, matching macOS power-user readline expectations. Switch to "Off" if you need to type Option-layer characters.',
+        optionAsAltAutoNonUs:
+          "Auto — detected: {{detected}}. Option composes your keyboard layout's special characters (@, €, [, ], etc.). Core readline shortcuts (Option+B/F/D) are handled automatically.",
+        optionAsAltAutoUnknown:
+          "Auto — detected: {{detected}}. Option composes your keyboard layout's special characters (@, €, [, ], etc.). Core readline shortcuts (Option+B/F/D) are handled automatically.",
+        optionAsAltFalse:
+          'Option composes special characters for your keyboard layout. Core readline shortcuts (Option+B/F/D) are handled automatically.',
+        optionAsAltTrue:
+          'Both Option keys send Alt/Esc sequences for full readline and shell support. Special character input via Option is unavailable.',
+        optionAsAltSide:
+          'The {{side}} Option key sends Alt/Esc sequences; the other composes special characters.'
       }
     },
     integrations: {
