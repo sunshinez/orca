@@ -15,6 +15,7 @@ import type { VoiceSettings } from './speech-types'
 import { cloneDefaultWorkspaceStatuses } from './workspace-statuses'
 import { TASK_PROVIDERS } from './task-providers'
 import { DEFAULT_WORKTREE_CARD_PROPERTIES } from './worktree-card-properties'
+import { ORCA_FALLBACK_LANGUAGE } from './i18n/languages'
 
 export { DEFAULT_STATUS_BAR_ITEMS } from './status-bar-defaults'
 export {
@@ -144,6 +145,7 @@ export function getDefaultOnboardingState(): OnboardingState {
 
 export function getDefaultSettings(homedir: string): GlobalSettings {
   return {
+    language: ORCA_FALLBACK_LANGUAGE,
     workspaceDir: `${homedir}/orca/workspaces`,
     nestWorkspaces: true,
     refreshLocalBaseRefOnWorktreeCreate: false,

@@ -1,4 +1,5 @@
 import { ExternalLink, Loader2, QrCode, RefreshCw, Wifi } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
 import { Button } from '../ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -32,22 +33,21 @@ export function MobileNetworkInterfaceSection({
   hasQrCode,
   onGenerateQr
 }: MobileNetworkInterfaceSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <div className="rounded-lg border border-border/60 p-4">
       <div className="mb-3 flex items-center gap-2">
         <Wifi className="size-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Network Interface</span>
+        <span className="text-sm font-medium">{t('settings.mobileNetwork.title')}</span>
       </div>
       <p className="text-muted-foreground mb-3 text-xs">
-        Choose which network address to advertise in the QR code. Use your LAN address for
-        same-network pairing, or an overlay network address (Tailscale, ZeroTier) for cross-network
-        access.
+        {t('settings.mobileNetwork.description')}
       </p>
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <Select value={selectedAddress} onValueChange={onSelectedAddressChange}>
             <SelectTrigger size="sm" className="min-w-[220px]">
-              <SelectValue placeholder="No interfaces found" />
+              <SelectValue placeholder={t('settings.mobileNetwork.noInterfaces')} />
             </SelectTrigger>
             <SelectContent>
               {networkInterfaces.map((iface) => (
@@ -67,14 +67,14 @@ export function MobileNetworkInterfaceSection({
                 size="icon-sm"
                 onClick={onRefreshNetworkInterfaces}
                 disabled={refreshingNetworkInterfaces}
-                aria-label="Refresh network interfaces"
+                aria-label={t('settings.mobileNetwork.refreshAriaLabel')}
                 className="text-muted-foreground"
               >
                 <RefreshCw className={refreshingNetworkInterfaces ? 'animate-spin' : ''} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={6}>
-              Refresh network interfaces
+              {t('settings.mobileNetwork.refreshTooltip')}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -91,23 +91,21 @@ export function MobileNetworkInterfaceSection({
           ) : (
             <QrCode className="size-3.5" />
           )}
-          {hasQrCode ? 'Regenerate' : 'Generate QR Code'}
+          {hasQrCode
+            ? t('settings.mobileNetwork.regenerateQr')
+            : t('settings.mobileNetwork.generateQr')}
         </Button>
       </div>
       <Accordion type="single" collapsible className="mt-4 border-t border-border/60 pt-2">
         <AccordionItem value="remote-pairing-guide">
           <AccordionTrigger className="py-2 text-xs">
-            Connect outside your Wi-Fi with a tailnet
+            {t('settings.mobileNetwork.tailnetAccordionTitle')}
           </AccordionTrigger>
           <AccordionContent className="space-y-3 text-xs text-muted-foreground">
-            <p>
-              Orca Mobile connects directly to this computer. To use it away from the same local
-              network, put your computer and phone on the same private overlay network, then
-              generate the QR code with that network address selected.
-            </p>
+            <p>{t('settings.mobileNetwork.tailnetDescription')}</p>
             <ol className="list-decimal space-y-1 pl-4">
               <li>
-                Install{' '}
+                {t('settings.mobileNetwork.tailnetStep1Prefix')}{' '}
                 <button
                   type="button"
                   onClick={() => void window.api.shell.openUrl(TAILSCALE_DOWNLOAD_URL)}
@@ -116,14 +114,11 @@ export function MobileNetworkInterfaceSection({
                   Tailscale
                   <ExternalLink className="size-3" />
                 </button>{' '}
-                on your computer and phone.
+                {t('settings.mobileNetwork.tailnetStep1Suffix')}
               </li>
-              <li>Sign in to the same tailnet on both devices.</li>
-              <li>
-                In this Network Interface menu, choose the Tailscale address, usually a 100.x.y.z
-                IP.
-              </li>
-              <li>Regenerate the QR code and scan it from the Orca mobile app.</li>
+              <li>{t('settings.mobileNetwork.tailnetStep2')}</li>
+              <li>{t('settings.mobileNetwork.tailnetStep3')}</li>
+              <li>{t('settings.mobileNetwork.tailnetStep4')}</li>
             </ol>
           </AccordionContent>
         </AccordionItem>

@@ -24,6 +24,7 @@
 // Decision Record and are intentionally not used here.
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ShieldCheck } from 'lucide-react'
 import type { GlobalSettings } from '../../../../shared/types'
 import type { TelemetryConsentState } from '../../../../shared/telemetry-consent-types'
@@ -90,6 +91,7 @@ type PrivacyPaneProps = {
 }
 
 export function PrivacyPane({ settings }: PrivacyPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [consent, setConsent] = useState<TelemetryConsentState | null>(null)
   // Double-click guard. Main's `setOptIn` has no idempotence check; without
   // this guard a fast double-click would fire two
@@ -176,18 +178,16 @@ export function PrivacyPane({ settings }: PrivacyPaneProps): React.JSX.Element {
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <ShieldCheck className="size-4" />
-            <Label>Share anonymous usage data</Label>
+            <Label>{t('settings.privacy.shareAnonymousData')}</Label>
           </div>
           <p className="text-xs text-muted-foreground">
-            Help us figure out what to build next. Orca sends anonymous counts of which features you
-            use and where things break — no file contents, prompts, terminal output, branch names,
-            or anything that identifies you.{' '}
+            {t('settings.privacy.shareAnonymousDataDescription')}{' '}
             <button
               type="button"
               className="underline underline-offset-2 hover:text-foreground"
               onClick={() => void window.api.shell.openUrl(PRIVACY_URL)}
             >
-              Privacy policy
+              {t('settings.privacy.privacyPolicy')}
             </button>
             .
           </p>
@@ -228,20 +228,10 @@ function BlockedHelper({ blocked, id }: { blocked: BlockedReason; id: string }):
 }
 
 function EnvHelperBody({ reason }: { reason: EnvBlockedReason }): React.JSX.Element {
+  const { t } = useTranslation()
   if (reason === 'ci') {
-    return (
-      <p>
-        Telemetry is disabled because a CI environment variable is set. Unset it and restart to
-        re-enable.
-      </p>
-    )
+    return <p>{t('settings.privacy.blocked.ci')}</p>
   }
   const varName = envVarNameForReason(reason)
-  return (
-    <p>
-      Telemetry is disabled by the{' '}
-      <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">{varName}</code>{' '}
-      environment variable. Unset it and restart to re-enable.
-    </p>
-  )
+  return <p>{t('settings.privacy.blocked.env', { varName })}</p>
 }

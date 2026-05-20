@@ -1652,6 +1652,11 @@ export type GlobalSettings = {
    *  effectively present at runtime — the renderer should still fall back to
    *  defaults when reading optional sub-fields. */
   voice?: VoiceSettings
+  /** Display language for the Orca interface.
+   *  Why: optional for backward compatibility with profiles saved before
+   *  i18n landed; the persistence merge fills the default, and the renderer
+   *  falls back to navigator.language or 'en' when absent. */
+  language?: string
 }
 
 export type CommitMessageAiSettings = {

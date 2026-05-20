@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
 
 const RemoveFolderDialog = React.memo(function RemoveFolderDialog() {
+  const { t } = useTranslation()
   const activeModal = useAppStore((s) => s.activeModal)
   const modalData = useAppStore((s) => s.modalData)
   const closeModal = useAppStore((s) => s.closeModal)
@@ -40,19 +42,17 @@ const RemoveFolderDialog = React.memo(function RemoveFolderDialog() {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-sm sm:max-w-sm" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="text-sm">Remove Project</DialogTitle>
+          <DialogTitle className="text-sm">{t('sidebar.removeFolder.title')}</DialogTitle>
           <DialogDescription className="text-xs">
-            This only removes{' '}
-            <span className="break-all font-medium text-foreground">{displayName}</span> from Orca.
-            It is still on your disk.
+            {t('sidebar.removeFolder.description', { name: displayName })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
+            {t('sidebar.removeFolder.cancel')}
           </Button>
           <Button variant="destructive" onClick={handleConfirm}>
-            Remove
+            {t('sidebar.removeFolder.remove')}
           </Button>
         </DialogFooter>
       </DialogContent>

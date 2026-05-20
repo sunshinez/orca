@@ -2,6 +2,7 @@
    full-page layout with its hydration/comment state so the selected issue
    surface stays coherent with the existing Linear drawer behavior. */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowRight,
   Check,
@@ -60,15 +61,6 @@ type LinearIssueWorkspaceProps = {
   onClose: () => void
 }
 
-async function copyTextToClipboard(text: string, label: string): Promise<void> {
-  try {
-    await window.api.ui.writeClipboardText(text)
-    toast.success(`${label} copied`)
-  } catch {
-    toast.error(`Failed to copy ${label.toLowerCase()}`)
-  }
-}
-
 function LinearIssueAvatar({
   avatarUrl,
   name,
@@ -100,6 +92,7 @@ function LinearIssueSubIssueButton({
   issue: LinearIssue
   onOpenIssue: (issue: LinearIssue) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const settings = useAppStore((s) => s.settings)
   const fetchLinearIssue = useAppStore((s) => s.fetchLinearIssue)
   const [open, setOpen] = useState(false)
@@ -120,15 +113,15 @@ function LinearIssueSubIssueButton({
         if (fullIssue) {
           onOpenIssue(fullIssue)
         } else {
-          toast.error('Failed to load sub-issue')
+          toast.error(t('linear.toast.loadSubIssueFailed'))
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to load sub-issue')
+        toast.error(error instanceof Error ? error.message : t('linear.toast.loadSubIssueFailed'))
       } finally {
         setOpeningSubIssueId(null)
       }
     },
-    [fetchLinearIssue, issue.workspaceId, onOpenIssue]
+    [fetchLinearIssue, issue.workspaceId, onOpenIssue, t]
   )
 
   const handleCreate = useCallback(async () => {
@@ -155,18 +148,18 @@ function LinearIssueSubIssueButton({
         setSubIssues((prev) =>
           prev.some((subIssue) => subIssue.id === child.id) ? prev : [...prev, child]
         )
-        toast.success(`Created ${result.identifier}`)
+        toast.success(t('linear.toast.created', { identifier: result.identifier }))
         setTitle('')
         setOpen(false)
       } else {
         toast.error(result.error)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create sub-issue')
+      toast.error(error instanceof Error ? error.message : t('linear.toast.createSubIssueFailed'))
     } finally {
       setSubmitting(false)
     }
-  }, [issue.id, issue.project?.id, issue.team.id, issue.workspaceId, settings, title])
+  }, [issue.id, issue.project?.id, issue.team.id, issue.workspaceId, settings, title, t])
 
   return (
     <section className="mt-10 max-w-[820px]">
@@ -199,7 +192,7 @@ function LinearIssueSubIssueButton({
             className="flex h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             <Plus className="size-4" />
-            <span>Add sub-issues</span>
+            <span>{t('linear.subIssues.addSubIssues')}</span>
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-3" align="start">
@@ -213,7 +206,7 @@ function LinearIssueSubIssueButton({
                   void handleCreate()
                 }
               }}
-              placeholder="Sub-issue title"
+              placeholder={t('linear.subIssues.subIssueTitlePlaceholder')}
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <div className="flex justify-end">
@@ -223,7 +216,7 @@ function LinearIssueSubIssueButton({
                 disabled={!title.trim() || submitting}
               >
                 {submitting ? <LoaderCircle className="size-3.5 animate-spin" /> : null}
-                Create
+                {t('linear.subIssues.create')}
               </Button>
             </div>
           </div>
@@ -240,6 +233,7 @@ function LinearIssueSidebarProjectCard({
   issue: LinearIssue
   onProjectChanged: (project: LinearProjectSummary) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const settings = useAppStore((s) => s.settings)
   const patchLinearIssue = useAppStore((s) => s.patchLinearIssue)
   const [open, setOpen] = useState(false)
@@ -263,7 +257,9 @@ function LinearIssueSidebarProjectCard({
         })
         .catch((error) => {
           if (!cancelled) {
-            toast.error(error instanceof Error ? error.message : 'Failed to load projects')
+            toast.error(
+              error instanceof Error ? error.message : t('linear.toast.loadProjectsFailed')
+            )
           }
         })
         .finally(() => {
@@ -276,7 +272,7 @@ function LinearIssueSidebarProjectCard({
       cancelled = true
       window.clearTimeout(timeout)
     }
-  }, [issue.workspaceId, open, query, settings])
+  }, [issue.workspaceId, open, query, settings, t])
 
   const handleSelectProject = useCallback(
     async (project: LinearProjectSummary) => {
@@ -291,24 +287,24 @@ function LinearIssueSidebarProjectCard({
         if (result.ok) {
           onProjectChanged(project)
           patchLinearIssue(issue.id, { project })
-          toast.success('Project updated')
+          toast.success(t('linear.toast.projectUpdated'))
           setOpen(false)
         } else {
           toast.error(result.error)
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to update project')
+        toast.error(error instanceof Error ? error.message : t('linear.toast.updateProjectFailed'))
       } finally {
         setSavingProjectId(null)
       }
     },
-    [issue.id, issue.workspaceId, onProjectChanged, patchLinearIssue, settings]
+    [issue.id, issue.workspaceId, onProjectChanged, patchLinearIssue, settings, t]
   )
 
   return (
     <section className="rounded-xl border border-border/60 bg-card text-card-foreground shadow-xs">
       <div className="flex h-10 items-center gap-1 border-b border-border/50 px-4 text-sm font-medium text-muted-foreground">
-        <span>Project</span>
+        <span>{t('linear.projectCard.title')}</span>
         <ChevronDown className="size-3.5" />
       </div>
       <Popover open={open} onOpenChange={setOpen}>
@@ -319,7 +315,7 @@ function LinearIssueSidebarProjectCard({
           >
             <FolderKanban className="size-4 shrink-0" />
             <span className="min-w-0 flex-1 truncate">
-              {issue.project?.name ?? 'Add to project'}
+              {issue.project?.name ?? t('linear.projectCard.addToProject')}
             </span>
             <ChevronDown className="size-3.5 shrink-0" />
           </button>
@@ -329,14 +325,14 @@ function LinearIssueSidebarProjectCard({
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search projects"
+              placeholder={t('linear.projectCard.searchPlaceholder')}
               className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <div className="max-h-64 overflow-y-auto scrollbar-sleek">
               {loading ? (
                 <div className="flex items-center gap-2 px-2 py-3 text-sm text-muted-foreground">
                   <LoaderCircle className="size-3.5 animate-spin" />
-                  Loading projects
+                  {t('linear.projectCard.loading')}
                 </div>
               ) : projects.length > 0 ? (
                 projects.map((project) => (
@@ -361,7 +357,9 @@ function LinearIssueSidebarProjectCard({
                 ))
               ) : (
                 <div className="px-2 py-3 text-sm text-muted-foreground">
-                  {query.trim() ? 'No projects found.' : 'Search for a project to add.'}
+                  {query.trim()
+                    ? t('linear.projectCard.noProjectsFound')
+                    : t('linear.projectCard.searchForProject')}
                 </div>
               )}
             </div>
@@ -378,6 +376,20 @@ export default function LinearIssueWorkspace({
   onOpenIssue,
   onClose
 }: LinearIssueWorkspaceProps): React.JSX.Element {
+  const { t } = useTranslation()
+
+  const copyTextToClipboard = useCallback(
+    async (text: string, label: string): Promise<void> => {
+      try {
+        await window.api.ui.writeClipboardText(text)
+        toast.success(t('linear.toast.copied', { label }))
+      } catch {
+        toast.error(t('linear.toast.copyFailed', { label: label.toLowerCase() }))
+      }
+    },
+    [t]
+  )
+
   const settings = useAppStore((s) => s.settings)
   const [fullIssue, setFullIssue] = useState<LinearIssue | null>(null)
   const [issueLoading, setIssueLoading] = useState(false)
@@ -417,7 +429,9 @@ export default function LinearIssueWorkspace({
         setComments(fetched)
       } catch (error) {
         if (requestId === requestIdRef.current) {
-          setCommentsError(error instanceof Error ? error.message : 'Failed to load comments.')
+          setCommentsError(
+            error instanceof Error ? error.message : t('linear.toast.loadCommentsFailed')
+          )
         }
       } finally {
         if (requestId === requestIdRef.current) {
@@ -425,7 +439,7 @@ export default function LinearIssueWorkspace({
         }
       }
     },
-    [settings]
+    [settings, t]
   )
 
   useEffect(() => {
@@ -501,16 +515,19 @@ export default function LinearIssueWorkspace({
 
   const displayed = fullIssue ?? issue
 
-  const handleCommentAdded = useCallback((comment: LinearLocalComment) => {
-    const newComment: LinearComment = {
-      id: comment.id || createBrowserUuid(),
-      body: comment.body,
-      createdAt: comment.createdAt,
-      user: { displayName: 'You' }
-    }
-    optimisticCommentsRef.current.push(newComment)
-    setComments((prev) => [...prev, newComment])
-  }, [])
+  const handleCommentAdded = useCallback(
+    (comment: LinearLocalComment) => {
+      const newComment: LinearComment = {
+        id: comment.id || createBrowserUuid(),
+        body: comment.body,
+        createdAt: comment.createdAt,
+        user: { displayName: t('linear.workspace.you') }
+      }
+      optimisticCommentsRef.current.push(newComment)
+      setComments((prev) => [...prev, newComment])
+    },
+    [t]
+  )
 
   const handleProjectChanged = useCallback((project: LinearProjectSummary) => {
     setFullIssue((prev) => (prev ? { ...prev, project } : prev))
@@ -522,28 +539,33 @@ export default function LinearIssueWorkspace({
     }
     return [
       {
-        label: 'Copy URL',
+        label: t('linear.copyLabels.url'),
         icon: Clipboard,
-        action: () => void copyTextToClipboard(displayed.url, 'URL')
+        action: () => void copyTextToClipboard(displayed.url, t('linear.copyLabels.url'))
       },
       {
-        label: 'Copy identifier',
+        label: t('linear.copyLabels.identifier'),
         icon: Clipboard,
-        action: () => void copyTextToClipboard(displayed.identifier, 'Identifier')
+        action: () =>
+          void copyTextToClipboard(displayed.identifier, t('linear.copyLabels.identifier'))
       },
       {
-        label: 'Copy suggested branch name',
+        label: t('linear.copyLabels.suggestedBranchName'),
         icon: GitBranch,
         action: () =>
-          void copyTextToClipboard(buildLinearIssueBranchName(displayed), 'Suggested branch name')
+          void copyTextToClipboard(
+            buildLinearIssueBranchName(displayed),
+            t('linear.copyLabels.suggestedBranchName')
+          )
       },
       {
-        label: 'Copy prompt',
+        label: t('linear.copyLabels.prompt'),
         icon: Clipboard,
-        action: () => void copyTextToClipboard(buildLinearIssuePrompt(displayed), 'Prompt')
+        action: () =>
+          void copyTextToClipboard(buildLinearIssuePrompt(displayed), t('linear.copyLabels.prompt'))
       }
     ]
-  }, [displayed])
+  }, [displayed, t, copyTextToClipboard])
 
   return (
     <Sheet open={issue !== null} onOpenChange={(open) => !open && onClose()}>
@@ -556,12 +578,10 @@ export default function LinearIssueWorkspace({
         }}
       >
         <VisuallyHidden.Root asChild>
-          <SheetTitle>{displayed?.title ?? 'Linear issue'}</SheetTitle>
+          <SheetTitle>{displayed?.title ?? t('linear.workspace.fallbackTitle')}</SheetTitle>
         </VisuallyHidden.Root>
         <VisuallyHidden.Root asChild>
-          <SheetDescription>
-            Preview, edit, and start work from the selected issue.
-          </SheetDescription>
+          <SheetDescription>{t('linear.workspace.sheetDescription')}</SheetDescription>
         </VisuallyHidden.Root>
 
         {displayed ? (
@@ -573,7 +593,7 @@ export default function LinearIssueWorkspace({
                   {displayed.workspaceName ?? 'Linear'}
                 </span>
                 <ChevronRight className="size-3.5 shrink-0" />
-                <span className="shrink-0">Issues</span>
+                <span className="shrink-0">{t('linear.workspace.issues')}</span>
                 <ChevronRight className="size-3.5 shrink-0" />
                 <span className="shrink-0 font-mono">{displayed.identifier}</span>
                 <span className="min-w-0 truncate font-medium text-foreground">
@@ -588,14 +608,16 @@ export default function LinearIssueWorkspace({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => void copyTextToClipboard(displayed.url, 'URL')}
-                      aria-label="Copy Linear URL"
+                      onClick={() =>
+                        void copyTextToClipboard(displayed.url, t('linear.copyLabels.url'))
+                      }
+                      aria-label={t('linear.workspace.copyUrlAria')}
                     >
                       <Link className="size-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={6}>
-                    Copy URL
+                    {t('linear.workspace.copyUrl')}
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -603,14 +625,19 @@ export default function LinearIssueWorkspace({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => void copyTextToClipboard(displayed.identifier, 'Identifier')}
-                      aria-label="Copy issue identifier"
+                      onClick={() =>
+                        void copyTextToClipboard(
+                          displayed.identifier,
+                          t('linear.copyLabels.identifier')
+                        )
+                      }
+                      aria-label={t('linear.workspace.copyIdentifierAria')}
                     >
                       <Clipboard className="size-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={6}>
-                    Copy identifier
+                    {t('linear.workspace.copyIdentifier')}
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -619,13 +646,13 @@ export default function LinearIssueWorkspace({
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => onUse(displayed)}
-                      aria-label="Start workspace from issue"
+                      aria-label={t('linear.workspace.startWorkspaceAria')}
                     >
                       <ArrowRight className="size-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={6}>
-                    Start workspace
+                    {t('linear.workspace.startWorkspace')}
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -634,13 +661,13 @@ export default function LinearIssueWorkspace({
                       variant="ghost"
                       size="icon-sm"
                       onClick={onClose}
-                      aria-label="Close Linear issue preview"
+                      aria-label={t('linear.workspace.closePreviewAria')}
                     >
                       <X className="size-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={6}>
-                    Close
+                    {t('linear.workspace.close')}
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -661,7 +688,7 @@ export default function LinearIssueWorkspace({
                       />
                     ) : (
                       <p className="text-sm italic text-muted-foreground">
-                        No description provided.
+                        {t('linear.workspace.noDescription')}
                       </p>
                     )}
                   </section>
@@ -670,7 +697,9 @@ export default function LinearIssueWorkspace({
 
                   <section className="mt-12 border-t border-border/60 pt-9">
                     <div className="mb-8 flex items-center justify-between gap-3">
-                      <h2 className="text-xl font-semibold text-foreground">Activity</h2>
+                      <h2 className="text-xl font-semibold text-foreground">
+                        {t('linear.workspace.activity')}
+                      </h2>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <LinearIssueAvatar
                           avatarUrl={displayed.assignee?.avatarUrl}
@@ -687,8 +716,11 @@ export default function LinearIssueWorkspace({
                         className="size-5"
                       />
                       <span>
-                        {displayed.assignee?.displayName ?? 'Someone'} updated the issue ·{' '}
-                        {formatLinearIssueRelativeTime(displayed.updatedAt)}
+                        {t('linear.workspace.issueUpdated', {
+                          assignee:
+                            displayed.assignee?.displayName ?? t('linear.workspace.someone'),
+                          time: formatLinearIssueRelativeTime(displayed.updatedAt)
+                        })}
                       </span>
                     </div>
 
@@ -707,7 +739,7 @@ export default function LinearIssueWorkspace({
                           ) : (
                             <RefreshCw className="size-3" />
                           )}
-                          Retry
+                          {t('linear.workspace.retry')}
                         </Button>
                       </div>
                     ) : null}
@@ -728,7 +760,7 @@ export default function LinearIssueWorkspace({
                             <div className="min-w-0 flex-1">
                               <div className="mb-1 flex min-w-0 items-center gap-2 text-sm">
                                 <span className="truncate font-semibold text-foreground">
-                                  {comment.user?.displayName ?? 'Unknown'}
+                                  {comment.user?.displayName ?? t('linear.workspace.unknownUser')}
                                 </span>
                                 <span className="shrink-0 text-muted-foreground">
                                   {formatLinearIssueRelativeTime(comment.createdAt)}
@@ -770,7 +802,7 @@ export default function LinearIssueWorkspace({
                   />
                   <section className="rounded-xl border border-border/60 bg-card text-card-foreground shadow-xs">
                     <div className="flex h-10 items-center gap-1 border-b border-border/50 px-4 text-sm font-medium text-muted-foreground">
-                      <span>Actions</span>
+                      <span>{t('linear.workspace.actions')}</span>
                       <ChevronDown className="size-3.5" />
                     </div>
                     <div className="space-y-1 p-3">

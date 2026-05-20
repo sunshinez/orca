@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   CircleStop,
   Loader2,
@@ -20,6 +21,8 @@ import { isSshTargetConnecting, type SshTargetBusyAction } from './ssh-target-ac
 
 // ── Shared status helpers ────────────────────────────────────────────
 
+// Why: kept in English for external consumers (e.g. SshStatusSegment) that
+// have not yet been internationalized. SshTargetCard uses t() directly.
 export const STATUS_LABELS: Record<SshConnectionStatus, string> = {
   disconnected: 'Disconnected',
   connecting: 'Connecting\u2026',
@@ -77,6 +80,7 @@ export function SshTargetCard({
   onEdit,
   onRemove
 }: SshTargetCardProps): React.JSX.Element {
+  const { t } = useTranslation()
   const status: SshConnectionStatus = state?.status ?? 'disconnected'
   const [actionInFlight, setActionInFlight] = useState<
     'connect' | 'disconnect' | 'terminate' | 'reset' | null
@@ -118,6 +122,29 @@ export function SshTargetCard({
     Promise.resolve(onResetRelay(target.id)).finally(() => setActionInFlight(null))
   }
 
+  const statusLabel = (s: SshConnectionStatus): string => {
+    switch (s) {
+      case 'disconnected':
+        return t('settings.ssh.status.disconnected')
+      case 'connecting':
+        return t('settings.ssh.status.connecting')
+      case 'auth-failed':
+        return t('settings.ssh.status.authFailed')
+      case 'deploying-relay':
+        return t('settings.ssh.status.deployingRelay')
+      case 'connected':
+        return t('settings.ssh.status.connected')
+      case 'reconnecting':
+        return t('settings.ssh.status.reconnecting')
+      case 'reconnection-failed':
+        return t('settings.ssh.status.reconnectionFailed')
+      case 'error':
+        return t('settings.ssh.status.error')
+      default:
+        return s
+    }
+  }
+
   const renderEndRemoteTerminalsButton = (): React.JSX.Element => (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -127,7 +154,11 @@ export function SshTargetCard({
           onClick={handleTerminateSessions}
           className="size-7 text-muted-foreground hover:text-red-400"
           disabled={hasActionInFlight}
-          aria-label={terminateInFlight ? 'Ending remote terminals' : 'End remote terminals'}
+          aria-label={
+            terminateInFlight
+              ? t('settings.ssh.aria.endingRemoteTerminals')
+              : t('settings.ssh.aria.endRemoteTerminals')
+          }
         >
           {terminateInFlight ? (
             <Loader2 className="size-3 animate-spin" />
@@ -137,7 +168,7 @@ export function SshTargetCard({
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={4}>
-        End remote terminals
+        {t('settings.ssh.endRemoteTerminals')}
       </TooltipContent>
     </Tooltip>
   )
@@ -151,7 +182,11 @@ export function SshTargetCard({
           onClick={handleResetRelay}
           className="size-7 text-muted-foreground hover:text-red-400"
           disabled={hasActionInFlight}
-          aria-label={resetInFlight ? 'Resetting remote relay' : 'Reset remote relay'}
+          aria-label={
+            resetInFlight
+              ? t('settings.ssh.aria.resettingRemoteRelay')
+              : t('settings.ssh.aria.resetRemoteRelay')
+          }
         >
           {resetInFlight ? (
             <Loader2 className="size-3 animate-spin" />
@@ -161,7 +196,7 @@ export function SshTargetCard({
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={4}>
-        Reset remote relay
+        {t('settings.ssh.resetRemoteRelay')}
       </TooltipContent>
     </Tooltip>
   )
@@ -178,13 +213,13 @@ export function SshTargetCard({
             onClick={() => onEdit(target)}
             className="size-7"
             disabled={hasActionInFlight}
-            aria-label="Edit target"
+            aria-label={t('settings.ssh.aria.editTarget')}
           >
             <Pencil className="size-3" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          Edit target
+          {t('settings.ssh.edit')}
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -195,7 +230,11 @@ export function SshTargetCard({
             onClick={() => onRemove(target.id)}
             className="size-7 text-muted-foreground hover:text-red-400"
             disabled={hasActionInFlight}
-            aria-label={removeInFlight ? 'Removing target' : 'Remove target'}
+            aria-label={
+              removeInFlight
+                ? t('settings.ssh.aria.removingTarget')
+                : t('settings.ssh.aria.removeTarget')
+            }
           >
             {removeInFlight ? (
               <Loader2 className="size-3 animate-spin" />
@@ -205,7 +244,7 @@ export function SshTargetCard({
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          Remove target
+          {t('settings.ssh.remove')}
         </TooltipContent>
       </Tooltip>
     </div>
@@ -219,7 +258,7 @@ export function SshTargetCard({
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-medium">{target.label}</span>
           <span className={`size-2 shrink-0 rounded-full ${statusColor(status)}`} />
-          <span className="text-[11px] text-muted-foreground">{STATUS_LABELS[status]}</span>
+          <span className="text-[11px] text-muted-foreground">{statusLabel(status)}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">
           {target.username}@{target.host}:{target.port}
@@ -242,7 +281,7 @@ export function SshTargetCard({
               disabled={hasActionInFlight}
             >
               <ServerOff className="size-3" />
-              Disconnect
+              {t('settings.ssh.disconnect')}
             </Button>
           </>
         ) : isSshTargetConnecting(status) ? (
@@ -250,7 +289,7 @@ export function SshTargetCard({
             {renderSecondaryIconActions(false)}
             <Button variant="ghost" size="xs" disabled className="gap-1.5">
               <Loader2 className="size-3 animate-spin" />
-              Connecting
+              {t('settings.ssh.connecting')}
             </Button>
           </>
         ) : (
@@ -268,7 +307,7 @@ export function SshTargetCard({
               ) : (
                 <MonitorSmartphone className="size-3" />
               )}
-              Test
+              {t('settings.ssh.test')}
             </Button>
             <Button
               variant="ghost"
@@ -282,7 +321,7 @@ export function SshTargetCard({
               ) : (
                 <Server className="size-3" />
               )}
-              Connect
+              {t('settings.ssh.connect')}
             </Button>
           </>
         )}

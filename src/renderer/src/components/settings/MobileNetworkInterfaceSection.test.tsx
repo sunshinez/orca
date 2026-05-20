@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { MobileNetworkInterfaceSection } from './MobileNetworkInterfaceSection'
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key })
+}))
+
 type ReactElementLike = {
   type: unknown
   props: Record<string, unknown>
@@ -67,7 +71,7 @@ describe('MobileNetworkInterfaceSection', () => {
 
     expect(collectText(tree)).toContain('100.64.1.20 (tailscale0)')
 
-    const refreshButton = findByAriaLabel(tree, 'Refresh network interfaces')
+    const refreshButton = findByAriaLabel(tree, 'settings.mobileNetwork.refreshAriaLabel')
     const onClick = refreshButton.props.onClick as () => void
     onClick()
 

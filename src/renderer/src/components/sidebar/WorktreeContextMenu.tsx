@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- Why: this menu keeps row targeting, batch actions, and ctrl-click event guards together so nested worktree menus share one event policy. */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -156,6 +157,7 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
   selectedWorktrees = [worktree],
   onContextMenuSelect
 }: Props) {
+  const { t } = useTranslation()
   const updateWorktreeMeta = useAppStore((s) => s.updateWorktreeMeta)
   const workspaceStatuses = useAppStore((s) => s.workspaceStatuses)
   const openModal = useAppStore((s) => s.openModal)
@@ -209,12 +211,16 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
   )
   const sleepLabel =
     isMultiContext && sleepableWorktrees.length > 0
-      ? `Sleep ${sleepableWorktrees.length} Workspace${sleepableWorktrees.length === 1 ? '' : 's'}`
-      : 'Sleep'
+      ? sleepableWorktrees.length === 1
+        ? t('sidebar.contextMenu.sleepWorkspaceSingular', { count: sleepableWorktrees.length })
+        : t('sidebar.contextMenu.sleepWorkspacePlural', { count: sleepableWorktrees.length })
+      : t('sidebar.contextMenu.sleep')
   const deleteLabel =
     isMultiContext && batchDeleteWorktrees.length > 0
-      ? `Delete ${batchDeleteWorktrees.length} Workspace${batchDeleteWorktrees.length === 1 ? '' : 's'}`
-      : 'Delete Selected'
+      ? batchDeleteWorktrees.length === 1
+        ? t('sidebar.contextMenu.deleteWorkspaceSingular', { count: batchDeleteWorktrees.length })
+        : t('sidebar.contextMenu.deleteWorkspacePlural', { count: batchDeleteWorktrees.length })
+      : t('sidebar.contextMenu.deleteSelected')
   const lineage = worktreeLineageById[worktree.id]
   // Why: path-derived worktree IDs can be reused. The menu must honor the same
   // instance check as grouped rows before offering navigation to a parent.
@@ -423,12 +429,12 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
               />
               <DropdownMenuItem onSelect={handleCopyPath} disabled={isDeleting}>
                 <Copy className="size-3.5" />
-                Copy Path
+                {t('sidebar.contextMenu.copyPath')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={handleTogglePin} disabled={isDeleting}>
                 {worktree.isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
-                {worktree.isPinned ? 'Unpin' : 'Pin'}
+                {worktree.isPinned ? t('sidebar.contextMenu.unpin') : t('sidebar.contextMenu.pin')}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={handleToggleRead} disabled={isDeleting}>
                 {worktree.isUnread ? (
@@ -436,7 +442,9 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
                 ) : (
                   <Bell className="size-3.5" />
                 )}
-                {worktree.isUnread ? 'Mark Read' : 'Mark Unread'}
+                {worktree.isUnread
+                  ? t('sidebar.contextMenu.markRead')
+                  : t('sidebar.contextMenu.markUnread')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {(validParentWorktreeId || lineage) && (
@@ -444,13 +452,13 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
                   {validParentWorktreeId && (
                     <DropdownMenuItem onSelect={handleOpenParent} disabled={isDeleting}>
                       <Workflow className="size-3.5" />
-                      Open Parent Workspace
+                      {t('sidebar.contextMenu.openParentWorkspace')}
                     </DropdownMenuItem>
                   )}
                   {lineage && (
                     <DropdownMenuItem onSelect={handleRemoveParentLink} disabled={isDeleting}>
                       <Unlink className="size-3.5" />
-                      Remove from Parent
+                      {t('sidebar.contextMenu.removeFromParent')}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -463,7 +471,7 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
               {hasAnyContextLineage && (
                 <DropdownMenuItem onSelect={handleRemoveParentLink} disabled={deletingContext}>
                   <Unlink className="size-3.5" />
-                  Remove from Parent
+                  {t('sidebar.contextMenu.removeFromParent')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -472,7 +480,9 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger disabled={deletingContext}>
               <Kanban className="size-3.5" />
-              {isMultiContext ? 'Move Statuses To' : 'Move to Status'}
+              {isMultiContext
+                ? t('sidebar.contextMenu.moveStatusesTo')
+                : t('sidebar.contextMenu.moveToStatus')}
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-44">
               <DropdownMenuRadioGroup value={contextWorkspaceStatus}>
@@ -495,7 +505,7 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
           {!isMultiContext && (
             <DropdownMenuItem onSelect={handleRename} disabled={isDeleting}>
               <Pencil className="size-3.5" />
-              Update
+              {t('sidebar.contextMenu.update')}
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
@@ -511,8 +521,8 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8} className="max-w-[200px] text-pretty">
               {isMultiContext
-                ? 'Close all active panels in the selected workspaces to free up memory and CPU.'
-                : 'Close all active panels in this workspace to free up memory and CPU.'}
+                ? t('sidebar.contextMenu.sleepTooltipMulti')
+                : t('sidebar.contextMenu.sleepTooltipSingle')}
             </TooltipContent>
           </Tooltip>
           {/* Why: `git worktree remove` always rejects the main worktree, so we
@@ -529,18 +539,18 @@ const WorktreeContextMenu = React.memo(function WorktreeContextMenu({
             }
             title={
               !isMultiContext && !isFolder && worktree.isMainWorktree
-                ? 'The main worktree cannot be deleted'
+                ? t('sidebar.contextMenu.mainWorktreeCannotDelete')
                 : undefined
             }
           >
             <Trash2 className="size-3.5" />
             {deletingContext
-              ? 'Deleting…'
+              ? t('sidebar.contextMenu.deleting')
               : isMultiContext
                 ? deleteLabel
                 : isFolder
-                  ? 'Remove Folder from Orca'
-                  : 'Delete'}
+                  ? t('sidebar.contextMenu.removeFolderFromOrca')
+                  : t('sidebar.contextMenu.delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

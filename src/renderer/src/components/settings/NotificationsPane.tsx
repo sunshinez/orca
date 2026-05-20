@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { GlobalSettings } from '../../../../shared/types'
 import { Button } from '../ui/button'
@@ -51,6 +52,7 @@ export function NotificationsPane({
   settings,
   updateSettings
 }: NotificationsPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const notificationSettings = settings.notifications
   const [isPickingSound, setIsPickingSound] = useState(false)
 
@@ -73,10 +75,10 @@ export function NotificationsPane({
         ? await window.api.notifications.playSound({ force: true })
         : null
       if (notificationSettings.customSoundPath && soundResult && !soundResult.played) {
-        toast.error('Custom notification sound could not be played')
+        toast.error(t('notifications.customSoundPlayFailed'))
         return
       }
-      toast.success('Test notification sent')
+      toast.success(t('notifications.testSent'))
     }
   }
 
@@ -97,8 +99,8 @@ export function NotificationsPane({
   return (
     <div className="space-y-1">
       <SettingToggle
-        label="Enable Notifications"
-        description="Native system notifications for background events."
+        label={t('notifications.enable')}
+        description={t('notifications.enableDescription')}
         checked={notificationSettings.enabled}
         onToggle={() => updateNotificationSettings({ enabled: !notificationSettings.enabled })}
       />
@@ -107,8 +109,8 @@ export function NotificationsPane({
 
       <SettingToggle
         icon={<Bot className="size-4" />}
-        label="Agent Task Complete"
-        description="A coding agent finishes and becomes idle."
+        label={t('notifications.agentTaskComplete')}
+        description={t('notifications.agentTaskCompleteDescription')}
         checked={notificationSettings.agentTaskComplete}
         disabled={!notificationSettings.enabled}
         onToggle={() =>
@@ -120,8 +122,8 @@ export function NotificationsPane({
 
       <SettingToggle
         icon={<Siren className="size-4" />}
-        label="Terminal Bell"
-        description="A background terminal emits a bell character."
+        label={t('notifications.terminalBell')}
+        description={t('notifications.terminalBellDescription')}
         checked={notificationSettings.terminalBell}
         disabled={!notificationSettings.enabled}
         onToggle={() =>
@@ -137,13 +139,13 @@ export function NotificationsPane({
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <FileAudio className="size-4" />
-            <Label>Custom Sound</Label>
+            <Label>{t('notifications.customSound')}</Label>
           </div>
           <p className="text-xs text-muted-foreground">
-            One local audio file for all delivered desktop notifications.
+            {t('notifications.customSoundDescription')}
           </p>
           <p className="text-[11px] text-muted-foreground/80">
-            Supported formats: MP3, WAV, OGG, M4A, AAC, FLAC.
+            {t('notifications.supportedFormats')}
           </p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -159,7 +161,7 @@ export function NotificationsPane({
                 </div>
               </div>
             ) : (
-              <div className="text-xs text-muted-foreground">System notification sound</div>
+              <div className="text-xs text-muted-foreground">{t('notifications.systemSound')}</div>
             )}
           </div>
           <Button
@@ -171,7 +173,7 @@ export function NotificationsPane({
             className="gap-2"
           >
             <FileAudio className="size-3.5" />
-            {selectedSoundPath ? 'Change' : 'Choose'}
+            {selectedSoundPath ? t('notifications.change') : t('notifications.choose')}
           </Button>
           {selectedSoundPath ? (
             <Button
@@ -183,7 +185,7 @@ export function NotificationsPane({
               className="gap-2"
             >
               <X className="size-3.5" />
-              Clear
+              {t('notifications.clear')}
             </Button>
           ) : null}
         </div>
@@ -192,8 +194,8 @@ export function NotificationsPane({
       <Separator />
 
       <SettingToggle
-        label="Suppress While Focused"
-        description="Skip notifications when the triggering worktree is already visible."
+        label={t('notifications.suppressWhileFocused')}
+        description={t('notifications.suppressWhileFocusedDescription')}
         checked={notificationSettings.suppressWhenFocused}
         disabled={!notificationSettings.enabled}
         onToggle={() =>
@@ -212,7 +214,7 @@ export function NotificationsPane({
           className="gap-2"
         >
           <BellRing className="size-3.5" />
-          Send Test Notification
+          {t('notifications.sendTest')}
         </Button>
       </div>
     </div>

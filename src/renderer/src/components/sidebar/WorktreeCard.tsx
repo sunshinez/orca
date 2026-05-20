@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- Why: the worktree card centralizes sidebar card state (selection, drag, agent status, git info, context menu) in one cohesive component so sidebar rendering doesn't fan out across files. */
 import React, { useEffect, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/store'
 import { getHostedReviewCacheKey } from '@/store/slices/hosted-review'
 import { Badge } from '@/components/ui/badge'
@@ -54,9 +55,9 @@ type WorktreeCardProps = {
   nativeDragEnabled?: boolean
 }
 
-function formatSparseDirectoryPreview(directories: string[]): string {
+function formatSparseDirectoryPreview(directories: string[], moreLabel: string): string {
   const preview = directories.slice(0, 4).join(', ')
-  return directories.length <= 4 ? preview : `${preview}, +${directories.length - 4} more`
+  return directories.length <= 4 ? preview : `${preview}, ${moreLabel}`
 }
 
 function isWebClient(): boolean {
@@ -82,6 +83,7 @@ const WorktreeCard = React.memo(function WorktreeCard({
   lineageChildren,
   onLineageToggle
 }: WorktreeCardProps) {
+  const { t } = useTranslation()
   const openModal = useAppStore((s) => s.openModal)
   const updateWorktreeMeta = useAppStore((s) => s.updateWorktreeMeta)
   const fetchHostedReviewForBranch = useAppStore((s) => s.fetchHostedReviewForBranch)
@@ -185,7 +187,10 @@ const WorktreeCard = React.memo(function WorktreeCard({
           // Why: linked metadata is persisted immediately, but GitHub details
           // arrive asynchronously. Show the durable link number instead of
           // making the worktree look unlinked while the cache warms.
-          title: issue === null ? 'Issue details unavailable' : 'Loading issue...'
+          title:
+            issue === null
+              ? t('sidebar.worktreeCard.issueDetailsUnavailable')
+              : t('sidebar.worktreeCard.loadingIssue')
         }
       : null)
   const linearIssue: LinearIssue | null | undefined = worktree.linkedLinearIssue
@@ -204,8 +209,8 @@ const WorktreeCard = React.memo(function WorktreeCard({
           identifier: worktree.linkedLinearIssue,
           title:
             linearIssueEntry || linearIssueFallbackEntry
-              ? 'Linear issue details unavailable'
-              : 'Loading Linear issue...'
+              ? t('sidebar.worktreeCard.linearIssueDetailsUnavailable')
+              : t('sidebar.worktreeCard.loadingLinearIssue')
         }
     : null
   const isDeleting = deleteState?.isDeleting ?? false
@@ -345,13 +350,17 @@ const WorktreeCard = React.memo(function WorktreeCard({
     [worktree.id, worktree.isUnread, updateWorktreeMeta]
   )
 
-  const unreadTooltip = worktree.isUnread ? 'Mark read' : 'Mark unread'
-  const childWorkspaceLabel = `${lineageChildCount} child ${
-    lineageChildCount === 1 ? 'workspace' : 'workspaces'
-  }`
-  const childWorkspaceShortLabel = `${lineageChildCount} ${
-    lineageChildCount === 1 ? 'child' : 'children'
-  }`
+  const unreadTooltip = worktree.isUnread
+    ? t('sidebar.worktreeCard.markRead')
+    : t('sidebar.worktreeCard.markUnread')
+  const childWorkspaceLabel =
+    lineageChildCount === 1
+      ? t('sidebar.worktreeCard.childWorkspaceSingular', { count: lineageChildCount })
+      : t('sidebar.worktreeCard.childWorkspacePlural', { count: lineageChildCount })
+  const childWorkspaceShortLabel =
+    lineageChildCount === 1
+      ? t('sidebar.worktreeCard.childShortSingular', { count: lineageChildCount })
+      : t('sidebar.worktreeCard.childShortPlural', { count: lineageChildCount })
   const showLineageChildChip = lineageChildCount > 0 && onLineageToggle !== undefined
 
   const handleDragStart = useCallback(
@@ -418,7 +427,7 @@ const WorktreeCard = React.memo(function WorktreeCard({
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50 backdrop-blur-[1px]">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-[11px] font-medium text-foreground shadow-sm border border-border/50">
             <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
-            Deleting…
+            {t('sidebar.worktreeCard.deleting')}
           </div>
         </div>
       )}
@@ -443,7 +452,11 @@ const WorktreeCard = React.memo(function WorktreeCard({
                     'hover:bg-accent/80 active:scale-95',
                     'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
                   )}
-                  aria-label={worktree.isUnread ? 'Mark as read' : 'Mark as unread'}
+                  aria-label={
+                    worktree.isUnread
+                      ? t('sidebar.worktreeCard.markAsRead')
+                      : t('sidebar.worktreeCard.markAsUnread')
+                  }
                 >
                   {worktree.isUnread ? (
                     <FilledBellIcon className="size-[13px] text-amber-500 drop-shadow-sm" />
@@ -477,7 +490,9 @@ const WorktreeCard = React.memo(function WorktreeCard({
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={8}>
-                  {isSshDisconnected ? 'SSH disconnected' : 'Remote repository via SSH'}
+                  {isSshDisconnected
+                    ? t('sidebar.worktreeCard.sshDisconnected')
+                    : t('sidebar.worktreeCard.sshRemote')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -496,7 +511,9 @@ const WorktreeCard = React.memo(function WorktreeCard({
               {/* Why: the card root is a non-interactive <div>, so aria-label
                    on it is announced inconsistently across screen readers.
                    A visible-text prefix inside the accessible name is reliable. */}
-              {showUnreadEmphasis && <span className="sr-only">Unread: </span>}
+              {showUnreadEmphasis && (
+                <span className="sr-only">{t('sidebar.worktreeCard.unreadPrefix')}</span>
+              )}
               {worktree.displayName}
             </div>
 
@@ -511,11 +528,11 @@ const WorktreeCard = React.memo(function WorktreeCard({
                     variant="outline"
                     className="h-[16px] px-1.5 text-[10px] font-medium rounded shrink-0 leading-none text-foreground/70 border-foreground/20 bg-foreground/[0.06]"
                   >
-                    primary
+                    {t('sidebar.worktreeCard.primaryBadge')}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={8}>
-                  Primary worktree (original clone directory)
+                  {t('sidebar.worktreeCard.primaryTooltip')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -527,15 +544,20 @@ const WorktreeCard = React.memo(function WorktreeCard({
                     variant="outline"
                     className="h-[16px] px-1.5 text-[10px] font-medium rounded shrink-0 leading-none text-amber-700 dark:text-amber-300 border-amber-500/30 bg-amber-500/5"
                   >
-                    sparse
+                    {t('sidebar.worktreeCard.sparseBadge')}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={8} className="max-w-72">
                   <div className="space-y-1">
-                    <div>Partial checkout. Files outside these paths are not on disk.</div>
+                    <div>{t('sidebar.worktreeCard.sparseTooltip')}</div>
                     {worktree.sparseDirectories && worktree.sparseDirectories.length > 0 ? (
                       <div className="font-mono text-[11px] opacity-80">
-                        {formatSparseDirectoryPreview(worktree.sparseDirectories)}
+                        {formatSparseDirectoryPreview(
+                          worktree.sparseDirectories,
+                          t('sidebar.worktreeCard.sparseMore', {
+                            count: worktree.sparseDirectories.length - 4
+                          })
+                        )}
                       </div>
                     ) : null}
                   </div>
@@ -565,7 +587,7 @@ const WorktreeCard = React.memo(function WorktreeCard({
                 variant="secondary"
                 className="h-[16px] px-1.5 text-[10px] font-medium rounded shrink-0 text-muted-foreground bg-accent border border-border dark:bg-accent/80 dark:border-border/50 leading-none"
               >
-                {repo ? getRepoKindLabel(repo) : 'Folder'}
+                {repo ? getRepoKindLabel(repo) : t('sidebar.worktreeCard.folderBadge')}
               </Badge>
             ) : (
               <span className="min-w-0 text-[11px] text-muted-foreground truncate leading-none">
@@ -601,7 +623,9 @@ const WorktreeCard = React.memo(function WorktreeCard({
               >
                 <Workflow className="size-2.5" />
                 <span className="max-w-[7rem] truncate">
-                  {lineageState === 'missing' ? 'Missing parent' : `from ${parentLabel}`}
+                  {lineageState === 'missing'
+                    ? t('sidebar.worktreeCard.missingParent')
+                    : t('sidebar.worktreeCard.fromParent', { parent: parentLabel })}
                 </span>
               </Badge>
             )}
@@ -637,7 +661,10 @@ const WorktreeCard = React.memo(function WorktreeCard({
           <div className="mt-0.5 flex items-start gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 px-1.5 py-1 text-[10.5px] leading-snug text-amber-700 dark:text-amber-300">
             <AlertTriangle className="mt-[1px] size-3 shrink-0" />
             <span className="min-w-0 flex-1">
-              {remoteBranchConflict.remote}/{remoteBranchConflict.branchName} already exists.
+              {t('sidebar.worktreeCard.remoteBranchConflict', {
+                remote: remoteBranchConflict.remote,
+                branchName: remoteBranchConflict.branchName
+              })}
             </span>
           </div>
         )}
@@ -661,7 +688,7 @@ const WorktreeCard = React.memo(function WorktreeCard({
                   variant="ghost"
                   size="xs"
                   className="relative z-10 h-[18px] max-w-[8rem] gap-1 rounded-md border border-sidebar-border bg-sidebar px-1.5 text-[10px] font-medium leading-none text-muted-foreground shadow-none hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-sidebar-ring"
-                  aria-label={`${lineageCollapsed ? 'Show' : 'Hide'} ${childWorkspaceLabel}`}
+                  aria-label={`${lineageCollapsed ? t('sidebar.worktreeCard.show') : t('sidebar.worktreeCard.hide')} ${childWorkspaceLabel}`}
                   aria-expanded={!lineageCollapsed}
                   onClick={onLineageToggle}
                 >
@@ -676,7 +703,9 @@ const WorktreeCard = React.memo(function WorktreeCard({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
-                {lineageCollapsed ? 'Show child workspaces' : 'Hide child workspaces'}
+                {lineageCollapsed
+                  ? t('sidebar.worktreeCard.showChildWorkspaces')
+                  : t('sidebar.worktreeCard.hideChildWorkspaces')}
               </TooltipContent>
             </Tooltip>
           </div>

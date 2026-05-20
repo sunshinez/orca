@@ -37,6 +37,7 @@ import {
   X
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
@@ -222,12 +223,14 @@ function buildMentionOptions({
   item,
   comments,
   participants,
-  assignableUsers
+  assignableUsers,
+  t
 }: {
   item: GitHubWorkItem
   comments: PRComment[]
   participants: GitHubAssignableUser[]
   assignableUsers: GitHubAssignableUser[]
+  t: (key: string) => string
 }): MentionOption[] {
   const byLogin = new Map<string, MentionOption>()
   const add = (
@@ -253,15 +256,18 @@ function buildMentionOptions({
     byLogin.set(key, { login, source, avatarUrl, name })
   }
 
-  add(item.author, item.type === 'pr' ? 'PR author' : 'Issue author')
+  add(
+    item.author,
+    item.type === 'pr' ? t('githubItem.mention.prAuthor') : t('githubItem.mention.issueAuthor')
+  )
   for (const comment of comments) {
-    add(comment.author, 'Commenter', comment.authorAvatarUrl)
+    add(comment.author, t('githubItem.mention.commenter'), comment.authorAvatarUrl)
   }
   for (const user of participants) {
-    add(user.login, 'Participant', user.avatarUrl, user.name)
+    add(user.login, t('githubItem.mention.participant'), user.avatarUrl, user.name)
   }
   for (const user of assignableUsers) {
-    add(user.login, 'Team member', user.avatarUrl, user.name)
+    add(user.login, t('githubItem.mention.teamMember'), user.avatarUrl, user.name)
   }
 
   return Array.from(byLogin.values())
@@ -279,20 +285,20 @@ function filterMentionOptions(options: MentionOption[], query: string): MentionO
   return filtered.slice(0, 8)
 }
 
-function getStateLabel(item: GitHubWorkItem): string {
+function getStateLabel(item: GitHubWorkItem, t: (key: string) => string): string {
   if (item.type === 'pr') {
     if (item.state === 'merged') {
-      return 'Merged'
+      return t('githubItem.state.merged')
     }
     if (item.state === 'draft') {
-      return 'Draft'
+      return t('githubItem.state.draft')
     }
     if (item.state === 'closed') {
-      return 'Closed'
+      return t('githubItem.state.closed')
     }
-    return 'Open'
+    return t('githubItem.state.open')
   }
-  return item.state === 'closed' ? 'Closed' : 'Open'
+  return item.state === 'closed' ? t('githubItem.state.closed') : t('githubItem.state.open')
 }
 
 function getStateTone(item: GitHubWorkItem): string {
@@ -314,29 +320,29 @@ function getStateTone(item: GitHubWorkItem): string {
   return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
 }
 
-function getPRMergeTooltip(item: GitHubWorkItem): string {
+function getPRMergeTooltip(item: GitHubWorkItem, t: (key: string) => string): string {
   if (item.mergeable === undefined && item.mergeStateStatus === undefined) {
-    return 'Merge status has not loaded yet'
+    return t('githubItem.mergeTooltip.notLoaded')
   }
   if (item.state === 'merged') {
-    return 'This pull request is already merged'
+    return t('githubItem.mergeTooltip.alreadyMerged')
   }
   if (item.state === 'closed') {
-    return 'This pull request is closed'
+    return t('githubItem.mergeTooltip.closed')
   }
   if (item.mergeable === 'CONFLICTING') {
-    return 'GitHub reports merge conflicts'
+    return t('githubItem.mergeTooltip.conflicting')
   }
   if (item.mergeStateStatus === 'BEHIND') {
-    return 'Update the branch before merging'
+    return t('githubItem.mergeTooltip.behind')
   }
   if (item.mergeStateStatus === 'BLOCKED') {
-    return 'GitHub reports this pull request is blocked'
+    return t('githubItem.mergeTooltip.blocked')
   }
   if (item.mergeable === 'MERGEABLE' || item.mergeStateStatus === 'CLEAN') {
-    return 'GitHub says this PR can merge'
+    return t('githubItem.mergeTooltip.canMerge')
   }
-  return 'GitHub has not reported a final merge status'
+  return t('githubItem.mergeTooltip.unknown')
 }
 
 function WorkItemStateBadge({
@@ -346,6 +352,7 @@ function WorkItemStateBadge({
   item: GitHubWorkItem
   className?: string
 }): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <span
       className={cn(
@@ -354,7 +361,7 @@ function WorkItemStateBadge({
         className
       )}
     >
-      {getStateLabel(item)}
+      {getStateLabel(item, t)}
     </span>
   )
 }
@@ -479,6 +486,7 @@ function PRDiffTreeNode({
   onCommentAdded,
   onViewedChange
 }: DiffTreeNodeProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(true)
 
   if (node.kind === 'file') {
@@ -511,7 +519,7 @@ function PRDiffTreeNode({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left transition hover:bg-muted/40"
         style={{ paddingLeft: `${12 + depth * 16}px` }}
-        aria-label={`${open ? 'Collapse' : 'Expand'} folder ${node.name}`}
+        aria-label={`${open ? t('githubItem.folder.collapse') : t('githubItem.folder.expand')} folder ${node.name}`}
       >
         {open ? (
           <>
@@ -946,6 +954,7 @@ function PRViewedCheckbox({
   filePath: string
   onToggle: () => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -953,7 +962,7 @@ function PRViewedCheckbox({
           type="button"
           role="checkbox"
           aria-checked={checked}
-          aria-label={`${checked ? 'Unmark' : 'Mark'} ${filePath} as viewed`}
+          aria-label={`${checked ? t('githubItem.viewed.unmark') : t('githubItem.viewed.mark')} ${filePath} ${t('githubItem.viewed.viewed')}`}
           disabled={pending}
           onClick={(event) => {
             event.stopPropagation()
@@ -979,11 +988,11 @@ function PRViewedCheckbox({
               <Check className="size-3" strokeWidth={3} />
             ) : null}
           </span>
-          <span>Viewed</span>
+          <span>{t('githubItem.viewed.viewed')}</span>
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
-        {checked ? 'Unmark viewed' : 'Mark viewed'}
+        {checked ? t('githubItem.viewed.unmarkViewed') : t('githubItem.viewed.markViewed')}
       </TooltipContent>
     </Tooltip>
   )
@@ -1007,6 +1016,7 @@ function PRFileRow({
   indentDepth?: number
   label?: string
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const [contents, setContents] = useState<GitHubPRFileContents | null>(null)
   const [loading, setLoading] = useState(false)
@@ -1032,7 +1042,7 @@ function PRFileRow({
             setContents(result)
           })
           .catch((err) => {
-            setError(err instanceof Error ? err.message : 'Failed to load diff')
+            setError(err instanceof Error ? err.message : t('githubItem.diff.failedToLoad'))
           })
           .finally(() => {
             setLoading(false)
@@ -1040,7 +1050,7 @@ function PRFileRow({
       }
       return next
     })
-  }, [baseSha, canLoadDiff, contents, file, headSha, loading, prNumber, repoId, repoPath])
+  }, [baseSha, canLoadDiff, contents, file, headSha, loading, prNumber, repoId, repoPath, t])
 
   const language = useMemo(() => detectLanguage(file.path), [file.path])
   const modelKey = `gh-dialog:pr:${prNumber}:${file.path}`
@@ -1055,7 +1065,7 @@ function PRFileRow({
       body: string
     }) => {
       if (!headSha) {
-        toast.error('Unable to comment without the PR head SHA.')
+        toast.error(t('githubItem.toast.unableToCommentWithoutSha'))
         return false
       }
       const result = await addPRReviewCommentForRepo({
@@ -1069,14 +1079,14 @@ function PRFileRow({
         body: commentBody
       })
       if (!result.ok) {
-        toast.error(result.error || 'Failed to add review comment.')
+        toast.error(result.error || t('githubItem.toast.failedToAddReviewComment'))
         return false
       }
       onCommentAdded(result.comment)
-      toast.success('Review comment added.')
+      toast.success(t('githubItem.toast.reviewCommentAdded'))
       return true
     },
-    [file.path, headSha, onCommentAdded, prNumber, repoId, repoPath]
+    [file.path, headSha, onCommentAdded, prNumber, repoId, repoPath, t]
   )
 
   const handleViewedToggle = useCallback(async () => {
@@ -1180,9 +1190,7 @@ function PRFileRow({
         <div className="flex h-[420px] flex-col border-t border-border/40 bg-background">
           {!canLoadDiff ? (
             <div className="flex h-full items-center justify-center px-4 text-center text-[12px] text-muted-foreground">
-              {file.isBinary
-                ? 'Binary file — diff not shown.'
-                : 'Diff unavailable (missing commit SHAs).'}
+              {file.isBinary ? t('githubItem.diff.binaryFile') : t('githubItem.diff.unavailable')}
             </div>
           ) : loading ? (
             <div className="flex h-full items-center justify-center">
@@ -1247,6 +1255,7 @@ function CommentCodeContext({
   const [error, setError] = useState(false)
   const [contextBefore, setContextBefore] = useState(0)
   const [contextAfter, setContextAfter] = useState(0)
+  const { t } = useTranslation()
   const file = useMemo(
     () => files.find((candidate) => candidate.path === comment.path),
     [comment.path, files]
@@ -1290,7 +1299,7 @@ function CommentCodeContext({
     return (
       <div className="mb-3 flex items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-3 py-2 text-[12px] text-muted-foreground">
         <LoaderCircle className="size-3.5 animate-spin" />
-        Loading code context…
+        {t('githubItem.codeContext.loading')}
       </div>
     )
   }
@@ -1325,8 +1334,8 @@ function CommentCodeContext({
   const canExpandBelow = to < lines.length
   const canExpandBlock = blockRange.startLine < from || blockRange.endLine > to
   const blockTooltip = shouldUseBlockRange
-    ? 'Show surrounding code block'
-    : 'Show nearby code context'
+    ? t('githubItem.codeContext.showBlock')
+    : t('githubItem.codeContext.showNearby')
 
   if (selectedLines.length === 0) {
     return null
@@ -1505,6 +1514,7 @@ function ConversationTab({
   onChecksUpdated: (checks: PRCheckDetail[]) => void
   onCommentAdded: (comment: PRComment) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const authorLabel = item.author ?? 'unknown'
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [commentFilter, setCommentFilter] = useState<PRCommentAudienceFilter>('all')
@@ -1521,9 +1531,10 @@ function ConversationTab({
         item,
         comments,
         participants: detailsParticipants,
-        assignableUsers: repoAssignees.data
+        assignableUsers: repoAssignees.data,
+        t
       }),
-    [comments, detailsParticipants, item, repoAssignees.data]
+    [comments, detailsParticipants, item, repoAssignees.data, t]
   )
 
   useEffect(() => {
@@ -1535,7 +1546,7 @@ function ConversationTab({
   const handleReply = useCallback(
     async (comment: PRComment, replyBody: string): Promise<boolean> => {
       if (!repoPath) {
-        toast.error('Unable to reply without a repository path.')
+        toast.error(t('githubItem.toast.unableToReplyWithoutRepo'))
         return false
       }
       const result =
@@ -1559,24 +1570,30 @@ function ConversationTab({
             })
 
       if (!result.ok) {
-        toast.error(result.error || 'Failed to post reply.')
+        toast.error(result.error || t('githubItem.toast.failedToPostReply'))
         return false
       }
       onCommentAdded(result.comment)
       setReplyingTo(null)
-      toast.success('Reply posted.')
+      toast.success(t('githubItem.toast.replyPosted'))
       return true
     },
-    [item.number, item.repoId, item.type, onCommentAdded, repoPath]
+    [item.number, item.repoId, item.type, onCommentAdded, repoPath, t]
   )
 
   const startWorkspaceButton = (
     <Button
       onClick={() => onUse(item)}
       className="w-full justify-center gap-2"
-      aria-label={`Start workspace from ${item.type === 'pr' ? 'PR' : 'issue'}`}
+      aria-label={
+        item.type === 'pr'
+          ? t('githubItem.startWorkspace.fromPR')
+          : t('githubItem.startWorkspace.fromIssue')
+      }
     >
-      {`Start workspace from ${item.type === 'pr' ? 'PR' : 'issue'}`}
+      {item.type === 'pr'
+        ? t('githubItem.startWorkspace.fromPR')
+        : t('githubItem.startWorkspace.fromIssue')}
       <ArrowRight className="size-4" />
     </Button>
   )
@@ -1597,7 +1614,9 @@ function ConversationTab({
         <aside className="rounded-lg border border-border/50 bg-card/50 shadow-xs">
           <div className="flex h-10 items-center gap-2 border-b border-border/50 px-3">
             <CircleDashed className="size-3.5 text-muted-foreground" />
-            <span className="text-[13px] font-medium text-foreground">Checks</span>
+            <span className="text-[13px] font-medium text-foreground">
+              {t('githubItem.tabs.checks')}
+            </span>
             <span className="ml-auto rounded-full border border-border/50 bg-muted/30 px-1.5 py-0.5 text-[11px] tabular-nums text-muted-foreground">
               {(checks ?? []).length}
             </span>
@@ -1712,7 +1731,9 @@ function ConversationTab({
           <CommentReplyForm
             className="mt-3"
             placeholder={
-              comment.path ? 'Reply in this review thread' : `Reply to @${comment.author}`
+              comment.path
+                ? t('githubItem.reply.inThread')
+                : t('githubItem.reply.toAuthor', { author: comment.author })
             }
             mentionOptions={mentionOptions}
             onCancel={() => setReplyingTo(null)}
@@ -1872,6 +1893,7 @@ function PRActionsPanel({
   onStateChange: (state: GitHubWorkItem['state']) => void
   onMutated: () => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [statePending, setStatePending] = useState(false)
   const [mergePending, setMergePending] = useState(false)
   const patchWorkItem = useAppStore((s) => s.patchWorkItem)
@@ -1924,11 +1946,21 @@ function PRActionsPanel({
         number: item.number,
         updates: { state: nextState }
       })
-      toast.success(nextState === 'closed' ? 'Pull request closed' : 'Pull request reopened')
+      toast.success(
+        nextState === 'closed'
+          ? t('githubItem.toast.pullRequestClosed')
+          : t('githubItem.toast.pullRequestReopened')
+      )
       onMutated()
     } catch (err) {
       applyStatePatch(previousState)
-      toast.error(err instanceof Error ? err.message : `Failed to ${label.toLowerCase()} PR`)
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : label === 'Close'
+            ? t('githubItem.toast.failedToClosePR')
+            : t('githubItem.toast.failedToReopenPR')
+      )
     } finally {
       setStatePending(false)
     }
@@ -1939,8 +1971,16 @@ function PRActionsPanel({
       return
     }
     const label =
-      method === 'squash' ? 'Squash and merge' : method === 'rebase' ? 'Rebase and merge' : 'Merge'
-    if (!window.confirm(`${label} PR #${item.number}?`)) {
+      method === 'squash'
+        ? t('githubItem.merge.squashAndMerge')
+        : method === 'rebase'
+          ? t('githubItem.merge.rebaseAndMerge')
+          : t('githubItem.merge.merge')
+    if (
+      !window.confirm(
+        t('githubItem.merge.confirmTitle', { method: label, number: String(item.number) })
+      )
+    ) {
       return
     }
     setMergePending(true)
@@ -1956,10 +1996,10 @@ function PRActionsPanel({
         return
       }
       applyStatePatch('merged')
-      toast.success('Pull request merged')
+      toast.success(t('githubItem.toast.pullRequestMerged'))
       onMutated()
     } catch {
-      toast.error('Failed to merge pull request')
+      toast.error(t('githubItem.toast.failedToMergePullRequest'))
     } finally {
       setMergePending(false)
     }
@@ -1991,7 +2031,7 @@ function PRActionsPanel({
           ) : (
             <CircleDot className="size-3.5" />
           )}
-          {nextState === 'closed' ? 'Close PR' : 'Reopen PR'}
+          {nextState === 'closed' ? t('githubItem.merge.closePR') : t('githubItem.merge.reopenPR')}
         </Button>
 
         <DropdownMenu modal={false}>
@@ -2010,31 +2050,31 @@ function PRActionsPanel({
                   ) : (
                     <GitMerge className="size-3.5" />
                   )}
-                  Merge
+                  {t('githubItem.merge.merge')}
                   <ChevronDown className="size-3 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={6}>
-              {!repoPath ? 'Merge requires a registered local repo' : getPRMergeTooltip(actionItem)}
+              {!repoPath ? t('githubItem.merge.requiresRepo') : getPRMergeTooltip(actionItem, t)}
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="start" className="w-52">
             <DropdownMenuItem disabled={mergeDisabled} onSelect={() => void handleMerge('squash')}>
               <GitMerge className="size-4" />
-              Squash and merge
+              {t('githubItem.merge.squashAndMerge')}
             </DropdownMenuItem>
             <DropdownMenuItem disabled={mergeDisabled} onSelect={() => void handleMerge('merge')}>
               <GitMerge className="size-4" />
-              Create merge commit
+              {t('githubItem.merge.merge')}
             </DropdownMenuItem>
             <DropdownMenuItem disabled={mergeDisabled} onSelect={() => void handleMerge('rebase')}>
               <GitMerge className="size-4" />
-              Rebase and merge
+              {t('githubItem.merge.rebaseAndMerge')}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => window.api.shell.openUrl(item.url)}>
               <ExternalLink className="size-4" />
-              Open GitHub merge box
+              {t('githubItem.merge.openGitHubMergeBox')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -2082,6 +2122,7 @@ function CommentReplyForm({
   onCancel: () => void
   onSubmit: (body: string) => Promise<boolean>
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -2130,10 +2171,10 @@ function CommentReplyForm({
       />
       <div className="mt-2 flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
+          {t('githubItem.reply.cancel')}
         </Button>
         <Button size="sm" disabled={!body.trim() || submitting} onClick={() => void submit()}>
-          {submitting ? 'Posting…' : 'Reply'}
+          {submitting ? t('githubItem.reply.posting') : t('githubItem.reply.reply')}
         </Button>
       </div>
     </div>
@@ -2157,6 +2198,7 @@ function ChecksTab({
   loading: boolean
   onChecksUpdated: (checks: PRCheckDetail[]) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [localChecks, setLocalChecks] = useState<PRCheckDetail[] | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [rerunning, setRerunning] = useState(false)
@@ -2171,7 +2213,7 @@ function ChecksTab({
 
   const handleRefresh = useCallback(async (): Promise<PRCheckDetail[] | null> => {
     if (!repoPath) {
-      toast.error('Unable to refresh checks without a repository path.')
+      toast.error(t('githubItem.toast.unableToRefreshChecksWithoutRepo'))
       return null
     }
     setRefreshing(true)
@@ -2187,12 +2229,12 @@ function ChecksTab({
       onChecksUpdated(nextChecks)
       return nextChecks
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to refresh checks')
+      toast.error(err instanceof Error ? err.message : t('githubItem.toast.failedToRefreshChecks'))
       return null
     } finally {
       setRefreshing(false)
     }
-  }, [headSha, item.number, onChecksUpdated, repoId, repoPath])
+  }, [headSha, item.number, onChecksUpdated, repoId, repoPath, t])
 
   const handleRerun = useCallback(
     async (failedOnly: boolean): Promise<void> => {
@@ -2212,15 +2254,19 @@ function ChecksTab({
           toast.error(result.error)
           return
         }
-        toast.success(result.count === 1 ? 'Check rerun requested' : 'Check reruns requested')
+        toast.success(
+          result.count === 1
+            ? t('githubItem.toast.checkRerunRequested')
+            : t('githubItem.toast.checkRerunsRequested')
+        )
         await handleRefresh()
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to rerun checks')
+        toast.error(err instanceof Error ? err.message : t('githubItem.toast.failedToRerunChecks'))
       } finally {
         setRerunning(false)
       }
     },
-    [handleRefresh, headSha, item.number, rerunning, repoId, repoPath]
+    [handleRefresh, headSha, item.number, rerunning, repoId, repoPath, t]
   )
 
   const toolbar = (
@@ -2596,6 +2642,7 @@ function GHEditSection({
   assignees: string[]
   onUse: (item: GitHubWorkItem) => void
 }): React.JSX.Element | null {
+  const { t } = useTranslation()
   const [labelPopoverOpen, setLabelPopoverOpen] = useState(false)
   const [assigneePopoverOpen, setAssigneePopoverOpen] = useState(false)
   const [localAssignees, setLocalAssignees] = useState<string[]>(assignees)
@@ -2869,7 +2916,7 @@ function GHEditSection({
               getStateTone({ ...item, state: localState })
             )}
           >
-            {getStateLabel({ ...item, state: localState })}
+            {getStateLabel({ ...item, state: localState }, t)}
             <ChevronDown className="size-2.5 opacity-50" />
           </button>
         </PopoverTrigger>
@@ -3048,6 +3095,7 @@ function GHCommentComposer({
   mentionOptions: MentionOption[]
   onCommentAdded: (comment: PRComment) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -3082,14 +3130,14 @@ function GHCommentComposer({
         // the real login/avatar immediately instead of waiting for a reopen.
         onCommentAdded(result.comment)
       } else {
-        toast.error(result.error ?? 'Failed to add comment')
+        toast.error(result.error ?? t('githubItem.toast.failedToAddComment'))
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add comment')
+      toast.error(err instanceof Error ? err.message : t('githubItem.toast.failedToAddComment'))
     } finally {
       setSubmitting(false)
     }
-  }, [autoGrow, body, repoPath, repoId, issueNumber, itemType, onCommentAdded])
+  }, [autoGrow, body, repoPath, repoId, issueNumber, itemType, onCommentAdded, t])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -3209,6 +3257,7 @@ export default function GitHubItemDialog({
   const [localLabels, setLocalLabels] = useState<string[]>(workItem?.labels ?? [])
   const [diffViewMode, setDiffViewMode] = useState<DiffViewMode>('flat')
   const [linkCopied, setLinkCopied] = useState(false)
+  const { t } = useTranslation()
   const workItemId = workItem?.id
   const workItemState = workItem?.state
   const workItemLabels = workItem?.labels
@@ -3283,7 +3332,7 @@ export default function GitHubItemDialog({
     return () => {
       cancelled = true
     }
-  }, [workItem])
+  }, [workItem, t])
 
   // Why: subscribe to the module-level cache so reopening a cached item
   // paints synchronously on first render. getSnapshot returns the entry
@@ -3473,11 +3522,11 @@ export default function GitHubItemDialog({
       // APIs lose focus/activation inside nested overlay surfaces.
       await window.api.ui.writeClipboardText(workItem.url)
       setLinkCopied(true)
-      toast.success('GitHub link copied')
+      toast.success(t('githubItem.toast.githubLinkCopied'))
     } catch {
-      toast.error('Failed to copy GitHub link')
+      toast.error(t('githubItem.toast.failedToCopyGithubLink'))
     }
-  }, [workItem])
+  }, [workItem, t])
 
   const appendOptimisticComment = useCallback(
     (comment: PRComment) => {
@@ -3516,7 +3565,7 @@ export default function GitHubItemDialog({
   const handlePRFileViewedChange = useCallback(
     async (path: string, viewed: boolean): Promise<boolean> => {
       if (!repoPath || !details?.pullRequestId || !workItem || workItem.type !== 'pr') {
-        toast.error('Unable to sync viewed state for this pull request.')
+        toast.error(t('githubItem.toast.unableToSyncViewedState'))
         return false
       }
       setPendingViewedPaths((prev) => new Set(prev).add(path))
@@ -3537,7 +3586,7 @@ export default function GitHubItemDialog({
           if (detailsCacheKey && previousState) {
             patchCachedPRFileViewedState(detailsCacheKey, path, previousState)
           }
-          toast.error('Failed to sync viewed state with GitHub.')
+          toast.error(t('githubItem.toast.failedToSyncViewedState'))
           return false
         }
         return true
@@ -3549,7 +3598,7 @@ export default function GitHubItemDialog({
         })
       }
     },
-    [details?.pullRequestId, detailsCacheKey, repoPath, workItem]
+    [details?.pullRequestId, detailsCacheKey, repoPath, workItem, t]
   )
 
   return (
@@ -3570,12 +3619,10 @@ export default function GitHubItemDialog({
             but the visible header carries the same info. Wrap each with
             `asChild` so the VisuallyHidden span wraps the element cleanly. */}
         <VisuallyHidden.Root asChild>
-          <SheetTitle>{workItem?.title ?? 'GitHub item'}</SheetTitle>
+          <SheetTitle>{workItem?.title ?? t('githubItem.sheet.fallbackTitle')}</SheetTitle>
         </VisuallyHidden.Root>
         <VisuallyHidden.Root asChild>
-          <SheetDescription>
-            Read-only preview of the selected GitHub issue or pull request.
-          </SheetDescription>
+          <SheetDescription>{t('githubItem.sheet.description')}</SheetDescription>
         </VisuallyHidden.Root>
 
         {workItem && (
@@ -3589,14 +3636,20 @@ export default function GitHubItemDialog({
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                     <WorkItemStateBadge item={{ ...workItem, state: localState }} />
                     <span className="font-mono">#{workItem.number}</span>
-                    <span>{workItem.type === 'pr' ? 'Pull request' : 'Issue'}</span>
+                    <span>
+                      {workItem.type === 'pr'
+                        ? t('githubItem.sheet.pullRequest')
+                        : t('githubItem.sheet.issue')}
+                    </span>
                   </div>
                   <h2 className="text-[15px] font-semibold leading-snug text-foreground">
                     {workItem.title}
                   </h2>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                    <span>{workItem.author ?? 'unknown'}</span>
-                    <span>updated {formatRelativeTime(workItem.updatedAt)}</span>
+                    <span>{workItem.author ?? t('githubItem.sheet.unknown')}</span>
+                    <span>
+                      {t('githubItem.sheet.updated')} {formatRelativeTime(workItem.updatedAt)}
+                    </span>
                     {workItem.branchName && (
                       <span className="max-w-full truncate rounded-md border border-border/50 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                         {workItem.branchName}
@@ -3615,7 +3668,7 @@ export default function GitHubItemDialog({
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => void handleCopyWorkItemLink()}
-                        aria-label="Copy GitHub link"
+                        aria-label={t('githubItem.sheet.copyLink')}
                       >
                         {linkCopied ? (
                           <Check className="size-4 text-emerald-500" />
@@ -3625,7 +3678,7 @@ export default function GitHubItemDialog({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={6}>
-                      {linkCopied ? 'Copied' : 'Copy GitHub link'}
+                      {linkCopied ? t('githubItem.sheet.copied') : t('githubItem.sheet.copyLink')}
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
@@ -3634,13 +3687,13 @@ export default function GitHubItemDialog({
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => window.api.shell.openUrl(workItem.url)}
-                        aria-label="Open on GitHub"
+                        aria-label={t('githubItem.sheet.openOnGitHub')}
                       >
                         <ExternalLink className="size-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={6}>
-                      Open on GitHub
+                      {t('githubItem.sheet.openOnGitHub')}
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
@@ -3707,12 +3760,12 @@ export default function GitHubItemDialog({
                   >
                     <TabsTrigger value="conversation" className="px-2">
                       <MessageSquare className="size-3.5" />
-                      Conversation
+                      {t('githubItem.tabs.conversation')}
                     </TabsTrigger>
                     {workItem.type === 'pr' && (
                       <TabsTrigger value="files" className="px-2">
                         <FileText className="size-3.5" />
-                        Files
+                        {t('githubItem.tabs.files')}
                         {files.length > 0 && (
                           <span className="ml-1 text-[10px] text-muted-foreground">
                             {files.length}

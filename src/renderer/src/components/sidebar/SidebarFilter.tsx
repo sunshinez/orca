@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Activity, Check, FolderPlus, GitBranch, ListFilter, Server } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
@@ -33,6 +34,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
   contentSide = 'right',
   onMenuOpenChange
 }: SidebarFilterProps) {
+  const { t } = useTranslation()
   const showActiveOnly = useAppStore((s) => s.showActiveOnly)
   const setShowActiveOnly = useAppStore((s) => s.setShowActiveOnly)
   const hideDefaultBranchWorkspace = useAppStore((s) => s.hideDefaultBranchWorkspace)
@@ -129,7 +131,9 @@ const SidebarFilter = React.memo(function SidebarFilter({
               size="icon-xs"
               type="button"
               aria-label={
-                hasAnyFilter ? `Edit filters (${activeFilterCount} active)` : 'Filter workspaces'
+                hasAnyFilter
+                  ? t('sidebar.filter.editFiltersActive', { count: activeFilterCount })
+                  : t('sidebar.filter.filterWorkspaces')
               }
               className="relative text-muted-foreground"
               data-workspace-board-preserve-open={preserveWorkspaceBoardOpen ? '' : undefined}
@@ -149,7 +153,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
           </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent side={tooltipSide} sideOffset={6}>
-          {hasAnyFilter ? 'Edit filters' : 'Filter workspaces'}
+          {hasAnyFilter ? t('sidebar.filter.editFilters') : t('sidebar.filter.filterWorkspaces')}
         </TooltipContent>
       </Tooltip>
       <DropdownMenuContent
@@ -161,13 +165,13 @@ const SidebarFilter = React.memo(function SidebarFilter({
       >
         <FilterToggleRow
           icon={<Activity className="size-3.5" />}
-          label="Active only"
+          label={t('sidebar.filter.activeOnly')}
           checked={showActiveOnly}
           onChange={setShowActiveOnly}
         />
         <FilterToggleRow
           icon={<GitBranch className="size-3.5" />}
-          label="Hide default branch"
+          label={t('sidebar.filter.hideDefaultBranch')}
           checked={hideDefaultBranchWorkspace}
           onChange={setHideDefaultBranchWorkspace}
         />
@@ -177,7 +181,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
             <DropdownMenuSeparator />
             <div className="flex items-center justify-between px-2 py-1">
               <span className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
-                Repositories
+                {t('sidebar.filter.repositories')}
                 {hasRepoFilter && (
                   <span className="ml-1.5 normal-case tracking-normal font-medium text-foreground">
                     · {selectedCount}
@@ -191,7 +195,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
                   className="rounded-full px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-40 disabled:hover:bg-transparent"
                   disabled={allSelected}
                 >
-                  Select all
+                  {t('sidebar.filter.selectAll')}
                 </button>
                 <button
                   type="button"
@@ -199,7 +203,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
                   className="rounded-full px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-40 disabled:hover:bg-transparent"
                   disabled={!hasRepoFilter}
                 >
-                  Clear
+                  {t('sidebar.filter.clear')}
                 </button>
               </div>
             </div>
@@ -212,7 +216,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
             >
               <CommandInput
                 autoFocus
-                placeholder="Search repos..."
+                placeholder={t('sidebar.filter.searchReposPlaceholder')}
                 value={query}
                 onValueChange={setQuery}
                 onKeyDown={(event) => event.stopPropagation()}
@@ -221,7 +225,9 @@ const SidebarFilter = React.memo(function SidebarFilter({
                 iconClassName="h-3.5 w-3.5"
               />
               <CommandList className="max-h-64 py-1">
-                <CommandEmpty className="py-4 text-[11px]">No repos match</CommandEmpty>
+                <CommandEmpty className="py-4 text-[11px]">
+                  {t('sidebar.filter.noReposMatch')}
+                </CommandEmpty>
                 {filteredRepos.map((r) => {
                   const checked = selectedRepoIdSet.has(r.id)
                   return (
@@ -240,7 +246,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
                         {r.connectionId && (
                           <span className="shrink-0 inline-flex items-center gap-0.5 rounded bg-muted px-1 py-0.5 text-[9px] font-medium leading-none text-muted-foreground">
                             <Server className="size-2.5" />
-                            SSH
+                            {t('sidebar.filter.ssh')}
                           </span>
                         )}
                       </span>
@@ -266,7 +272,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
               onClick={clearAll}
               className="rounded-[5px] px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              Reset filters
+              {t('sidebar.filter.resetFilters')}
             </button>
           ) : (
             <span />
@@ -277,7 +283,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
             className="inline-flex items-center gap-1.5 rounded-[5px] px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             <FolderPlus className="size-3.5" />
-            Add repo
+            {t('sidebar.filter.addRepo')}
           </button>
         </div>
       </DropdownMenuContent>

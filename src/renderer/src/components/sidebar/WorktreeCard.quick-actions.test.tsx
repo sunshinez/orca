@@ -3,6 +3,10 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo, Worktree, WorktreeCardProperty } from '../../../../shared/types'
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key })
+}))
+
 const fetchHostedReviewForBranch = vi.fn()
 const fetchIssue = vi.fn()
 const openModal = vi.fn()
@@ -107,7 +111,7 @@ describe('WorktreeCard quick actions', () => {
       <WorktreeCard worktree={makeWorktree()} repo={makeRepo()} isActive={false} />
     )
 
-    expect(markup).toContain('aria-label="Mark as read"')
+    expect(markup).toContain('aria-label="sidebar.worktreeCard.markAsRead"')
     expect(markup).toContain('data-workspace-board-preserve-open=""')
   })
 })

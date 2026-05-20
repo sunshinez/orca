@@ -1,4 +1,5 @@
 import type { GlobalSettings } from '../../../../shared/types'
+import { useTranslation } from 'react-i18next'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { useAppStore } from '../../store'
@@ -20,18 +21,19 @@ export function GitPane({
   updateSettings,
   displayedGitUsername
 }: GitPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((s) => s.settingsSearchQuery)
 
   const visibleSections = [
     matchesSettingsSearch(searchQuery, {
-      title: 'Branch Prefix',
-      description: 'Prefix added to branch names when creating worktrees.',
+      title: t('settings.git.branchPrefix.title'),
+      description: t('settings.git.branchPrefix.description'),
       keywords: ['branch naming', 'git username', 'custom']
     }) ? (
       <SearchableSetting
         key="branch-prefix"
-        title="Branch Prefix"
-        description="Prefix added to branch names when creating worktrees."
+        title={t('settings.git.branchPrefix.title')}
+        description={t('settings.git.branchPrefix.description')}
         keywords={['branch naming', 'git username', 'custom']}
         className="space-y-3"
       >
@@ -46,7 +48,11 @@ export function GitPane({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {option === 'git-username' ? 'Git Username' : option === 'custom' ? 'Custom' : 'None'}
+              {option === 'git-username'
+                ? t('settings.git.branchPrefix.gitUsername')
+                : option === 'custom'
+                  ? t('settings.git.branchPrefix.custom')
+                  : t('settings.git.branchPrefix.none')}
             </button>
           ))}
         </div>
@@ -70,23 +76,21 @@ export function GitPane({
       </SearchableSetting>
     ) : null,
     matchesSettingsSearch(searchQuery, {
-      title: 'Refresh Local Base Ref',
-      description: 'Optionally fast-forward local main or master when creating worktrees.',
+      title: t('settings.git.refreshLocalBaseRef.title'),
+      description: t('settings.git.refreshLocalBaseRef.description'),
       keywords: ['main', 'master', 'origin/main', 'git diff', 'base ref', 'worktree']
     }) ? (
       <SearchableSetting
         key="refresh-base-ref"
-        title="Refresh Local Base Ref"
-        description="Optionally fast-forward local main or master when creating worktrees."
+        title={t('settings.git.refreshLocalBaseRef.title')}
+        description={t('settings.git.refreshLocalBaseRef.description')}
         keywords={['main', 'master', 'origin/main', 'git diff', 'base ref', 'worktree']}
         className="flex items-center justify-between gap-4 px-1 py-2"
       >
         <div className="space-y-0.5">
-          <Label>Refresh Local Base Ref</Label>
+          <Label>{t('settings.git.refreshLocalBaseRef.label')}</Label>
           <p className="text-xs text-muted-foreground">
-            When enabled, Orca updates your local <code>main</code> or <code>master</code> before
-            creating a worktree. This helps AI tools and diffs compare your branch against the
-            latest base branch. Orca only does this when it is safe.
+            {t('settings.git.refreshLocalBaseRef.helper')}
           </p>
         </div>
         <button
@@ -112,14 +116,14 @@ export function GitPane({
       </SearchableSetting>
     ) : null,
     matchesSettingsSearch(searchQuery, {
-      title: 'GitHub API Budget',
-      description: 'Current GitHub CLI REST, Search, and GraphQL rate limits.',
+      title: t('settings.git.githubApiBudget.title'),
+      description: t('settings.git.githubApiBudget.description'),
       keywords: ['github', 'gh', 'graphql', 'rate limit', 'api budget']
     }) ? (
       <SearchableSetting
         key="github-api-budget"
-        title="GitHub API Budget"
-        description="Current GitHub CLI REST, Search, and GraphQL rate limits."
+        title={t('settings.git.githubApiBudget.title')}
+        description={t('settings.git.githubApiBudget.description')}
         keywords={['github', 'gh', 'graphql', 'rate limit', 'api budget']}
         className="space-y-3"
       >
@@ -127,21 +131,21 @@ export function GitPane({
       </SearchableSetting>
     ) : null,
     matchesSettingsSearch(searchQuery, {
-      title: 'Orca Attribution',
-      description: 'Add Orca attribution to commits, PRs, and issues.',
+      title: t('settings.git.orcaAttribution.title'),
+      description: t('settings.git.orcaAttribution.description'),
       keywords: ['github', 'gh', 'pr', 'issue', 'co-author', 'coauthored', 'attribution', 'orca']
     }) ? (
       <SearchableSetting
         key="github-attribution"
-        title="Orca Attribution"
-        description="Add Orca attribution to commits, PRs, and issues."
+        title={t('settings.git.orcaAttribution.title')}
+        description={t('settings.git.orcaAttribution.description')}
         keywords={['github', 'gh', 'pr', 'issue', 'co-author', 'coauthored', 'attribution', 'orca']}
         className="flex items-center justify-between gap-4 px-1 py-2"
       >
         <div className="space-y-0.5">
-          <Label>Orca Attribution</Label>
+          <Label>{t('settings.git.orcaAttribution.label')}</Label>
           <p className="text-xs text-muted-foreground">
-            Add Orca attribution to commits, PRs, and issues.
+            {t('settings.git.orcaAttribution.helper')}
           </p>
         </div>
         <button

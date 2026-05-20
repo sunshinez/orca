@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -13,19 +14,26 @@ import type { OrcaHookScriptKind } from '@/lib/orca-hook-trust'
 
 type ScriptKind = OrcaHookScriptKind
 
-const SCRIPT_KIND_LABEL: Record<ScriptKind, string> = {
-  setup: 'setup script',
-  archive: 'archive script',
-  issueCommand: 'issue command'
+function scriptKindLabel(kind: ScriptKind): string {
+  const labels: Record<ScriptKind, string> = {
+    setup: 'setup script',
+    archive: 'archive script',
+    issueCommand: 'issue command'
+  }
+  return labels[kind]
 }
 
-const SCRIPT_KIND_TRIGGER: Record<ScriptKind, string> = {
-  setup: 'when this workspace is created',
-  archive: 'when this workspace is removed',
-  issueCommand: 'when this workspace launches with a linked issue'
+function scriptKindTrigger(kind: ScriptKind): string {
+  const triggers: Record<ScriptKind, string> = {
+    setup: 'when this workspace is created',
+    archive: 'when this workspace is removed',
+    issueCommand: 'when this workspace launches with a linked issue'
+  }
+  return triggers[kind]
 }
 
 const OrcaYamlTrustDialog = React.memo(function OrcaYamlTrustDialog() {
+  const { t } = useTranslation()
   const activeModal = useAppStore((s) => s.activeModal)
   const modalData = useAppStore((s) => s.modalData)
   const closeModal = useAppStore((s) => s.closeModal)
@@ -96,28 +104,33 @@ const OrcaYamlTrustDialog = React.memo(function OrcaYamlTrustDialog() {
         <DialogHeader>
           <DialogTitle className="text-sm">
             {previouslyApproved
-              ? `${repoName}'s ${SCRIPT_KIND_LABEL[scriptKind]} changed — run the new version?`
-              : `Run ${SCRIPT_KIND_LABEL[scriptKind]} from ${repoName}?`}
+              ? t('sidebar.orcaYamlTrust.changedTitle', {
+                  repoName,
+                  scriptKind: scriptKindLabel(scriptKind)
+                })
+              : t('sidebar.orcaYamlTrust.newTitle', {
+                  repoName,
+                  scriptKind: scriptKindLabel(scriptKind)
+                })}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            {previouslyApproved ? (
-              <>
-                <code>orca.yaml</code> changed since you last approved. Re-review before it runs{' '}
-                {SCRIPT_KIND_TRIGGER[scriptKind]}.
-              </>
-            ) : (
-              <>
-                This repository&apos;s <code>orca.yaml</code> runs on your machine{' '}
-                {SCRIPT_KIND_TRIGGER[scriptKind]}. Only run if you trust {repoName}.
-              </>
-            )}
+            {previouslyApproved
+              ? t('sidebar.orcaYamlTrust.changedDescription', {
+                  trigger: scriptKindTrigger(scriptKind)
+                })
+              : t('sidebar.orcaYamlTrust.newDescription', {
+                  repoName,
+                  trigger: scriptKindTrigger(scriptKind)
+                })}
           </DialogDescription>
         </DialogHeader>
 
         {scriptContent && (
           <div className="rounded-md border border-border/70 bg-muted/35 px-3 py-2">
             <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {previouslyApproved ? `New ${scriptKind} script` : `${scriptKind} script`}
+              {previouslyApproved
+                ? t('sidebar.orcaYamlTrust.newScript', { scriptKind })
+                : t('sidebar.orcaYamlTrust.script', { scriptKind })}
             </div>
             <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-xs text-foreground">
               {scriptContent}
@@ -139,15 +152,17 @@ const OrcaYamlTrustDialog = React.memo(function OrcaYamlTrustDialog() {
             onChange={(event) => setAlwaysTrust(event.target.checked)}
           />
           <span className="text-xs font-medium text-foreground">
-            Always trust <code>orca.yaml</code> in {repoName}
+            {t('sidebar.orcaYamlTrust.alwaysTrust', { repoName })}
           </span>
         </label>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => resolveAndClose('skip')}>
-            Don&apos;t run
+            {t('sidebar.orcaYamlTrust.dontRun')}
           </Button>
-          <Button onClick={() => resolveAndClose('run')}>Run hooks</Button>
+          <Button onClick={() => resolveAndClose('run')}>
+            {t('sidebar.orcaYamlTrust.runHooks')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

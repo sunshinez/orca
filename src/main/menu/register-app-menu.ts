@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, app } from 'electron'
+import { getMenuTranslator } from '../locales'
 
 export type AppearanceMenuState = {
   showTasksButton: boolean
@@ -20,6 +21,7 @@ type RegisterAppMenuOptions = {
   onToggleRightSidebar: () => void
   onToggleAppearance: (key: AppearanceMenuKey) => void
   getAppearanceState: () => AppearanceMenuState
+  getLanguage: () => string | undefined
 }
 
 function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
@@ -34,11 +36,13 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     onToggleLeftSidebar,
     onToggleRightSidebar,
     onToggleAppearance,
-    getAppearanceState
+    getAppearanceState,
+    getLanguage
   } = options
 
   const isMac = process.platform === 'darwin'
   const appearance = getAppearanceState()
+  const t = getMenuTranslator(getLanguage())
 
   const reloadFocusedWindow = (ignoreCache: boolean): void => {
     const webContents = BrowserWindow.getFocusedWindow()?.webContents
@@ -67,28 +71,28 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   }
 
   const checkForUpdatesItem: Electron.MenuItemConstructorOptions = {
-    label: 'Check for Updates...',
+    label: t('appMenu.checkForUpdates'),
     click: checkForUpdatesClick
   }
 
   const settingsItem: Electron.MenuItemConstructorOptions = {
-    label: 'Settings',
+    label: t('appMenu.settings'),
     accelerator: 'CmdOrCtrl+,',
     click: () => onOpenSettings()
   }
 
   const featureTourItem: Electron.MenuItemConstructorOptions = {
-    label: 'Feature tour',
+    label: t('help.featureTour'),
     click: (_menuItem, window) => onOpenFeatureTour(window)
   }
 
   const crashReportItem: Electron.MenuItemConstructorOptions = {
-    label: 'Report Crash...',
+    label: t('help.reportCrash'),
     click: (_menuItem, window) => onOpenCrashReport(window)
   }
 
   const exportPdfItem: Electron.MenuItemConstructorOptions = {
-    label: 'Export as PDF...',
+    label: t('file.exportPdf'),
     accelerator: 'CmdOrCtrl+Shift+E',
     click: () => {
       // Why: fire a one-way event into the focused renderer. The renderer
@@ -126,7 +130,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   }
 
   const fileMenu: Electron.MenuItemConstructorOptions = {
-    label: 'File',
+    label: t('file.label'),
     submenu: [
       exportPdfItem,
       // Why: on Windows/Linux there is no app-named menu, so Settings and
@@ -138,13 +142,13 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
             { type: 'separator' },
             settingsItem,
             { type: 'separator' },
-            { role: 'quit', label: 'Exit' }
+            { role: 'quit', label: t('file.exit') }
           ] satisfies Electron.MenuItemConstructorOptions[]))
     ]
   }
 
   const editMenu: Electron.MenuItemConstructorOptions = {
-    label: 'Edit',
+    label: t('edit.label'),
     submenu: [
       { role: 'undo' },
       { role: 'redo' },
@@ -164,7 +168,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   // appearance state through getAppearanceState() and produces a fresh
   // template with accurate `checked` values.
   const appearanceSubmenu: Electron.MenuItemConstructorOptions = {
-    label: 'Appearance',
+    label: t('view.appearance.label'),
     submenu: [
       {
         // Why: display-only shortcut hint — not a real accelerator. Cmd/Ctrl+B
@@ -173,29 +177,29 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         // accelerator here would steal the chord before that carve-out can
         // fire. Sidebar open/closed lives in the renderer store (non-persisted),
         // so we forward a toggle request rather than mirroring state in main.
-        label: `Toggle Left Sidebar\t${isMac ? 'Cmd+B' : 'Ctrl+B'}`,
+        label: `${t('view.appearance.toggleLeftSidebar')}\t${isMac ? 'Cmd+B' : 'Ctrl+B'}`,
         click: () => onToggleLeftSidebar()
       },
       {
         // Why: display-only shortcut hint for the same reason as above.
-        label: `Toggle Right Sidebar\t${isMac ? 'Alt+Cmd+B' : 'Ctrl+Alt+B'}`,
+        label: `${t('view.appearance.toggleRightSidebar')}\t${isMac ? 'Alt+Cmd+B' : 'Ctrl+Alt+B'}`,
         click: () => onToggleRightSidebar()
       },
       {
-        label: 'Show Status Bar',
+        label: t('view.appearance.showStatusBar'),
         type: 'checkbox',
         checked: appearance.statusBarVisible,
         click: () => onToggleAppearance('statusBarVisible')
       },
       { type: 'separator' },
       {
-        label: 'Show Tasks Button',
+        label: t('view.appearance.showTasksButton'),
         type: 'checkbox',
         checked: appearance.showTasksButton,
         click: () => onToggleAppearance('showTasksButton')
       },
       {
-        label: 'Show Titlebar App Name',
+        label: t('view.appearance.showTitlebarAppName'),
         type: 'checkbox',
         checked: appearance.showTitlebarAppName,
         click: () => onToggleAppearance('showTitlebarAppName')
@@ -204,21 +208,21 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   }
 
   const viewMenu: Electron.MenuItemConstructorOptions = {
-    label: 'View',
+    label: t('view.label'),
     submenu: [
       {
-        label: 'Reload',
+        label: t('view.reload'),
         click: () => reloadFocusedWindow(false)
       },
       {
-        label: 'Force Reload',
+        label: t('view.forceReload'),
         accelerator: 'Shift+CmdOrCtrl+R',
         click: () => reloadFocusedWindow(true)
       },
       { role: 'toggleDevTools' },
       { type: 'separator' },
       {
-        label: 'Reset Size',
+        label: t('view.resetSize'),
         accelerator: 'CmdOrCtrl+0',
         // Why: Some keyboard layouts/platforms intercept Cmd/Ctrl+zoom chords
         // before before-input-event fires. Binding the menu accelerator gives
@@ -226,17 +230,17 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         click: () => onZoomReset()
       },
       {
-        label: 'Zoom In',
+        label: t('view.zoomIn'),
         accelerator: 'CmdOrCtrl+=',
         click: () => onZoomIn()
       },
       {
-        label: 'Zoom Out',
+        label: t('view.zoomOut'),
         accelerator: 'CmdOrCtrl+-',
         click: () => onZoomOut()
       },
       {
-        label: 'Zoom Out (Shift Alias)',
+        label: t('view.zoomOutShiftAlias'),
         // Why: Some Linux keyboard layouts report the top-row minus chord as
         // an underscore accelerator. Keep this hidden alias so Ctrl+- and
         // Ctrl+_ can both route to terminal zoom out.
@@ -251,7 +255,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         // before the renderer's keydown handler fires. The overlay
         // mutual-exclusion logic (which runs in the renderer) would be
         // bypassed if this were a real accelerator binding.
-        label: `Open Worktree Palette\t${isMac ? 'Cmd+J' : 'Ctrl+Shift+J'}`
+        label: `${t('view.openWorktreePalette')}\t${isMac ? 'Cmd+J' : 'Ctrl+Shift+J'}`
       },
       { type: 'separator' },
       { role: 'togglefullscreen' },
@@ -261,7 +265,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   }
 
   const windowMenu: Electron.MenuItemConstructorOptions = {
-    label: 'Window',
+    label: t('window.label'),
     submenu: [{ role: 'minimize' }, { role: 'zoom' }]
   }
 
@@ -269,7 +273,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   // every platform. macOS still keeps About/Updates in the app menu, while
   // Windows/Linux keep those entries here because they have no app menu.
   const helpMenu: Electron.MenuItemConstructorOptions = {
-    label: 'Help',
+    label: t('help.label'),
     submenu: [
       crashReportItem,
       { type: 'separator' },

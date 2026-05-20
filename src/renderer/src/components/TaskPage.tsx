@@ -36,6 +36,7 @@ import {
   X
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import { useAppStore } from '@/store'
 import { useRepoMap } from '@/store/selectors'
@@ -315,14 +316,6 @@ function getTaskStatusTone(item: GitHubWorkItem): string {
 
 // Why: Linear encodes priority as an integer (0–4). Map to human-readable
 // labels so the table column is scannable without memorising the scale.
-const LINEAR_PRIORITY_LABELS: Record<number, string> = {
-  0: 'None',
-  1: 'Urgent',
-  2: 'High',
-  3: 'Medium',
-  4: 'Low'
-}
-
 type LinearViewMode = 'list' | 'board'
 type LinearGroupBy = 'none' | 'status' | 'assignee' | 'priority' | 'team'
 type LinearOrderBy = 'priority' | 'updated' | 'identifier'
@@ -381,8 +374,8 @@ const DEFAULT_LINEAR_DISPLAY_PROPERTIES: LinearDisplayProperty[] = [
   'updated'
 ]
 
-function getLinearPriorityLabel(priority: number): string {
-  return LINEAR_PRIORITY_LABELS[priority] ?? `P${priority}`
+function getLinearPriorityLabel(priority: number, t: (key: string) => string): string {
+  return t(`taskPage.priority.${priority}`) ?? `P${priority}`
 }
 
 function getLinearStatusSectionState(section: LinearGroupSection): LinearIssue['state'] | null {
@@ -409,6 +402,7 @@ function LinearStateCell({
   issue: LinearIssue
   className?: string
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const settings = useAppStore((s) => s.settings)
   const patchLinearIssue = useAppStore((s) => s.patchLinearIssue)
   const states = useTeamStates(issue.team.id, settings, issue.workspaceId)
@@ -445,7 +439,7 @@ function LinearStateCell({
           }
           if (result.ok === false) {
             patchLinearIssue(issue.id, { state: previousState })
-            toast.error(result.error ?? 'Failed to update Linear state')
+            toast.error(result.error ?? t('taskPage.toast.failedToUpdateLinearState'))
           }
         })
         .catch(() => {
@@ -453,7 +447,7 @@ function LinearStateCell({
             return
           }
           patchLinearIssue(issue.id, { state: previousState })
-          toast.error('Failed to update Linear state')
+          toast.error(t('taskPage.toast.failedToUpdateLinearState'))
         })
         .finally(() => {
           if (reqId === reqRef.current) {
@@ -469,7 +463,8 @@ function LinearStateCell({
       patchLinearIssue,
       pending,
       settings,
-      states.data
+      states.data,
+      t
     ]
   )
 
@@ -567,7 +562,8 @@ function compareLinearIssues(a: LinearIssue, b: LinearIssue, orderBy: LinearOrde
 
 function getLinearIssueGroup(
   issue: LinearIssue,
-  groupBy: LinearGroupBy
+  groupBy: LinearGroupBy,
+  t: (key: string) => string
 ): { key: string; label: string } {
   if (groupBy === 'status') {
     return { key: `status:${issue.state.name}`, label: issue.state.name }
@@ -575,34 +571,35 @@ function getLinearIssueGroup(
   if (groupBy === 'assignee') {
     return {
       key: `assignee:${issue.assignee?.id ?? 'unassigned'}`,
-      label: issue.assignee?.displayName ?? 'Unassigned'
+      label: issue.assignee?.displayName ?? t('taskPage.assignee.unassigned')
     }
   }
   if (groupBy === 'priority') {
     return {
       key: `priority:${issue.priority}`,
-      label: getLinearPriorityLabel(issue.priority)
+      label: getLinearPriorityLabel(issue.priority, t)
     }
   }
   if (groupBy === 'team') {
     return { key: `team:${issue.team.id}`, label: issue.team.name }
   }
-  return { key: 'all', label: 'Issues' }
+  return { key: 'all', label: t('taskPage.linearTab.issues') }
 }
 
 function groupLinearIssues(
   issues: LinearIssue[],
   groupBy: LinearGroupBy,
-  orderBy: LinearOrderBy
+  orderBy: LinearOrderBy,
+  t: (key: string) => string
 ): LinearGroupSection[] {
   const sorted = [...issues].sort((a, b) => compareLinearIssues(a, b, orderBy))
   if (groupBy === 'none') {
-    return [{ key: 'all', label: 'Issues', issues: sorted }]
+    return [{ key: 'all', label: t('taskPage.linearTab.issues'), issues: sorted }]
   }
 
   const sections = new Map<string, LinearGroupSection>()
   for (const issue of sorted) {
-    const group = getLinearIssueGroup(issue, groupBy)
+    const group = getLinearIssueGroup(issue, groupBy, t)
     const section = sections.get(group.key)
     if (section) {
       section.issues.push(issue)
@@ -641,6 +638,7 @@ function GHStatusCell({
   item: GitHubWorkItem
   repo: Repo | null
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const patchWorkItem = useAppStore((s) => s.patchWorkItem)
   const [localState, setLocalState] = useState(item.state)
   const [open, setOpen] = useState(false)
@@ -683,7 +681,7 @@ function GHStatusCell({
           if (typed && typed.ok === false) {
             setLocalState(newState === 'closed' ? 'open' : 'closed')
             patchWorkItem(item.id, { state: newState === 'closed' ? 'open' : 'closed' })
-            toast.error(typed.error ?? 'Failed to update state')
+            toast.error(typed.error ?? t('taskPage.toast.failedToUpdateState'))
           }
         })
         .catch(() => {
@@ -692,10 +690,10 @@ function GHStatusCell({
           }
           setLocalState(newState === 'closed' ? 'open' : 'closed')
           patchWorkItem(item.id, { state: newState === 'closed' ? 'open' : 'closed' })
-          toast.error('Failed to update state')
+          toast.error(t('taskPage.toast.failedToUpdateState'))
         })
     },
-    [item.id, item.number, item.type, localState, repo, patchWorkItem]
+    [item.id, item.number, item.type, localState, repo, patchWorkItem, t]
   )
 
   if (item.type !== 'issue' || !repo) {
@@ -724,7 +722,7 @@ function GHStatusCell({
               : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
           )}
         >
-          {localState === 'closed' ? 'Closed' : 'Open'}
+          {localState === 'closed' ? t('githubItem.state.closed') : t('githubItem.state.open')}
           <ChevronDown className="size-2.5 opacity-50" />
         </button>
       </PopoverTrigger>
@@ -776,27 +774,30 @@ function formatPRDelta(item: GitHubWorkItem): string | null {
   return parts.length > 0 ? parts.join(' ') : null
 }
 
-function getReviewLabel(item: GitHubWorkItem): string {
+function getReviewLabel(
+  item: GitHubWorkItem,
+  t: (key: string, options?: Record<string, string | number>) => string
+): string {
   if (
     item.reviewDecision === undefined &&
     item.reviewRequests === undefined &&
     item.latestReviews === undefined
   ) {
-    return 'Reviewers'
+    return t('taskPage.review.reviewers')
   }
   if (item.reviewDecision === 'APPROVED') {
-    return 'Approved'
+    return t('taskPage.review.approved')
   }
   if (item.reviewDecision === 'CHANGES_REQUESTED') {
-    return 'Changes requested'
+    return t('taskPage.review.changesRequested')
   }
   if (item.reviewRequests && item.reviewRequests.length > 0) {
-    return `${item.reviewRequests.length} requested`
+    return t('taskPage.review.requestedCount', { count: item.reviewRequests.length })
   }
   if (item.latestReviews && item.latestReviews.length > 0) {
-    return `${item.latestReviews.length} reviewed`
+    return t('taskPage.review.reviewedCount', { count: item.latestReviews.length })
   }
-  return 'No reviewers'
+  return t('taskPage.review.noReviewers')
 }
 
 function getReviewTone(item: GitHubWorkItem): string {
@@ -812,21 +813,24 @@ function getReviewTone(item: GitHubWorkItem): string {
   return 'border-border/60 bg-background/70 text-muted-foreground'
 }
 
-function getChecksLabel(item: GitHubWorkItem): string {
+function getChecksLabel(
+  item: GitHubWorkItem,
+  t: (key: string, options?: Record<string, string | number>) => string
+): string {
   const summary = item.checksSummary
   if (!summary) {
-    return 'Checks'
+    return t('taskPage.checks.checks')
   }
   if (summary.total === 0) {
-    return 'No checks'
+    return t('taskPage.checks.noChecks')
   }
   if (summary.failed > 0) {
-    return `${summary.failed} failing`
+    return t('taskPage.checks.failing', { count: summary.failed })
   }
   if (summary.pending > 0) {
-    return `${summary.pending} pending`
+    return t('taskPage.checks.pending', { count: summary.pending })
   }
-  return `${summary.passed}/${summary.total} passed`
+  return t('taskPage.checks.passed', { passed: summary.passed, total: summary.total })
 }
 
 function getChecksTone(item: GitHubWorkItem): string {
@@ -843,29 +847,29 @@ function getChecksTone(item: GitHubWorkItem): string {
   return 'border-border/60 bg-background/70 text-muted-foreground'
 }
 
-function getMergeLabel(item: GitHubWorkItem): string {
+function getMergeLabel(item: GitHubWorkItem, t: (key: string) => string): string {
   if (item.mergeable === undefined && item.mergeStateStatus === undefined) {
-    return 'Merge'
+    return t('githubItem.merge.merge')
   }
   if (item.state === 'merged') {
-    return 'Merged'
+    return t('githubItem.state.merged')
   }
   if (item.state === 'closed') {
-    return 'Closed'
+    return t('githubItem.state.closed')
   }
   if (item.mergeable === 'CONFLICTING') {
-    return 'Conflicts'
+    return t('taskPage.merge.conflicts')
   }
   if (item.mergeStateStatus === 'BEHIND') {
-    return 'Behind'
+    return t('taskPage.merge.behind')
   }
   if (item.mergeStateStatus === 'BLOCKED') {
-    return 'Blocked'
+    return t('taskPage.merge.blocked')
   }
   if (item.mergeable === 'MERGEABLE' || item.mergeStateStatus === 'CLEAN') {
-    return 'Able to merge'
+    return t('taskPage.merge.ableToMerge')
   }
-  return 'Unknown'
+  return t('taskPage.merge.unknown')
 }
 
 function getMergeTone(item: GitHubWorkItem): string {
@@ -881,35 +885,35 @@ function getMergeTone(item: GitHubWorkItem): string {
   return 'border-border/60 bg-background/70 text-muted-foreground'
 }
 
-function getMergeTooltip(item: GitHubWorkItem): string {
+function getMergeTooltip(item: GitHubWorkItem, t: (key: string) => string): string {
   if (item.mergeable === undefined && item.mergeStateStatus === undefined) {
-    return 'Merge status has not loaded yet'
+    return t('githubItem.mergeTooltip.notLoaded')
   }
   if (item.state === 'merged') {
-    return 'This pull request is already merged'
+    return t('githubItem.mergeTooltip.alreadyMerged')
   }
   if (item.state === 'closed') {
-    return 'This pull request is closed'
+    return t('githubItem.mergeTooltip.closed')
   }
   if (item.mergeable === 'CONFLICTING') {
-    return 'GitHub reports merge conflicts'
+    return t('githubItem.mergeTooltip.conflicting')
   }
   if (item.mergeStateStatus === 'BEHIND') {
-    return 'Update the branch before merging'
+    return t('githubItem.mergeTooltip.behind')
   }
   if (item.mergeStateStatus === 'BLOCKED') {
-    return 'GitHub reports this pull request is blocked'
+    return t('githubItem.mergeTooltip.blocked')
   }
   if (item.checksSummary?.state === 'pending') {
-    return 'GitHub says this PR can merge, but checks are still running'
+    return t('taskPage.merge.checksPending')
   }
   if (item.checksSummary?.state === 'success') {
-    return 'GitHub says this PR can merge and checks passed'
+    return t('taskPage.merge.checksPassed')
   }
   if (item.mergeable === 'MERGEABLE' || item.mergeStateStatus === 'CLEAN') {
-    return 'GitHub says this PR can merge'
+    return t('githubItem.mergeTooltip.canMerge')
   }
-  return 'GitHub has not reported a final merge status'
+  return t('githubItem.mergeTooltip.unknown')
 }
 
 function getReviewerInputToken(
@@ -979,6 +983,7 @@ function PRReviewCell({
   item: GitHubWorkItem
   repo: Repo | null
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [reviewerInput, setReviewerInput] = useState('')
   const [localReviewRequests, setLocalReviewRequests] = useState<GitHubAssignableUser[]>(
@@ -1110,7 +1115,7 @@ function PRReviewCell({
       .map((login) => login.trim().replace(/^@/, ''))
       .filter(Boolean)
     if (logins.length === 0) {
-      toast.error('Enter a reviewer login')
+      toast.error(t('taskPage.toast.enterReviewerLogin'))
       return
     }
     setSubmitting(true)
@@ -1122,7 +1127,7 @@ function PRReviewCell({
         reviewers: logins
       })
       if (result.ok) {
-        toast.success('Reviewer requested')
+        toast.success(t('taskPage.toast.reviewerRequested'))
         setLocalReviewRequests((current) =>
           buildRequestedReviewUsers(logins, reviewerCandidates, current)
         )
@@ -1132,7 +1137,7 @@ function PRReviewCell({
         toast.error(result.error)
       }
     } catch {
-      toast.error('Failed to request reviewer')
+      toast.error(t('taskPage.toast.failedToRequestReviewer'))
     } finally {
       setSubmitting(false)
     }
@@ -1167,7 +1172,7 @@ function PRReviewCell({
           )}
         >
           <Users className="size-3" />
-          <span className="truncate">{getReviewLabel(itemWithLocalReviewRequests)}</span>
+          <span className="truncate">{getReviewLabel(itemWithLocalReviewRequests, t)}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -1187,15 +1192,17 @@ function PRReviewCell({
                   >
                     <span className="truncate">@{reviewer.login}</span>
                     <span className="shrink-0 text-[10px] text-muted-foreground">
-                      {reviewer.state}
+                      {reviewer.state === 'Requested'
+                        ? t('taskPage.review.requested')
+                        : t('taskPage.review.reviewed')}
                     </span>
                   </div>
                 ))
               ) : (
                 <div className="text-xs text-muted-foreground">
                   {hasReviewerMetadata
-                    ? 'No reviewers requested yet.'
-                    : 'Open the PR details to view current reviewers.'}
+                    ? t('taskPage.review.noReviewersYet')
+                    : t('taskPage.review.openDetailsToView')}
                 </div>
               )}
             </div>
@@ -1324,7 +1331,7 @@ function PRReviewCell({
                   ))
                 ) : (
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    {reviewerMetadata.error ?? 'No matching reviewers.'}
+                    {reviewerMetadata.error ?? t('taskPage.review.noMatchingReviewers')}
                   </div>
                 )}
               </div>
@@ -1343,8 +1350,9 @@ function PRChecksCell({
   item: GitHubWorkItem
   onOpen: () => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   if (item.type !== 'pr') {
-    return <span className="text-[11px] text-muted-foreground">Issue</span>
+    return <span className="text-[11px] text-muted-foreground">{t('githubItem.sheet.issue')}</span>
   }
   const summary = item.checksSummary
   const Icon =
@@ -1370,11 +1378,11 @@ function PRChecksCell({
           )}
         >
           <Icon className="size-3" />
-          <span className="truncate">{getChecksLabel(item)}</span>
+          <span className="truncate">{getChecksLabel(item, t)}</span>
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>
-        Open PR conversation and checks
+        {t('taskPage.checks.openPRConversationAndChecks')}
       </TooltipContent>
     </Tooltip>
   )
@@ -1389,6 +1397,7 @@ function PRMergeCell({
   repo: Repo | null
   onRefresh: () => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [merging, setMerging] = useState(false)
   if (item.type !== 'pr') {
     return <span className="text-[11px] text-muted-foreground">Issue</span>
@@ -1406,8 +1415,17 @@ function PRMergeCell({
     }
     const confirmed = window.confirm(
       method === 'squash'
-        ? `Squash and merge PR #${item.number}?`
-        : `${method === 'rebase' ? 'Rebase and merge' : 'Merge'} PR #${item.number}?`
+        ? t('taskPage.merge.confirmTitle', {
+            method: t('githubItem.merge.squashAndMerge'),
+            number: String(item.number)
+          })
+        : t('taskPage.merge.confirmTitle', {
+            method:
+              method === 'rebase'
+                ? t('githubItem.merge.rebaseAndMerge')
+                : t('githubItem.merge.merge'),
+            number: String(item.number)
+          })
     )
     if (!confirmed) {
       return
@@ -1421,13 +1439,13 @@ function PRMergeCell({
         method
       })
       if (result.ok) {
-        toast.success('Pull request merged')
+        toast.success(t('taskPage.toast.pullRequestMerged'))
         onRefresh()
       } else {
         toast.error(result.error)
       }
     } catch {
-      toast.error('Failed to merge pull request')
+      toast.error(t('taskPage.toast.failedToMergePullRequest'))
     } finally {
       setMerging(false)
     }
@@ -1451,13 +1469,13 @@ function PRMergeCell({
               ) : (
                 <GitMerge className="size-3" />
               )}
-              <span className="truncate">{getMergeLabel(item)}</span>
+              <span className="truncate">{getMergeLabel(item, t)}</span>
               <ChevronDown className="size-2.5 opacity-60" />
             </button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={6}>
-          {getMergeTooltip(item)}
+          {getMergeTooltip(item, t)}
         </TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="start" onClick={(event) => event.stopPropagation()}>
@@ -1517,6 +1535,7 @@ function PaginationBar({
   loadingTarget: number | null
   onPageChange: (page: number) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const pageNumbers = getPageNumbers(currentPage, totalPages)
   const btnClass =
     'inline-flex items-center gap-0.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40'
@@ -1530,18 +1549,18 @@ function PaginationBar({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t('taskPage.label.pagination')}
       className="flex items-center justify-center gap-1 border-t border-border/50 px-4 py-3"
     >
       <button
         type="button"
         disabled={currentPage === 0 || loadingTarget !== null}
         onClick={() => onPageChange(currentPage - 1)}
-        aria-label="Previous page"
+        aria-label={t('taskPage.label.previousPage')}
         className={btnClass}
       >
         <ChevronLeft className="size-4" />
-        Previous
+        {t('taskPage.label.previous')}
       </button>
 
       {pageNumbers.map((entry, idx) =>
@@ -1576,10 +1595,10 @@ function PaginationBar({
         type="button"
         disabled={currentPage >= totalPages - 1 || loadingTarget !== null}
         onClick={() => onPageChange(currentPage + 1)}
-        aria-label="Next page"
+        aria-label={t('taskPage.label.nextPage')}
         className={btnClass}
       >
-        Next
+        {t('taskPage.label.next')}
         <ChevronRight className="size-4" />
       </button>
     </nav>
@@ -1610,6 +1629,7 @@ const hasUpstreamCandidateDivergence = (
   !sameGitHubOwnerRepo(s.sources.prs, s.sources.upstreamCandidate)
 
 export default function TaskPage(): React.JSX.Element {
+  const { t } = useTranslation()
   const settings = useAppStore((s) => s.settings)
   const persistedUIReady = useAppStore((s) => s.persistedUIReady)
   const taskResumeState = useAppStore((s) => s.taskResumeState)
@@ -1943,12 +1963,10 @@ export default function TaskPage(): React.JSX.Element {
       const prSlug = entry.sources?.prs
         ? `${entry.sources.prs.owner}/${entry.sources.prs.repo}`
         : r.displayName
-      toast.message(
-        `Your preferred issue source (upstream) is no longer configured for ${prSlug}. Using origin.`
-      )
+      toast.message(t('taskPage.toast.upstreamNotConfigured', { slug: prSlug }))
       fellBackToastedRef.current.add(r.id)
     }
-  }, [selectedRepos, selectedWorkItemsCacheEntries, taskSource])
+  }, [selectedRepos, selectedWorkItemsCacheEntries, taskSource, t])
 
   // Why: on a partial-failure retry the cache still holds successful-side
   // data, so `tasksLoading` (which is gated on `anyUncached`) never flips
@@ -2384,8 +2402,8 @@ export default function TaskPage(): React.JSX.Element {
     [linearIssueGridTemplate]
   )
   const linearIssueSections = useMemo(
-    () => groupLinearIssues(filteredLinearIssues, linearGroupBy, linearOrderBy),
-    [filteredLinearIssues, linearGroupBy, linearOrderBy]
+    () => groupLinearIssues(filteredLinearIssues, linearGroupBy, linearOrderBy, t),
+    [filteredLinearIssues, linearGroupBy, linearOrderBy, t]
   )
   const linearIssueListRows = useMemo<LinearIssueListRow[]>(
     () =>
@@ -2411,9 +2429,10 @@ export default function TaskPage(): React.JSX.Element {
       groupLinearIssues(
         filteredLinearIssues,
         linearGroupBy === 'none' ? 'status' : linearGroupBy,
-        linearOrderBy
+        linearOrderBy,
+        t
       ),
-    [filteredLinearIssues, linearGroupBy, linearOrderBy]
+    [filteredLinearIssues, linearGroupBy, linearOrderBy, t]
   )
   const linearStatusBoardEnabled = linearGroupBy === 'none' || linearGroupBy === 'status'
 
@@ -2504,12 +2523,12 @@ export default function TaskPage(): React.JSX.Element {
         if (result.ok === false) {
           patchLinearIssue(issue.id, { state: previousState })
           applyFallbackState(previousState)
-          toast.error(result.error ?? 'Failed to update Linear state')
+          toast.error(result.error ?? t('taskPage.toast.failedToUpdateLinearState'))
         }
       } catch {
         patchLinearIssue(issue.id, { state: previousState })
         applyFallbackState(previousState)
-        toast.error('Failed to update Linear state')
+        toast.error(t('taskPage.toast.failedToUpdateLinearState'))
       } finally {
         setLinearBoardUpdatingIssueIds((prev) => {
           const next = new Set(prev)
@@ -2524,7 +2543,8 @@ export default function TaskPage(): React.JSX.Element {
       linearBoardUpdatingIssueIds,
       linearStatusBoardEnabled,
       patchLinearIssue,
-      settings
+      settings,
+      t
     ]
   )
 
@@ -2803,7 +2823,9 @@ export default function TaskPage(): React.JSX.Element {
         if (cancelled) {
           return
         }
-        setTasksError(err instanceof Error ? err.message : 'Failed to load GitHub work.')
+        setTasksError(
+          err instanceof Error ? err.message : t('taskPage.toast.failedToLoadGithubWork')
+        )
         setFailedCount(0) // the per-repo banner would be misleading next to tasksError
         setTasksLoading(false)
       })
@@ -2859,10 +2881,10 @@ export default function TaskPage(): React.JSX.Element {
       // preset updates the persisted settings instead of only changing the
       // current page state.
       void updateSettings({ defaultTaskViewPreset: presetId }).catch(() => {
-        toast.error('Failed to save default task view.')
+        toast.error(t('taskPage.toast.failedToSaveDefaultTaskView'))
       })
     },
-    [updateSettings]
+    [updateSettings, t]
   )
 
   const handleSelectGithubTaskKind = useCallback(
@@ -3005,13 +3027,13 @@ export default function TaskPage(): React.JSX.Element {
             body: newIssueBody
           })
       if (!result.ok) {
-        toast.error(result.error || 'Failed to create issue.')
+        toast.error(result.error || t('taskPage.toast.failedToCreateIssue'))
         return
       }
-      toast.success(`Opened issue #${result.number}`, {
+      toast.success(t('taskPage.toast.issueCreated', { number: result.number }), {
         action: result.url
           ? {
-              label: 'View',
+              label: t('taskPage.label.view'),
               onClick: () => window.open(result.url, '_blank')
             }
           : undefined
@@ -3067,7 +3089,7 @@ export default function TaskPage(): React.JSX.Element {
     } finally {
       setNewIssueSubmitting(false)
     }
-  }, [newIssueBody, newIssueSubmitting, newIssueTargetRepo, newIssueTitle, setDialogWorkItem])
+  }, [newIssueBody, newIssueSubmitting, newIssueTargetRepo, newIssueTitle, setDialogWorkItem, t])
 
   const handleCreateNewLinearIssue = useCallback(async (): Promise<void> => {
     if (!newLinearIssueTargetTeam) {
@@ -3086,13 +3108,13 @@ export default function TaskPage(): React.JSX.Element {
         workspaceId: newLinearIssueTargetTeam.workspaceId
       })
       if (!result.ok) {
-        toast.error(result.error || 'Failed to create issue.')
+        toast.error(result.error || t('taskPage.toast.failedToCreateIssue'))
         return
       }
-      toast.success(`Created ${result.identifier}`, {
+      toast.success(t('taskPage.toast.linearIssueCreated', { identifier: result.identifier }), {
         action: result.url
           ? {
-              label: 'View',
+              label: t('taskPage.label.view'),
               onClick: () => window.open(result.url, '_blank')
             }
           : undefined
@@ -3120,7 +3142,8 @@ export default function TaskPage(): React.JSX.Element {
     newLinearIssueTargetTeam,
     newLinearIssueTitle,
     settings,
-    setSelectedLinearIssue
+    setSelectedLinearIssue,
+    t
   ])
 
   useEffect(() => {
@@ -3265,7 +3288,7 @@ export default function TaskPage(): React.JSX.Element {
         if (cancelled) {
           return
         }
-        setLinearError(err instanceof Error ? err.message : 'Failed to load Linear issues.')
+        setLinearError(err instanceof Error ? err.message : t('taskPage.errors.loadLinearIssues'))
         setLinearLoading(false)
       })
 
@@ -3376,9 +3399,11 @@ export default function TaskPage(): React.JSX.Element {
       }
     } catch (error) {
       setLinearConnectState('error')
-      setLinearConnectError(error instanceof Error ? error.message : 'Connection failed')
+      setLinearConnectError(
+        error instanceof Error ? error.message : t('taskPage.errors.connectionFailed')
+      )
     }
-  }, [connectLinear, linearApiKeyDraft])
+  }, [connectLinear, linearApiKeyDraft, t])
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 overflow-hidden bg-background text-foreground">
@@ -3428,10 +3453,10 @@ export default function TaskPage(): React.JSX.Element {
                                 taskSourceManuallyChangedRef.current = true
                                 setTaskSource(source.id)
                                 void updateSettings({ defaultTaskSource: source.id }).catch(() => {
-                                  toast.error('Failed to save default task source.')
+                                  toast.error(t('taskPage.toast.failedToSaveDefaultTaskSource'))
                                 })
                               }}
-                              aria-label={source.label}
+                              aria-label={t(`taskPage.source.${source.id}`)}
                               className={cn(
                                 'group flex h-8 w-8 items-center justify-center rounded-md border transition',
                                 active
@@ -3444,7 +3469,7 @@ export default function TaskPage(): React.JSX.Element {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="bottom" sideOffset={6}>
-                            {source.label}
+                            {t(`taskPage.source.${source.id}`)}
                           </TooltipContent>
                         </Tooltip>
                       )
@@ -3461,7 +3486,7 @@ export default function TaskPage(): React.JSX.Element {
                             setLinearError(null)
                             setLinearLoading(true)
                             void selectLinearWorkspace(value).catch(() => {
-                              toast.error('Failed to switch Linear workspace.')
+                              toast.error(t('taskPage.toast.failedToSwitchLinearWorkspace'))
                             })
                           }}
                         >
@@ -3486,14 +3511,14 @@ export default function TaskPage(): React.JSX.Element {
                             setLinearTeamSelection(next)
                             void updateSettings({ defaultLinearTeamSelection: [...next] }).catch(
                               () => {
-                                toast.error('Failed to save team selection.')
+                                toast.error(t('taskPage.toast.failedToSaveTeamSelection'))
                               }
                             )
                           }}
                           onSelectAll={() => {
                             setLinearTeamSelection(new Set(linearTeamOptions.map((t) => t.id)))
                             void updateSettings({ defaultLinearTeamSelection: null }).catch(() => {
-                              toast.error('Failed to save team selection.')
+                              toast.error(t('taskPage.toast.failedToSaveTeamSelection'))
                             })
                           }}
                           triggerClassName="h-8 w-full rounded-md border border-border/50 bg-muted/50 px-2 text-xs font-medium shadow-sm transition hover:bg-muted/50 focus:ring-2 focus:ring-ring/20 focus:outline-none"
@@ -3533,7 +3558,7 @@ export default function TaskPage(): React.JSX.Element {
                                   : 'border-border/50 bg-transparent text-foreground hover:bg-muted/50'
                               )}
                             >
-                              {mode.label}
+                              {t(`taskPage.label.${mode.id}`)}
                             </button>
                           )
                         })}
@@ -3552,14 +3577,14 @@ export default function TaskPage(): React.JSX.Element {
                           onChange={(next) => {
                             setRepoSelection(next)
                             void updateSettings({ defaultRepoSelection: [...next] }).catch(() => {
-                              toast.error('Failed to save repo selection.')
+                              toast.error(t('taskPage.toast.failedToSaveRepoSelection'))
                             })
                           }}
                           onSelectAll={() => {
                             const allIds = new Set(eligibleRepos.map((r) => r.id))
                             setRepoSelection(allIds)
                             void updateSettings({ defaultRepoSelection: null }).catch(() => {
-                              toast.error('Failed to save repo selection.')
+                              toast.error(t('taskPage.toast.failedToSaveRepoSelection'))
                             })
                           }}
                           triggerClassName="h-8 w-full rounded-md border border-border/50 bg-muted/50 px-2 text-xs font-medium shadow-sm transition hover:bg-muted/50 focus:ring-2 focus:ring-ring/20 focus:outline-none"
@@ -3602,7 +3627,7 @@ export default function TaskPage(): React.JSX.Element {
                                     : 'border-border/50 bg-transparent text-foreground hover:bg-muted/50'
                                 )}
                               >
-                                {option.label}
+                                {t(`taskPage.preset.${option.id}`)}
                               </button>
                             )
                           })}
@@ -3667,8 +3692,8 @@ export default function TaskPage(): React.JSX.Element {
                           onKeyDown={handleTaskSearchKeyDown}
                           placeholder={
                             activeGithubTaskKind === 'prs'
-                              ? 'Search GitHub PRs...'
-                              : 'Search GitHub issues...'
+                              ? t('taskPage.search.prs')
+                              : t('taskPage.search.issues')
                           }
                           className="h-8 rounded-md border-border/50 bg-background pl-8 pr-8 text-xs"
                         />
@@ -3781,7 +3806,7 @@ export default function TaskPage(): React.JSX.Element {
                                   : 'border-border/50 bg-transparent text-foreground hover:bg-muted/50'
                               )}
                             >
-                              {preset.label}
+                              {t(`taskPage.preset.${preset.id}`)}
                             </button>
                           )
                         })}
@@ -3856,7 +3881,7 @@ export default function TaskPage(): React.JSX.Element {
                               setLinearRefreshNonce((n) => n + 1)
                             }
                           }}
-                          placeholder="Search Linear issues..."
+                          placeholder={t('taskPage.search.linear')}
                           className="h-8 rounded-md border-border/50 bg-background pl-8 pr-8 text-xs"
                         />
                         {linearSearchInput ? (
@@ -3912,7 +3937,7 @@ export default function TaskPage(): React.JSX.Element {
                             backend and don't have an Open/Merged/Closed
                             axis. */}
                         {gitlabView === 'project'
-                          ? GITLAB_TASK_FILTERS.map(({ id, label }) => {
+                          ? GITLAB_TASK_FILTERS.map(({ id }) => {
                               const active = gitlabFilter === id
                               return (
                                 <button
@@ -3929,7 +3954,7 @@ export default function TaskPage(): React.JSX.Element {
                                       : 'border-border/50 bg-transparent text-foreground hover:bg-muted/50'
                                   )}
                                 >
-                                  {label}
+                                  {t(`taskPage.filter.${id}`)}
                                 </button>
                               )
                             })
@@ -3945,8 +3970,8 @@ export default function TaskPage(): React.JSX.Element {
                               disabled={gitlabLoading || gitlabTodosLoading}
                               aria-label={
                                 gitlabView === 'project'
-                                  ? 'Refresh GitLab work items'
-                                  : 'Refresh My Todos'
+                                  ? t('taskPage.refresh.gitlabWorkItems')
+                                  : t('taskPage.refresh.myTodos')
                               }
                               className="border-border/50 bg-transparent hover:bg-muted/50 backdrop-blur-md supports-[backdrop-filter]:bg-transparent"
                             >
@@ -3959,8 +3984,8 @@ export default function TaskPage(): React.JSX.Element {
                           </TooltipTrigger>
                           <TooltipContent side="bottom" sideOffset={6}>
                             {gitlabView === 'project'
-                              ? 'Refresh GitLab work items'
-                              : 'Refresh My Todos'}
+                              ? t('taskPage.refresh.gitlabWorkItems')
+                              : t('taskPage.refresh.myTodos')}
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -4056,7 +4081,7 @@ export default function TaskPage(): React.JSX.Element {
                               Retrying…
                             </span>
                           ) : (
-                            'Retry'
+                            t('taskPage.retry')
                           )}
                         </Button>
                       </div>
@@ -4434,8 +4459,8 @@ export default function TaskPage(): React.JSX.Element {
                 {!gitlabLoading && gitlabItems.length === 0 && !gitlabError ? (
                   <div className="px-4 py-12 text-center text-sm text-muted-foreground">
                     {primaryRepo
-                      ? 'No GitLab work matches this filter.'
-                      : 'Select a repo to see GitLab work items.'}
+                      ? t('taskPage.gitlab.noMatches')
+                      : t('taskPage.gitlab.selectRepoToSee')}
                   </div>
                 ) : null}
                 <div className="divide-y divide-border/50">
@@ -4467,7 +4492,8 @@ export default function TaskPage(): React.JSX.Element {
                       </span>
                       <span className="min-w-0 truncate text-sm">{item.title}</span>
                       <span className="text-xs text-muted-foreground">
-                        {item.type === 'mr' ? 'MR' : 'Issue'} · {item.state}
+                        {item.type === 'mr' ? t('taskPage.gitlab.mr') : t('githubItem.sheet.issue')}{' '}
+                        · {item.state}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : ''}
@@ -4515,14 +4541,14 @@ export default function TaskPage(): React.JSX.Element {
             <div className="flex min-h-0 max-h-full flex-col overflow-hidden rounded-md rounded-t-none border border-t-0 border-border/50 bg-background shadow-sm">
               <div className="flex h-10 flex-none items-center justify-between gap-3 border-b border-border/50 bg-muted/35 px-3">
                 <div className="min-w-0 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                  Linear issues
+                  {t('taskPage.header.linearIssues')}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <div
                     className="hidden items-center rounded-md border border-border/50 bg-background/70 p-0.5 md:flex"
-                    aria-label="Linear view mode"
+                    aria-label={t('taskPage.label.linearViewMode')}
                   >
-                    {LINEAR_VIEW_OPTIONS.map(({ id, label, Icon }) => {
+                    {LINEAR_VIEW_OPTIONS.map(({ id, Icon }) => {
                       const active = linearViewMode === id
                       return (
                         <Tooltip key={id}>
@@ -4530,7 +4556,7 @@ export default function TaskPage(): React.JSX.Element {
                             <button
                               type="button"
                               onClick={() => setLinearViewMode(id)}
-                              aria-label={`${label} view`}
+                              aria-label={`${t(`taskPage.viewMode.${id}`)} view`}
                               aria-pressed={active}
                               className={cn(
                                 'inline-flex size-6 items-center justify-center rounded text-muted-foreground transition hover:text-foreground',
@@ -4541,7 +4567,7 @@ export default function TaskPage(): React.JSX.Element {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="bottom" sideOffset={6}>
-                            {label} view
+                            {t(`taskPage.viewMode.${id}`)} view
                           </TooltipContent>
                         </Tooltip>
                       )
@@ -4567,17 +4593,17 @@ export default function TaskPage(): React.JSX.Element {
                         value={linearViewMode}
                         onValueChange={(value) => setLinearViewMode(value as LinearViewMode)}
                       >
-                        {LINEAR_VIEW_OPTIONS.map(({ id, label, Icon }) => (
+                        {LINEAR_VIEW_OPTIONS.map(({ id, Icon }) => (
                           <DropdownMenuRadioItem key={id} value={id}>
                             <Icon className="size-3.5" />
-                            {label}
+                            {t(`taskPage.viewMode.${id}`)}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="flex items-center gap-2">
                         <SlidersHorizontal className="size-3.5" />
-                        Grouping
+                        {t('taskPage.label.grouping')}
                       </DropdownMenuLabel>
                       <DropdownMenuRadioGroup
                         value={linearGroupBy}
@@ -4585,14 +4611,14 @@ export default function TaskPage(): React.JSX.Element {
                       >
                         {LINEAR_GROUP_OPTIONS.map((option) => (
                           <DropdownMenuRadioItem key={option.id} value={option.id}>
-                            {option.label}
+                            {t(`taskPage.groupBy.${option.id}`)}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="flex items-center gap-2">
                         <ArrowDownUp className="size-3.5" />
-                        Ordering
+                        {t('taskPage.label.ordering')}
                       </DropdownMenuLabel>
                       <DropdownMenuRadioGroup
                         value={linearOrderBy}
@@ -4600,14 +4626,14 @@ export default function TaskPage(): React.JSX.Element {
                       >
                         {LINEAR_ORDER_OPTIONS.map((option) => (
                           <DropdownMenuRadioItem key={option.id} value={option.id}>
-                            {option.label}
+                            {t(`taskPage.sortBy.${option.id}`)}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="flex items-center gap-2">
                         <Eye className="size-3.5" />
-                        Display properties
+                        {t('taskPage.label.displayProperties')}
                       </DropdownMenuLabel>
                       {LINEAR_DISPLAY_PROPERTIES.map((property) => (
                         <DropdownMenuCheckboxItem
@@ -4616,13 +4642,13 @@ export default function TaskPage(): React.JSX.Element {
                           onSelect={(event) => event.preventDefault()}
                           onCheckedChange={() => toggleLinearDisplayProperty(property.id)}
                         >
-                          {property.label}
+                          {t(`taskPage.boardProperty.${property.id}`)}
                         </DropdownMenuCheckboxItem>
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <div className="text-[11px] text-muted-foreground">
-                    {filteredLinearIssues.length} shown
+                    {t('taskPage.header.shown', { count: filteredLinearIssues.length })}
                   </div>
                 </div>
               </div>
@@ -4666,11 +4692,13 @@ export default function TaskPage(): React.JSX.Element {
 
                 {!linearLoading && linearIssues.length === 0 && !linearError ? (
                   <div className="px-4 py-10 text-center">
-                    <p className="text-sm font-medium text-foreground">No Linear issues found</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {t('taskPage.empty.noLinearIssuesFound')}
+                    </p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {linearSearchInput
-                        ? 'Try a different search query.'
-                        : 'No assigned issues. Try searching for something.'}
+                        ? t('taskPage.empty.tryDifferentSearch')
+                        : t('taskPage.empty.noAssignedIssues')}
                     </p>
                   </div>
                 ) : null}
@@ -4792,10 +4820,13 @@ export default function TaskPage(): React.JSX.Element {
                                     <LinearStateCell issue={issue} className="px-1.5 py-0.5" />
                                   ) : null}
                                   {effectiveLinearDisplayProperties.has('priority') ? (
-                                    <span>{getLinearPriorityLabel(issue.priority)}</span>
+                                    <span>{getLinearPriorityLabel(issue.priority, t)}</span>
                                   ) : null}
                                   {effectiveLinearDisplayProperties.has('assignee') ? (
-                                    <span>{issue.assignee?.displayName ?? 'Unassigned'}</span>
+                                    <span>
+                                      {issue.assignee?.displayName ??
+                                        t('taskPage.assignee.unassigned')}
+                                    </span>
                                   ) : null}
                                   {effectiveLinearDisplayProperties.has('team') ? (
                                     <span className="truncate">{teamLabel}</span>
@@ -4900,12 +4931,12 @@ export default function TaskPage(): React.JSX.Element {
                               ) : null}
                               {effectiveLinearDisplayProperties.has('priority') ? (
                                 <span className="shrink-0 text-[11px] text-muted-foreground">
-                                  {getLinearPriorityLabel(issue.priority)}
+                                  {getLinearPriorityLabel(issue.priority, t)}
                                 </span>
                               ) : null}
                               {effectiveLinearDisplayProperties.has('assignee') ? (
                                 <span className="min-w-0 truncate text-[11px] text-muted-foreground">
-                                  {issue.assignee?.displayName ?? 'Unassigned'}
+                                  {issue.assignee?.displayName ?? t('taskPage.assignee.unassigned')}
                                 </span>
                               ) : null}
                               {effectiveLinearDisplayProperties.has('team') ? (
@@ -4941,7 +4972,7 @@ export default function TaskPage(): React.JSX.Element {
 
                           {effectiveLinearDisplayProperties.has('priority') ? (
                             <span className="block truncate text-[12px] text-muted-foreground max-lg:!hidden">
-                              {getLinearPriorityLabel(issue.priority)}
+                              {getLinearPriorityLabel(issue.priority, t)}
                             </span>
                           ) : null}
 
@@ -4959,7 +4990,7 @@ export default function TaskPage(): React.JSX.Element {
                                 </span>
                               )}
                               <span className="truncate">
-                                {issue.assignee?.displayName ?? 'Unassigned'}
+                                {issue.assignee?.displayName ?? t('taskPage.assignee.unassigned')}
                               </span>
                             </div>
                           ) : null}
@@ -5196,10 +5227,10 @@ export default function TaskPage(): React.JSX.Element {
               {newIssueSubmitting ? (
                 <>
                   <LoaderCircle className="size-4 animate-spin" />
-                  Creating…
+                  {t('taskPage.label.creating')}
                 </>
               ) : (
-                'Create issue'
+                t('taskPage.label.createIssue')
               )}
             </Button>
           </DialogFooter>
@@ -5224,15 +5255,16 @@ export default function TaskPage(): React.JSX.Element {
           }}
         >
           <DialogHeader>
-            <DialogTitle>New Linear issue</DialogTitle>
+            <DialogTitle>{t('taskPage.label.newLinearIssue')}</DialogTitle>
             <DialogDescription>
               {availableTeams.length > 1
-                ? 'Creates a new issue in the selected team.'
-                : `Creates a new issue in ${
-                    newLinearIssueTargetTeam?.workspaceName
+                ? t('taskPage.empty.createsNewIssueInSelectedTeam')
+                : t('taskPage.empty.createsNewIssueInTeam', {
+                    workspace: newLinearIssueTargetTeam?.workspaceName
                       ? `${newLinearIssueTargetTeam.workspaceName} / `
-                      : ''
-                  }${newLinearIssueTargetTeam?.name ?? 'your team'}.`}
+                      : '',
+                    team: newLinearIssueTargetTeam?.name ?? t('taskPage.empty.yourTeam')
+                  })}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
@@ -5308,10 +5340,10 @@ export default function TaskPage(): React.JSX.Element {
               {newLinearIssueSubmitting ? (
                 <>
                   <LoaderCircle className="size-4 animate-spin" />
-                  Creating…
+                  {t('taskPage.label.creating')}
                 </>
               ) : (
-                'Create issue'
+                t('taskPage.label.createIssue')
               )}
             </Button>
           </DialogFooter>
@@ -5372,7 +5404,9 @@ export default function TaskPage(): React.JSX.Element {
           }}
         >
           <DialogHeader className="gap-3">
-            <DialogTitle className="leading-tight">Connect Linear workspace</DialogTitle>
+            <DialogTitle className="leading-tight">
+              {t('taskPage.label.connectLinearWorkspace')}
+            </DialogTitle>
             <DialogDescription>
               Paste a <strong className="font-semibold text-foreground">Personal API key</strong> to
               browse issues from that workspace.
@@ -5429,10 +5463,10 @@ export default function TaskPage(): React.JSX.Element {
               {linearConnectState === 'connecting' ? (
                 <>
                   <LoaderCircle className="size-4 animate-spin" />
-                  Verifying…
+                  {t('taskPage.label.verifying')}
                 </>
               ) : (
-                'Connect'
+                t('taskPage.label.connect')
               )}
             </Button>
           </DialogFooter>

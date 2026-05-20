@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { GlobalSettings } from '../../../../shared/types'
 import { Label } from '../ui/label'
 import { SearchableSetting } from './SearchableSetting'
@@ -23,6 +24,8 @@ export const INPUT_PANE_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     ]
   }
 ]
+// Why: search entries stay in English so the settings search works across
+// language switches. Only the rendered labels are translated.
 
 type InputPaneProps = {
   settings: GlobalSettings
@@ -30,13 +33,14 @@ type InputPaneProps = {
 }
 
 export function InputPane({ settings, updateSettings }: InputPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const enabled = settings.primarySelectionMiddleClickPaste ?? isLinuxUserAgent()
 
   return (
     <section className="space-y-4">
       <SearchableSetting
-        title="Middle-click Paste from Selection"
-        description="On Linux, selected text uses the system selection clipboard. Other platforms use a private buffer when enabled."
+        title={t('settings.input.middleClickPaste.label')}
+        description={t('settings.input.middleClickPaste.description')}
         keywords={[
           'input',
           'editing',
@@ -52,10 +56,9 @@ export function InputPane({ settings, updateSettings }: InputPaneProps): React.J
         className="flex items-center justify-between gap-4 px-1 py-2"
       >
         <div className="space-y-0.5">
-          <Label>Middle-click Paste from Selection</Label>
+          <Label>{t('settings.input.middleClickPaste.label')}</Label>
           <p className="text-xs text-muted-foreground">
-            On Linux, use the system selection clipboard. On other platforms, use a private buffer
-            when this is enabled.
+            {t('settings.input.middleClickPaste.description')}
           </p>
         </div>
         <button

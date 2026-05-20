@@ -1,4 +1,5 @@
 import type { GlobalSettings } from '../../../../shared/types'
+import { useTranslation } from 'react-i18next'
 import { Label } from '../ui/label'
 import { useAppStore } from '../../store'
 import { SearchableSetting } from './SearchableSetting'
@@ -21,6 +22,7 @@ export function ExperimentalPane({
   updateSettings,
   hiddenExperimentalUnlocked = false
 }: ExperimentalPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((s) => s.settingsSearchQuery)
   const showPet = matchesSettingsSearch(searchQuery, [EXPERIMENTAL_SEARCH_ENTRY.pet])
   const showAgentsView = matchesSettingsSearch(searchQuery, [EXPERIMENTAL_SEARCH_ENTRY.activity])
@@ -32,20 +34,17 @@ export function ExperimentalPane({
     <div className="space-y-4">
       {showPet ? (
         <SearchableSetting
-          title="Pet"
-          description="Floating animated pet in the bottom-right corner."
+          title={t('settings.experimental.pet.title')}
+          description={t('settings.experimental.pet.description')}
           keywords={EXPERIMENTAL_SEARCH_ENTRY.pet.keywords}
           className="space-y-3 px-1 py-2"
           id="experimental-pet"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 shrink space-y-1.5">
-              <Label>Pet</Label>
+              <Label>{t('settings.experimental.pet.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Shows a small animated pet pinned to the bottom-right corner. Pick a character
-                (Claudino, OpenCode, Gremlin) or upload your own PNG, APNG, GIF, WebP, JPG, or SVG
-                from the status-bar pet menu. Hide it any time from the same menu without disabling
-                this setting.
+                {t('settings.experimental.pet.helper')}
               </p>
             </div>
             <button
@@ -71,18 +70,16 @@ export function ExperimentalPane({
 
       {showAgentsView ? (
         <SearchableSetting
-          title="Agents View"
-          description="Threaded left-sidebar feed for agent completions and blocking states."
+          title={t('settings.experimental.agentsView.title')}
+          description={t('settings.experimental.agentsView.description')}
           keywords={EXPERIMENTAL_SEARCH_ENTRY.activity.keywords}
           className="space-y-3 px-1 py-2"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 shrink space-y-0.5">
-              <Label>Agents View</Label>
+              <Label>{t('settings.experimental.agentsView.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Adds an Agents entry to the left sidebar with a threaded worktree feed for completed
-                agents, blocking questions, unread state, and worktree creation events. Experimental
-                — the event model and UI may change.
+                {t('settings.experimental.agentsView.helper')}
               </p>
             </div>
             <button
@@ -110,17 +107,16 @@ export function ExperimentalPane({
 
       {showWorktreeSymlinks ? (
         <SearchableSetting
-          title="Symlinks on worktrees"
-          description="Automatically symlink configured files or folders into newly created worktrees."
+          title={t('settings.experimental.symlinks.title')}
+          description={t('settings.experimental.symlinks.description')}
           keywords={EXPERIMENTAL_SEARCH_ENTRY.symlinks.keywords}
           className="space-y-3 px-1 py-2"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 shrink space-y-0.5">
-              <Label>Symlinks on worktrees</Label>
+              <Label>{t('settings.experimental.symlinks.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Allows for automatic symlinks of certain folders or files that must be connected to
-                created worktrees.
+                {t('settings.experimental.symlinks.helper')}
               </p>
             </div>
             <button

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Check, Github, Gitlab } from 'lucide-react'
 import type { GlobalSettings, TaskProvider } from '../../../../shared/types'
 import {
@@ -15,33 +16,17 @@ type TasksPaneProps = {
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
-const TASK_PROVIDER_OPTIONS: readonly {
-  id: TaskProvider
-  label: string
-  description: string
-  Icon: (props: { className?: string }) => React.JSX.Element
-}[] = [
-  {
-    id: 'github',
-    label: 'GitHub',
-    description: 'Show GitHub in the Tasks source picker and sidebar shortcuts.',
-    Icon: ({ className }) => <Github className={className} />
-  },
-  {
-    id: 'gitlab',
-    label: 'GitLab',
-    description: 'Show GitLab in the Tasks source picker and sidebar shortcuts.',
-    Icon: ({ className }) => <Gitlab className={className} />
-  },
-  {
-    id: 'linear',
-    label: 'Linear',
-    description: 'Show Linear in the Tasks source picker and sidebar shortcuts.',
-    Icon: ({ className }) => <LinearIcon className={className} />
-  }
-]
+const TASK_PROVIDER_ICONS: Record<
+  TaskProvider,
+  (props: { className?: string }) => React.JSX.Element
+> = {
+  github: ({ className }) => <Github className={className} />,
+  gitlab: ({ className }) => <Gitlab className={className} />,
+  linear: ({ className }) => <LinearIcon className={className} />
+}
 
 export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const visibleProviders = normalizeVisibleTaskProviders(settings.visibleTaskProviders)
 
   const toggleProvider = (provider: TaskProvider): void => {
@@ -64,16 +49,15 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
     <div className="space-y-6">
       <section className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Task Sources</h3>
+          <h3 className="text-sm font-semibold">{t('settings.tasks.taskSources.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Choose which task providers appear in the Tasks page source picker and sidebar
-            shortcuts. At least one provider must stay visible.
+            {t('settings.tasks.taskSources.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Task Providers"
-          description="Choose which task providers appear in the Tasks page and sidebar shortcuts."
+          title={t('settings.tasks.taskProviders.title')}
+          description={t('settings.tasks.taskProviders.description')}
           keywords={[
             'tasks',
             'provider',
@@ -86,19 +70,19 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
           ]}
           className="grid gap-2"
         >
-          {TASK_PROVIDER_OPTIONS.map((option) => {
-            const enabled = visibleProviders.includes(option.id)
+          {(['github', 'gitlab', 'linear'] as const).map((providerId) => {
+            const enabled = visibleProviders.includes(providerId)
             const isLastEnabled = enabled && visibleProviders.length === 1
-            const Icon = option.Icon
+            const Icon = TASK_PROVIDER_ICONS[providerId]
 
             return (
               <button
-                key={option.id}
+                key={providerId}
                 type="button"
                 role="checkbox"
                 aria-checked={enabled}
                 aria-disabled={isLastEnabled}
-                onClick={() => toggleProvider(option.id)}
+                onClick={() => toggleProvider(providerId)}
                 className={cn(
                   'flex w-full items-center gap-3 rounded-md border border-border/60 px-3 py-2.5 text-left transition-colors',
                   enabled
@@ -118,8 +102,16 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
                   <Icon className="size-3.5" />
                 </span>
                 <span className="min-w-0 flex-1 space-y-0.5">
-                  <Label className="cursor-inherit">{option.label}</Label>
-                  <span className="block text-xs text-muted-foreground">{option.description}</span>
+                  <Label className="cursor-inherit">
+                    {providerId === 'github'
+                      ? 'GitHub'
+                      : providerId === 'gitlab'
+                        ? 'GitLab'
+                        : 'Linear'}
+                  </Label>
+                  <span className="block text-xs text-muted-foreground">
+                    {t(`settings.tasks.taskProviders.${providerId}Description`)}
+                  </span>
                 </span>
                 <span
                   aria-hidden

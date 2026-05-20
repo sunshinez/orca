@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, FileCode2, LoaderCircle, Plus, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Repo, Worktree } from '../../../../shared/types'
@@ -36,6 +37,7 @@ function countServers(configs: LoadedMcpConfigInspection[]): number {
 }
 
 export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const openFile = useAppStore((state) => state.openFile)
   const setActiveView = useAppStore((state) => state.setActiveView)
   const setActiveWorktree = useAppStore((state) => state.setActiveWorktree)
@@ -109,19 +111,19 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
     try {
       if (connectionId && sshConnectionStatus !== 'connected') {
         setConfigs(missingInspections)
-        setInspectionUnavailableMessage('Connect this SSH repo to inspect or add MCP configs.')
+        setInspectionUnavailableMessage(t('settings.mcp.sshNotConnected'))
         return
       }
 
       if (!connectionId && !canInspectLocalMcpConfigRoot(targetRootPath, isWindows)) {
         setConfigs(missingInspections)
-        setInspectionUnavailableMessage('This workspace path is not available from this host.')
+        setInspectionUnavailableMessage(t('settings.mcp.pathUnavailableHost'))
         return
       }
 
       if (!connectionId && !(await window.api.shell.pathExists(targetRootPath))) {
         setConfigs(missingInspections)
-        setInspectionUnavailableMessage('This workspace path is not available on disk.')
+        setInspectionUnavailableMessage(t('settings.mcp.pathUnavailableDisk'))
         return
       }
 
@@ -195,7 +197,7 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
               exists: false,
               status: 'invalid',
               absolutePath,
-              readError: extractIpcErrorMessage(error, 'Unable to read config file.')
+              readError: extractIpcErrorMessage(error, t('settings.mcp.readError'))
             }
           }
         })
@@ -203,13 +205,11 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
       setConfigs(next)
     } catch (error) {
       setConfigs(missingInspections)
-      setInspectionUnavailableMessage(
-        extractIpcErrorMessage(error, 'Unable to inspect MCP configs.')
-      )
+      setInspectionUnavailableMessage(extractIpcErrorMessage(error, t('settings.mcp.inspectError')))
     } finally {
       setLoading(false)
     }
-  }, [connectionId, isWindows, missingInspections, sshConnectionStatus, targetRootPath])
+  }, [connectionId, isWindows, missingInspections, sshConnectionStatus, targetRootPath, t])
 
   useEffect(() => {
     void loadConfigs()
@@ -258,9 +258,9 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
         { targetGroupId }
       )
       setActiveView('terminal')
-      toast.success('MCP config created', { description: '.mcp.json' })
+      toast.success(t('settings.mcp.created'), { description: '.mcp.json' })
     } catch (error) {
-      toast.error(extractIpcErrorMessage(error, 'Failed to create MCP config.'))
+      toast.error(extractIpcErrorMessage(error, t('settings.mcp.createError')))
     }
   }
 
@@ -268,15 +268,10 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
     <section className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">MCP Configs</h3>
-          <p className="text-xs text-muted-foreground">
-            Inspect MCP server definitions that agents can use while working in this repo.
-          </p>
+          <h3 className="text-sm font-semibold">{t('settings.mcp.title')}</h3>
+          <p className="text-xs text-muted-foreground">{t('settings.mcp.description')}</p>
           {repo.connectionId ? (
-            <p className="text-xs text-muted-foreground">
-              SSH repos are read through the remote filesystem. Starter creation is limited to the
-              workspace root config.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('settings.mcp.sshNote')}</p>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -284,7 +279,7 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
             variant="ghost"
             size="icon-sm"
             onClick={() => void loadConfigs()}
-            aria-label="Refresh MCP configs"
+            aria-label={t('settings.mcp.refreshAria')}
           >
             {loading ? (
               <LoaderCircle className="size-3.5 animate-spin" />
@@ -300,7 +295,7 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
               onClick={() => void handleCreateStarter()}
             >
               <Plus className="size-3.5" />
-              {createConfirm ? 'Create empty config' : 'Add MCP config'}
+              {createConfirm ? t('settings.mcp.createEmpty') : t('settings.mcp.addConfig')}
             </Button>
           ) : null}
         </div>
@@ -324,10 +319,7 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
               {inspectionUnavailable ? (
                 <span>{inspectionUnavailableMessage}</span>
               ) : (
-                <span>
-                  No MCP config found. Add an empty workspace config when you want this repo to
-                  define its own MCP servers.
-                </span>
+                <span>{t('settings.mcp.noConfig')}</span>
               )}
             </div>
           ) : (
@@ -344,7 +336,7 @@ export function McpConfigSection({ repo }: McpConfigSectionProps): React.JSX.Ele
 
           {missingConfigs.length > 0 && !inspectionUnavailable ? (
             <div className="space-y-1.5 border-t border-border/50 px-3 py-2">
-              <p className="text-[11px] text-muted-foreground">Checked</p>
+              <p className="text-[11px] text-muted-foreground">{t('settings.mcp.checked')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {missingConfigs.map((config) => (
                   <span

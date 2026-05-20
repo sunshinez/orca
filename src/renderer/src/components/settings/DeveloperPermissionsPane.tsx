@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Accessibility,
   Bluetooth,
@@ -124,23 +125,26 @@ const PERMISSIONS: PermissionDefinition[] = [
   }
 ]
 
-function statusLabel(status: DeveloperPermissionStatus | undefined): string {
+function statusLabel(
+  status: DeveloperPermissionStatus | undefined,
+  t: (key: string) => string
+): string {
   switch (status) {
     case 'granted':
-      return 'Granted'
+      return t('settings.developerPermissions.status.granted')
     case 'denied':
-      return 'Denied'
+      return t('settings.developerPermissions.status.denied')
     case 'not-determined':
-      return 'Not requested'
+      return t('settings.developerPermissions.status.notDetermined')
     case 'restricted':
-      return 'Restricted'
+      return t('settings.developerPermissions.status.restricted')
     case 'unsupported':
-      return 'macOS only'
+      return t('settings.developerPermissions.status.unsupported')
     case 'ready':
-      return 'Entitled'
+      return t('settings.developerPermissions.status.ready')
     case 'unknown':
     default:
-      return 'Check manually'
+      return t('settings.developerPermissions.status.unknown')
   }
 }
 
@@ -155,6 +159,7 @@ function statusClass(status: DeveloperPermissionStatus | undefined): string {
 }
 
 export function DeveloperPermissionsPane(): React.JSX.Element {
+  const { t } = useTranslation()
   const [states, setStates] = useState<DeveloperPermissionState[]>([])
   const [loading, setLoading] = useState(true)
   const [pendingId, setPendingId] = useState<DeveloperPermissionId | null>(null)
@@ -169,11 +174,11 @@ export function DeveloperPermissionsPane(): React.JSX.Element {
     try {
       setStates(await window.api.developerPermissions.getStatus())
     } catch {
-      toast.error('Could not load developer permissions')
+      toast.error(t('settings.developerPermissions.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void refresh()
@@ -197,14 +202,14 @@ export function DeveloperPermissionsPane(): React.JSX.Element {
       const result = await window.api.developerPermissions.request({ id })
       await refresh()
       if (result.status === 'granted') {
-        toast.success('Permission granted')
+        toast.success(t('settings.developerPermissions.permissionGranted'))
       } else if (result.openedSystemSettings) {
-        toast.message('Opened macOS Privacy & Security')
+        toast.message(t('settings.developerPermissions.openedSystemSettings'))
       } else {
-        toast.message('Permission request sent')
+        toast.message(t('settings.developerPermissions.permissionRequestSent'))
       }
     } catch {
-      toast.error('Could not request permission')
+      toast.error(t('settings.developerPermissions.requestError'))
     } finally {
       setPendingId(null)
     }
@@ -216,16 +221,15 @@ export function DeveloperPermissionsPane(): React.JSX.Element {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm font-medium">
             <ShieldCheck className="size-4" />
-            Terminal tools inherit Orca&apos;s macOS privacy envelope.
+            {t('settings.developerPermissions.header')}
           </div>
           <p className="text-xs text-muted-foreground">
-            Use these controls when a CLI, local app, or automation tool needs macOS privacy access.
-            Orca does not ask at startup.
+            {t('settings.developerPermissions.subtitle')}
           </p>
         </div>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void refresh()}>
           <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common.refresh')}
         </Button>
       </div>
 
@@ -240,16 +244,20 @@ export function DeveloperPermissionsPane(): React.JSX.Element {
                 <div className="mt-0.5 text-muted-foreground">{permission.icon}</div>
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">{permission.label}</span>
+                    <span className="text-sm font-medium">
+                      {t(`settings.developerPermissions.permission.${permission.id}.label`)}
+                    </span>
                     <span
                       className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${statusClass(
                         status
                       )}`}
                     >
-                      {statusLabel(status)}
+                      {statusLabel(status, t)}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{permission.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(`settings.developerPermissions.permission.${permission.id}.description`)}
+                  </p>
                 </div>
               </div>
               <Button
@@ -260,7 +268,9 @@ export function DeveloperPermissionsPane(): React.JSX.Element {
                 className="shrink-0 gap-1.5"
               >
                 <ExternalLink className="size-3.5" />
-                {pending ? 'Working...' : permission.actionLabel}
+                {pending
+                  ? t('settings.developerPermissions.working')
+                  : t(`settings.developerPermissions.permission.${permission.id}.actionLabel`)}
               </Button>
             </div>
           )

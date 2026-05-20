@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import type { GlobalSettings } from '../../../../shared/types'
@@ -38,6 +39,7 @@ export function BrowserPane({
   updateSettings,
   onOpenComputerUse
 }: BrowserPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((s) => s.settingsSearchQuery)
   const browserDefaultUrl = useAppStore((s) => s.browserDefaultUrl)
   const setBrowserDefaultUrl = useAppStore((s) => s.setBrowserDefaultUrl)
@@ -101,16 +103,14 @@ export function BrowserPane({
 
       {showHomePage ? (
         <SearchableSetting
-          title="Default Home Page"
-          description="URL opened when creating a new browser tab. Leave empty to open a blank tab."
+          title={t('browser.homePage.label')}
+          description={t('browser.homePage.description')}
           keywords={['browser', 'home', 'homepage', 'default', 'url', 'new tab', 'blank']}
           className="flex items-start justify-between gap-4 px-1 py-2"
         >
           <div className="min-w-0 shrink space-y-0.5">
-            <Label>Default Home Page</Label>
-            <p className="text-xs text-muted-foreground">
-              URL opened when creating a new browser tab. Leave empty to open a blank tab.
-            </p>
+            <Label>{t('browser.homePage.label')}</Label>
+            <p className="text-xs text-muted-foreground">{t('browser.homePage.description')}</p>
           </div>
           <form
             className="flex shrink-0 items-center gap-2"
@@ -125,14 +125,14 @@ export function BrowserPane({
               if (normalized && normalized !== ORCA_BROWSER_BLANK_URL) {
                 setBrowserDefaultUrl(normalized)
                 setHomePageDraft(normalized)
-                toast.success('Home page saved.')
+                toast.success(t('browser.homePage.save'))
               }
             }}
           >
             <Input
               value={homePageDraft}
               onChange={(e) => setHomePageDraft(e.target.value)}
-              placeholder="https://google.com"
+              placeholder={t('browser.homePage.placeholder')}
               spellCheck={false}
               autoCapitalize="none"
               autoCorrect="off"
@@ -147,8 +147,8 @@ export function BrowserPane({
 
       {showSearchEngine ? (
         <SearchableSetting
-          title="Default Search Engine"
-          description="Search engine used when typing non-URL text in the address bar."
+          title={t('browser.searchEngine.label')}
+          description={t('browser.searchEngine.description')}
           keywords={[
             'browser',
             'search',
@@ -165,10 +165,8 @@ export function BrowserPane({
           className="flex items-start justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Default Search Engine</Label>
-            <p className="text-xs text-muted-foreground">
-              Used when typing non-URL text in the address bar.
-            </p>
+            <Label>{t('browser.searchEngine.label')}</Label>
+            <p className="text-xs text-muted-foreground">{t('browser.searchEngine.description')}</p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             <Select
@@ -196,8 +194,8 @@ export function BrowserPane({
 
       {showLinkRouting ? (
         <SearchableSetting
-          title="Link Routing"
-          description="Open http(s) links in Orca's built-in browser — from the terminal, markdown, and the editor. Shift+Cmd/Ctrl+click always uses your system browser."
+          title={t('browser.linkRouting.label')}
+          description={t('browser.linkRouting.description')}
           keywords={[
             'browser',
             'preview',
@@ -211,11 +209,8 @@ export function BrowserPane({
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Link Routing</Label>
-            <p className="text-xs text-muted-foreground">
-              Open http(s) links in Orca&apos;s built-in browser — from the terminal, markdown, and
-              the editor. Shift+Cmd/Ctrl+click always uses your system browser.
-            </p>
+            <Label>{t('browser.linkRouting.label')}</Label>
+            <p className="text-xs text-muted-foreground">{t('browser.linkRouting.description')}</p>
           </div>
           <button
             role="switch"
@@ -237,8 +232,8 @@ export function BrowserPane({
       {showCookies ? (
         <SearchableSetting
           id="browser-session-cookies"
-          title="Session & Cookies"
-          description="Manage browser profiles and import cookies from Chrome, Edge, Comet, or other browsers."
+          title={t('browser.sessionCookies.label')}
+          description={t('browser.sessionCookies.description')}
           keywords={[
             'cookies',
             'session',
@@ -254,10 +249,9 @@ export function BrowserPane({
         >
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-0.5">
-              <Label>Session &amp; Cookies</Label>
+              <Label>{t('browser.sessionCookies.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Select a default profile for new browser tabs. Import cookies and switch profiles
-                per-tab via the <strong>···</strong> toolbar menu.
+                {t('browser.sessionCookies.description')}
               </p>
             </div>
             <Button
@@ -267,7 +261,7 @@ export function BrowserPane({
               className="shrink-0 gap-1.5"
             >
               <Plus className="size-3" />
-              Add Profile
+              {t('browser.sessionCookies.addProfile')}
             </Button>
           </div>
 
@@ -313,7 +307,9 @@ export function BrowserPane({
       >
         <DialogContent className="sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle className="text-base">New Browser Profile</DialogTitle>
+            <DialogTitle className="text-base">
+              {t('browser.sessionCookies.newProfileTitle')}
+            </DialogTitle>
           </DialogHeader>
           <form
             onSubmit={async (e) => {
@@ -330,9 +326,11 @@ export function BrowserPane({
                 if (profile) {
                   setNewProfileDialogOpen(false)
                   setNewProfileName('')
-                  toast.success(`Profile "${profile.label}" created.`)
+                  toast.success(
+                    t('browser.sessionCookies.profileCreated', { label: profile.label })
+                  )
                 } else {
-                  toast.error('Failed to create profile.')
+                  toast.error(t('browser.sessionCookies.profileCreateFailed'))
                 }
               } finally {
                 setIsCreatingProfile(false)
@@ -342,7 +340,7 @@ export function BrowserPane({
             <Input
               value={newProfileName}
               onChange={(e) => setNewProfileName(e.target.value)}
-              placeholder="Profile name"
+              placeholder={t('browser.sessionCookies.profilePlaceholder')}
               autoFocus
               maxLength={50}
               className="mb-4"
@@ -357,14 +355,16 @@ export function BrowserPane({
                   setNewProfileName('')
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
                 size="sm"
                 disabled={!newProfileName.trim() || isCreatingProfile}
               >
-                {isCreatingProfile ? 'Creating…' : 'Create'}
+                {isCreatingProfile
+                  ? t('browser.sessionCookies.creating')
+                  : t('browser.sessionCookies.create')}
               </Button>
             </DialogFooter>
           </form>

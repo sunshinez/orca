@@ -1,7 +1,11 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { GlobalSettings } from '../../../../shared/types'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key })
+}))
 import { useAppStore } from '../../store'
 import { CommitMessageAiPane } from './CommitMessageAiPane'
 import { COMMIT_MESSAGE_AI_PANE_SEARCH_ENTRIES } from './commit-message-ai-search'
@@ -37,11 +41,11 @@ describe('CommitMessageAiPane', () => {
   it('renders only the opt-in control before the feature is enabled', () => {
     const markup = renderPane(buildSettings())
 
-    expect(markup).toContain('AI Commit Messages')
-    expect(markup).toContain('Enable AI commit messages')
+    expect(markup).toContain('settings.commitMessageAi.sectionTitle')
+    expect(markup).toContain('settings.commitMessageAi.sectionDescription')
     expect(markup).toContain('aria-checked="false"')
-    expect(markup).not.toContain('Which agent drafts your commit messages')
-    expect(markup).not.toContain('Thinking effort')
+    expect(markup).not.toContain('settings.commitMessageAi.agent.title')
+    expect(markup).not.toContain('settings.commitMessageAi.thinking.title')
   })
 
   it('renders model, thinking, and prompt controls for enabled preset agents', () => {
@@ -59,13 +63,13 @@ describe('CommitMessageAiPane', () => {
     )
 
     expect(markup).toContain('aria-checked="true"')
-    expect(markup).toContain('Which agent drafts your commit messages')
-    expect(markup).toContain('Model')
-    expect(markup).toContain('Thinking effort')
-    expect(markup).toContain('Higher effort produces more careful messages')
+    expect(markup).toContain('settings.commitMessageAi.agent.label')
+    expect(markup).toContain('settings.commitMessageAi.model.label')
+    expect(markup).toContain('settings.commitMessageAi.thinking.label')
+    expect(markup).toContain('settings.commitMessageAi.thinking.helper')
     expect(markup).toContain('Use Conventional Commits.')
-    expect(markup).toContain('Save')
-    expect(markup).toContain('Saved')
+    expect(markup).toContain('common.save')
+    expect(markup).toContain('settings.commitMessageAi.customPrompt.saved')
   })
 
   it('renders custom command settings for custom agents', () => {
@@ -82,8 +86,8 @@ describe('CommitMessageAiPane', () => {
       })
     )
 
-    expect(markup).toContain('AI Commit Messages')
-    expect(markup).toContain('Custom command')
+    expect(markup).toContain('settings.commitMessageAi.sectionTitle')
+    expect(markup).toContain('settings.commitMessageAi.customCommand.label')
     expect(markup).toContain('ollama run llama3.1 {prompt}')
   })
 
@@ -102,11 +106,10 @@ describe('CommitMessageAiPane', () => {
       })
     )
 
-    expect(markup).toContain('Not configured')
-    expect(markup).toContain('Your default agent is Gemini')
-    expect(markup).toContain('Choose Claude, Codex, or Custom')
-    expect(markup).not.toContain('Which model the selected agent uses')
-    expect(markup).not.toContain('Thinking effort')
+    expect(markup).toContain('settings.commitMessageAi.agent.notConfigured')
+    expect(markup).toContain('settings.commitMessageAi.agent.unsupportedDefault')
+    expect(markup).not.toContain('settings.commitMessageAi.model.helper')
+    expect(markup).not.toContain('settings.commitMessageAi.thinking.label')
   })
 
   it('keeps custom command discoverable in settings search metadata', () => {

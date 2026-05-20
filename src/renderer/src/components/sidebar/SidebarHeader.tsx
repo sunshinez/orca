@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Kanban, Plus, SlidersHorizontal } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
@@ -20,28 +21,28 @@ import SidebarFilter from './SidebarFilter'
 import WorkspaceKanbanDrawer from './WorkspaceKanbanDrawer'
 
 const GROUP_BY_OPTIONS = [
-  { id: 'none', label: 'None' },
-  { id: 'workspace-status', label: 'Status' },
-  { id: 'pr-status', label: 'PR' },
-  { id: 'repo', label: 'Repo' }
+  { id: 'none', labelKey: 'sidebar.header.groupByOptions.none' },
+  { id: 'workspace-status', labelKey: 'sidebar.header.groupByOptions.status' },
+  { id: 'pr-status', labelKey: 'sidebar.header.groupByOptions.pr' },
+  { id: 'repo', labelKey: 'sidebar.header.groupByOptions.repo' }
 ] as const
 
-const PROPERTY_OPTIONS: { id: WorktreeCardProperty; label: string }[] = [
+const PROPERTY_OPTIONS: { id: WorktreeCardProperty; labelKey: string }[] = [
   // Why: toggles the inline "Agent activity" list rendered below each
   // workspace card body (see WorktreeCard -> WorktreeCardAgents). Off hides
   // the list; there is no alternate surface.
-  { id: 'inline-agents', label: 'Agent activity' }
+  { id: 'inline-agents', labelKey: 'sidebar.header.propertyOptions.agentActivity' }
 ]
 
 const SORT_OPTIONS = [
-  { id: 'name', label: 'Name', description: null },
+  { id: 'name', labelKey: 'sidebar.header.sortByOptions.name', descriptionKey: null },
   {
     id: 'smart',
-    label: 'Smart',
-    description: 'Agents that need attention, then most recent activity.'
+    labelKey: 'sidebar.header.sortByOptions.smart',
+    descriptionKey: 'sidebar.header.sortByOptions.smartDescription'
   },
-  { id: 'recent', label: 'Recent', description: null },
-  { id: 'repo', label: 'Repo', description: null }
+  { id: 'recent', labelKey: 'sidebar.header.sortByOptions.recent', descriptionKey: null },
+  { id: 'repo', labelKey: 'sidebar.header.sortByOptions.repo', descriptionKey: null }
 ] as const
 
 const isMac = navigator.userAgent.includes('Mac')
@@ -51,6 +52,7 @@ const newWorktreeShortcutLabel = isMac ? '⌘N' : 'Ctrl+N'
 const HEADER_ACTION_HIT_TARGET_CLASS = 'relative z-20'
 
 const SidebarHeader = React.memo(function SidebarHeader() {
+  const { t } = useTranslation()
   const [workspaceBoardOpen, setWorkspaceBoardOpen] = useState(false)
   const [workspaceBoardMenuOpen, setWorkspaceBoardMenuOpen] = useState(false)
   const openModal = useAppStore((s) => s.openModal)
@@ -115,7 +117,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
       <div className="mt-2 flex h-8 items-center justify-between px-2 gap-2">
         <div className="flex min-w-0 items-center gap-1">
           <span className="pl-2 pr-0.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80 select-none">
-            Workspaces
+            {t('sidebar.header.workspaces')}
           </span>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -123,7 +125,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                 variant={workspaceBoardOpen ? 'secondary' : 'ghost'}
                 size="icon-xs"
                 className={`${HEADER_ACTION_HIT_TARGET_CLASS} text-muted-foreground`}
-                aria-label="Workspace board"
+                aria-label={t('sidebar.header.workspaceBoardAriaLabel')}
                 aria-pressed={workspaceBoardOpen}
                 data-workspace-board-trigger=""
                 onClick={handleWorkspaceBoardToggle}
@@ -132,7 +134,9 @@ const SidebarHeader = React.memo(function SidebarHeader() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={6}>
-              {workspaceBoardOpen ? 'Close workspace board' : 'Workspace board'}
+              {workspaceBoardOpen
+                ? t('sidebar.header.closeWorkspaceBoard')
+                : t('sidebar.header.workspaceBoard')}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -146,7 +150,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                     variant="ghost"
                     size="icon-xs"
                     className={`${HEADER_ACTION_HIT_TARGET_CLASS} text-muted-foreground`}
-                    aria-label="View options"
+                    aria-label={t('sidebar.header.viewOptionsAriaLabel')}
                     data-workspace-board-preserve-open=""
                   >
                     <SlidersHorizontal className="size-3.5" strokeWidth={2.25} />
@@ -154,7 +158,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent side="bottom" sideOffset={6}>
-                View options
+                {t('sidebar.header.viewOptionsTooltip')}
               </TooltipContent>
             </Tooltip>
             <DropdownMenuContent
@@ -164,7 +168,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
               className="w-56 pb-2"
               data-workspace-board-preserve-open=""
             >
-              <DropdownMenuLabel>Group by</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('sidebar.header.groupBy')}</DropdownMenuLabel>
               <div className="px-2 pt-0.5 pb-1">
                 <ToggleGroup
                   type="single"
@@ -184,14 +188,14 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                       value={opt.id}
                       className="h-6 px-2 text-[10px] data-[state=on]:bg-foreground/10 data-[state=on]:font-semibold data-[state=on]:text-foreground"
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </ToggleGroupItem>
                   ))}
                 </ToggleGroup>
               </div>
 
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('sidebar.header.sortBy')}</DropdownMenuLabel>
               <DropdownMenuRadioGroup
                 value={sortBy}
                 onValueChange={(v) => setSortBy(v as typeof sortBy)}
@@ -205,17 +209,17 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                       // toggle card properties without reopening the same panel.
                       onSelect={(e) => e.preventDefault()}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </DropdownMenuRadioItem>
                   )
-                  if (!opt.description) {
+                  if (!opt.descriptionKey) {
                     return radioItem
                   }
                   return (
                     <Tooltip key={opt.id}>
                       <TooltipTrigger asChild>{radioItem}</TooltipTrigger>
                       <TooltipContent side="right" sideOffset={6}>
-                        {opt.description}
+                        {t(opt.descriptionKey)}
                       </TooltipContent>
                     </Tooltip>
                   )
@@ -223,7 +227,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
               </DropdownMenuRadioGroup>
 
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Show properties</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('sidebar.header.showProperties')}</DropdownMenuLabel>
               {PROPERTY_OPTIONS.map((opt) => (
                 <DropdownMenuCheckboxItem
                   key={opt.id}
@@ -231,7 +235,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                   onCheckedChange={() => toggleWorktreeCardProperty(opt.id)}
                   onSelect={(e) => e.preventDefault()}
                 >
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -249,7 +253,7 @@ const SidebarHeader = React.memo(function SidebarHeader() {
                   }
                   openModal('new-workspace-composer', { telemetrySource: 'sidebar' })
                 }}
-                aria-label="New workspace"
+                aria-label={t('sidebar.header.newWorkspaceAriaLabel')}
                 disabled={!canCreateWorktree}
               >
                 <Plus className="size-3.5" strokeWidth={2.25} />
@@ -257,8 +261,8 @@ const SidebarHeader = React.memo(function SidebarHeader() {
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={6}>
               {canCreateWorktree
-                ? `New workspace (${newWorktreeShortcutLabel})`
-                : 'Add a Git project to create worktrees'}
+                ? t('sidebar.header.newWorkspaceTooltip', { shortcut: newWorktreeShortcutLabel })
+                : t('sidebar.header.newWorkspaceDisabledTooltip')}
             </TooltipContent>
           </Tooltip>
         </div>

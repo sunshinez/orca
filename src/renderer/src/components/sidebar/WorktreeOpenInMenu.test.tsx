@@ -27,10 +27,16 @@ const { mockState, openInExternalEditorMock, openInFileManagerMock, toastErrorMo
   })
 )
 
+const mockT = (key: string) => key
+
 vi.mock('sonner', () => ({
   toast: {
     error: toastErrorMock
   }
+}))
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key })
 }))
 
 vi.mock('@/store', () => {
@@ -128,7 +134,8 @@ describe('WorktreeOpenInMenu', () => {
     await openWorktreePath({
       target: 'file-manager',
       worktreePath: '/tmp/workspace',
-      connectionId: null
+      connectionId: null,
+      t: mockT
     })
 
     expect(toastErrorMock).toHaveBeenCalledWith(
@@ -144,12 +151,13 @@ describe('WorktreeOpenInMenu', () => {
     await openWorktreePath({
       target: 'external-editor',
       worktreePath: '/tmp/workspace',
-      connectionId: null
+      connectionId: null,
+      t: mockT
     })
 
     expect(openInExternalEditorMock).toHaveBeenCalledWith('/tmp/workspace', undefined)
-    expect(toastErrorMock).toHaveBeenCalledWith('Could not open workspace folder.', {
-      description: 'Check the editor command or file manager configuration on this machine.'
+    expect(toastErrorMock).toHaveBeenCalledWith('sidebar.openIn.openFailed', {
+      description: 'sidebar.openIn.openFailedDescription'
     })
   })
 
@@ -170,7 +178,8 @@ describe('WorktreeOpenInMenu', () => {
       target: 'external-editor',
       worktreePath: '/tmp/workspace',
       connectionId: null,
-      command: 'cursor'
+      command: 'cursor',
+      t: mockT
     })
     expect(openInExternalEditorMock).toHaveBeenCalledWith('/tmp/workspace', 'cursor')
   })
@@ -182,7 +191,8 @@ describe('WorktreeOpenInMenu', () => {
       target: 'external-editor',
       worktreePath: '/tmp/workspace',
       connectionId: null,
-      command: 'cursor'
+      command: 'cursor',
+      t: mockT
     })
 
     expect(openInExternalEditorMock).not.toHaveBeenCalled()

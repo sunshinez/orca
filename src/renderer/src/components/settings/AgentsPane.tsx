@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, ChevronDown, ExternalLink, RefreshCw, Terminal } from 'lucide-react'
 import type { GlobalSettings, TuiAgent } from '../../../../shared/types'
 import { AGENT_CATALOG, AgentIcon } from '@/lib/agent-catalog'
@@ -38,6 +39,7 @@ function AgentCommandOverrideInput({
   cmdOverride,
   onSaveOverride
 }: AgentCommandOverrideInputProps): React.JSX.Element {
+  const { t } = useTranslation()
   const draftSeed = cmdOverride ?? defaultCmd
   const [cmdDraft, setCmdDraft] = useState(draftSeed)
 
@@ -53,7 +55,7 @@ function AgentCommandOverrideInput({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="shrink-0 text-xs text-muted-foreground">Command</span>
+      <span className="shrink-0 text-xs text-muted-foreground">{t('settings.agents.command')}</span>
       <Input
         value={cmdDraft}
         onChange={(e) => setCmdDraft(e.target.value)}
@@ -83,7 +85,7 @@ function AgentCommandOverrideInput({
           }}
           className="h-7 shrink-0 text-xs text-muted-foreground hover:text-foreground"
         >
-          Reset
+          {t('common.reset')}
         </Button>
       )}
     </div>
@@ -101,6 +103,7 @@ function AgentRow({
   onSetDefault,
   onSaveOverride
 }: AgentRowProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [cmdOpen, setCmdOpen] = useState(Boolean(cmdOverride))
 
   return (
@@ -123,11 +126,11 @@ function AgentRow({
             {isDetected ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
                 <span className="size-1.5 rounded-full bg-emerald-500" />
-                Detected
+                {t('settings.agents.detected')}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-muted/30 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                Not installed
+                {t('settings.agents.notInstalled')}
               </span>
             )}
           </div>
@@ -150,7 +153,9 @@ function AgentRow({
             <button
               type="button"
               onClick={onSetDefault}
-              title={isDefault ? 'Default agent' : 'Set as default'}
+              title={
+                isDefault ? t('settings.agents.defaultAgent') : t('settings.agents.setAsDefault')
+              }
               className={cn(
                 'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
                 isDefault
@@ -159,7 +164,7 @@ function AgentRow({
               )}
             >
               {isDefault && <Check className="size-3" />}
-              {isDefault ? 'Default' : 'Set default'}
+              {isDefault ? t('settings.agents.default') : t('settings.agents.setDefault')}
             </button>
           )}
 
@@ -168,7 +173,7 @@ function AgentRow({
             <button
               type="button"
               onClick={() => setCmdOpen((prev) => !prev)}
-              title="Customize command"
+              title={t('settings.agents.customizeCommand')}
               className={cn(
                 'flex size-7 items-center justify-center rounded-lg transition-colors',
                 cmdOpen || cmdOverride
@@ -217,7 +222,7 @@ function AgentRow({
             onSaveOverride={onSaveOverride}
           />
           <p className="mt-1.5 text-[11px] text-muted-foreground">
-            Override the binary path or name used to launch this agent.
+            {t('settings.agents.overrideHint')}
           </p>
         </div>
       )}
@@ -226,6 +231,7 @@ function AgentRow({
 }
 
 export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const { detectedIds: detectedList, isRefreshing, refresh } = useDetectedAgents()
   // Why: refresh re-spawns the user's login shell to re-capture PATH
   // (preflight:refreshAgents on the main side). This handles the
@@ -272,9 +278,9 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
       {/* Default agent picker */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Default Agent</h3>
+          <h3 className="text-sm font-semibold">{t('settings.agents.defaultAgentTitle')}</h3>
           <p className="text-xs text-muted-foreground">
-            Pre-selected agent when opening a new workspace.
+            {t('settings.agents.defaultAgentDescription')}
           </p>
         </div>
 
@@ -291,7 +297,7 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
             )}
           >
             {isAutoDefault && <Check className="size-3.5" />}
-            Auto
+            {t('settings.agents.auto')}
           </button>
 
           {/* Why: users who prefer to open a raw shell by default need a
@@ -309,7 +315,7 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
             )}
           >
             <Terminal className="size-3.5" />
-            No agent (blank terminal)
+            {t('settings.agents.noAgent')}
             {isBlankDefault && <Check className="size-3.5" />}
           </button>
 
@@ -343,15 +349,15 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
       {detectedAgents.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold">Installed</h3>
+            <h3 className="text-sm font-semibold">{t('settings.agents.installed')}</h3>
             <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-              {detectedAgents.length} detected
+              {t('settings.agents.detectedCount', { count: detectedAgents.length })}
             </span>
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              title="Re-read your shell PATH and re-detect installed agents"
+              title={t('settings.agents.refreshTooltip')}
               className={cn(
                 'ml-auto flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
                 isRefreshing
@@ -360,7 +366,7 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
               )}
             >
               <RefreshCw className={cn('size-3', isRefreshing && 'animate-spin')} />
-              {isRefreshing ? 'Refreshing…' : 'Refresh'}
+              {isRefreshing ? t('settings.agents.refreshing') : t('settings.agents.refresh')}
             </button>
           </div>
 
@@ -387,9 +393,11 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
       {undetectedAgents.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">Available to install</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              {t('settings.agents.availableToInstall')}
+            </h3>
             <span className="rounded-full border border-border/40 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {undetectedAgents.length} agents
+              {t('settings.agents.agentCount', { count: undetectedAgents.length })}
             </span>
           </div>
 
@@ -414,7 +422,7 @@ export function AgentsPane({ settings, updateSettings }: AgentsPaneProps): React
 
       {detectedIds === null && (
         <div className="flex items-center justify-center rounded-xl border border-dashed border-border/50 py-8 text-sm text-muted-foreground">
-          Detecting installed agents…
+          {t('settings.agents.detecting')}
         </div>
       )}
     </div>

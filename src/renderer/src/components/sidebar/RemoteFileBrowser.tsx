@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- Why: the remote file browser centralizes filter state, path-mode preview state, cache, debounce, request gen, and click/keyboard handling in one component so picker navigation stays coherent. */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronRight, Folder, ArrowUp, LoaderCircle, Home, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -24,7 +25,6 @@ type RemoteFileBrowserProps = {
 }
 
 const FILE_HINT_MS = 2000
-const FILE_HINT_TEXT = "Files can't be opened as a project"
 const PATH_DEBOUNCE_MS = 300
 
 type BrowseResult = { resolvedPath: string; entries: DirEntry[] }
@@ -43,6 +43,7 @@ export function RemoteFileBrowser({
   onSelect,
   onCancel
 }: RemoteFileBrowserProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [resolvedPath, setResolvedPath] = useState('')
   const [entries, setEntries] = useState<DirEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -548,8 +549,8 @@ export function RemoteFileBrowser({
   const showPreviewLoading = isPreviewActive && preview!.loading
   const displayEntries = isPreviewActive ? previewFilteredEntries : filteredEntries
   const displayEmptyDirCopy = isPreviewActive
-    ? `${preview!.resolvedPath} is empty`
-    : 'Empty directory'
+    ? t('sidebar.remoteFileBrowser.emptyPreview', { path: preview!.resolvedPath })
+    : t('sidebar.remoteFileBrowser.emptyDirectory')
 
   // Disable Select folder while a non-empty path-mode preview is visible so
   // the committed directory isn't silently selected while the list shows a
@@ -613,7 +614,7 @@ export function RemoteFileBrowser({
           onChange={(e) => handleInputChange(e.target.value)}
           onPaste={handleInputPaste}
           onKeyDown={handleFilterKeyDown}
-          placeholder="Type to filter or enter a path…"
+          placeholder={t('sidebar.remoteFileBrowser.placeholder')}
           aria-invalid={!!preview?.error}
           aria-describedby={preview?.error ? 'remote-file-browser-path-error' : undefined}
           className={cn(
@@ -657,15 +658,19 @@ export function RemoteFileBrowser({
             </div>
           ) : !isPreviewActive && entries.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <p className="text-xs text-muted-foreground">Empty directory</p>
+              <p className="text-xs text-muted-foreground">
+                {t('sidebar.remoteFileBrowser.emptyDirectory')}
+              </p>
             </div>
           ) : displayEntries.length === 0 && !preview?.error ? (
             // Directory has contents; filter hides them all. Distinguishing
             // filter emptiness from directory emptiness keeps copy accurate.
             <div className="flex items-center justify-center h-full">
-              <p className="text-xs text-muted-foreground">{`No matches for '${
-                isPreviewActive ? preview!.filter : filter
-              }'`}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('sidebar.remoteFileBrowser.noMatches', {
+                  filter: isPreviewActive ? preview!.filter : filter
+                })}
+              </p>
             </div>
           ) : (
             displayEntries.map((entry) => {
@@ -706,11 +711,13 @@ export function RemoteFileBrowser({
         className="block text-[10px] text-muted-foreground truncate w-full"
         title={fileHint ? undefined : resolvedPath}
       >
-        {fileHint ? FILE_HINT_TEXT : `Opens as a remote project · ${resolvedPath}`}
+        {fileHint
+          ? t('sidebar.remoteFileBrowser.fileHint')
+          : t('sidebar.remoteFileBrowser.footer', { path: resolvedPath })}
       </p>
       <div className="flex items-center justify-end gap-2">
         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           size="sm"
@@ -719,7 +726,7 @@ export function RemoteFileBrowser({
           disabled={selectDisabled}
           title={resolvedPath}
         >
-          Select folder
+          {t('sidebar.remoteFileBrowser.selectFolder')}
         </Button>
       </div>
     </div>

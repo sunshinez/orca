@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import { toast } from 'sonner'
 import { runWorktreeDeletesInParallel } from './delete-worktree-flow'
 
 const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
+  const { t } = useTranslation()
   const activeModal = useAppStore((s) => s.activeModal)
   const modalData = useAppStore((s) => s.modalData)
   const closeModal = useAppStore((s) => s.closeModal)
@@ -127,11 +129,11 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
     // Why: the toast confirms the preference was saved and points the user at
     // where to undo it. The "Open Settings" action deep-links to the General
     // pane so they never have to hunt for the toggle if they change their mind.
-    toast.success("We'll skip this confirmation next time.", {
-      description: 'You can change this in Settings.',
+    toast.success(t('sidebar.deleteWorktree.dontAskAgainToast'), {
+      description: t('sidebar.deleteWorktree.dontAskAgainDescription'),
       duration: 8000,
       action: {
-        label: 'Open Settings',
+        label: t('sidebar.deleteWorktree.openSettings'),
         onClick: () => {
           openSettingsPage()
           openSettingsTarget({
@@ -142,7 +144,7 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
         }
       }
     })
-  }, [openSettingsPage, openSettingsTarget, updateSettings])
+  }, [openSettingsPage, openSettingsTarget, t, updateSettings])
 
   const handleDelete = useCallback(
     (force = false) => {
@@ -174,7 +176,7 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
             onDeleted?.([worktreeId])
           })
           .catch((err: unknown) => {
-            toast.error('Failed to delete worktree', {
+            toast.error(t('sidebar.deleteWorktree.deleteFailed'), {
               description: err instanceof Error ? err.message : String(err)
             })
           })
@@ -197,6 +199,7 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
       onDeleted,
       persistDontAskAgainPreference,
       removeWorktree,
+      t,
       worktreeIds.length,
       worktreeId,
       worktrees
@@ -222,23 +225,15 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
       >
         <DialogHeader>
           <DialogTitle className="text-sm">
-            {isBatchDelete ? 'Delete Worktrees' : 'Delete Worktree'}
+            {isBatchDelete
+              ? t('sidebar.deleteWorktree.titleBatch')
+              : t('sidebar.deleteWorktree.title')}
           </DialogTitle>
           <DialogDescription className="text-xs">
             {isBatchDelete ? (
-              <>
-                Remove{' '}
-                <span className="font-medium text-foreground">{worktrees.length} worktrees</span>{' '}
-                from git and delete their working tree folders.
-              </>
+              <>{t('sidebar.deleteWorktree.descriptionBatch', { count: worktrees.length })}</>
             ) : (
-              <>
-                Remove{' '}
-                <span className="break-all font-medium text-foreground">
-                  {worktree?.displayName}
-                </span>{' '}
-                from git and delete its working tree folder.
-              </>
+              <>{t('sidebar.deleteWorktree.description', { name: worktree?.displayName ?? '' })}</>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -286,8 +281,7 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                This is the <span className="font-semibold">main worktree</span> (the original clone
-                directory). Git does not allow removing the main worktree.
+                {t('sidebar.deleteWorktree.mainWorktreeWarning')}
               </div>
             </div>
           </div>
@@ -322,13 +316,13 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
             >
               {dontAskAgain ? <Check className="size-3" strokeWidth={3} /> : null}
             </span>
-            Don&apos;t ask again
+            {t('sidebar.deleteWorktree.dontAskAgain')}
           </button>
         )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isDeleting}>
-            {isMainWorktree ? 'Close' : 'Cancel'}
+            {isMainWorktree ? t('common.cancel') : t('common.cancel')}
           </Button>
           {!isMainWorktree &&
             (canForceDelete ? (
@@ -339,7 +333,9 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
                 disabled={isDeleting}
               >
                 {isDeleting ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 />}
-                {isDeleting ? 'Force Deleting…' : 'Force Delete'}
+                {isDeleting
+                  ? t('sidebar.deleteWorktree.forceDeleting')
+                  : t('sidebar.deleteWorktree.forceDelete')}
               </Button>
             ) : (
               <Button
@@ -349,7 +345,11 @@ const DeleteWorktreeDialog = React.memo(function DeleteWorktreeDialog() {
                 disabled={isDeleting}
               >
                 {isDeleting ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 />}
-                {isDeleting ? 'Deleting…' : isBatchDelete ? `Delete ${worktrees.length}` : 'Delete'}
+                {isDeleting
+                  ? t('sidebar.deleteWorktree.deleting')
+                  : isBatchDelete
+                    ? `${t('common.delete')} ${worktrees.length}`
+                    : t('common.delete')}
               </Button>
             ))}
         </DialogFooter>

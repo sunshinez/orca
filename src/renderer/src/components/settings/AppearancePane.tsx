@@ -1,4 +1,4 @@
-import type React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { GlobalSettings, StatusBarItem } from '../../../../shared/types'
 import { Label } from '../ui/label'
 import { Separator } from '../ui/separator'
@@ -172,6 +172,7 @@ export function AppearancePane({
   applyTheme,
   fontSuggestions
 }: AppearancePaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((state) => state.settingsSearchQuery)
   const isMac = navigator.userAgent.includes('Mac')
   const zoomInLabel = isMac ? '⌘+' : 'Ctrl +'
@@ -184,13 +185,15 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, THEME_ENTRIES) ? (
       <section key="theme" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Theme</h3>
-          <p className="text-xs text-muted-foreground">Choose how Orca looks in the app window.</p>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.theme.title')}</h3>
+          <p className="text-xs text-muted-foreground">
+            {t('settings.appearance.theme.description')}
+          </p>
         </div>
 
         <SearchableSetting
-          title="Theme"
-          description="Choose how Orca looks in the app window."
+          title={t('settings.appearance.theme.title')}
+          description={t('settings.appearance.theme.description')}
           keywords={['dark', 'light', 'system']}
         >
           <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
@@ -217,9 +220,9 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, ZOOM_ENTRIES) ? (
       <section key="zoom" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">UI Zoom</h3>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.zoom.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Scale the entire application interface. Use{' '}
+            {t('settings.appearance.zoom.description')} Use{' '}
             <kbd className="rounded border px-1 py-0.5 text-[10px]">{zoomInLabel}</kbd> /{' '}
             <kbd className="rounded border px-1 py-0.5 text-[10px]">{zoomOutLabel}</kbd> when not in
             a terminal pane.
@@ -227,8 +230,8 @@ export function AppearancePane({
         </div>
 
         <SearchableSetting
-          title="UI Zoom"
-          description="Scale the entire application interface."
+          title={t('settings.appearance.zoom.title')}
+          description={t('settings.appearance.zoom.description')}
           keywords={['zoom', 'scale', 'shortcut']}
         >
           <UIZoomControl />
@@ -238,19 +241,19 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, TYPOGRAPHY_ENTRIES) ? (
       <section key="typography" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Typography</h3>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.typography.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Choose the font used by the Orca interface.
+            {t('settings.appearance.typography.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="IDE Font"
-          description="Choose the font used by the Orca interface."
+          title={t('settings.appearance.typography.label')}
+          description={t('settings.appearance.typography.description')}
           keywords={['font', 'typeface', 'typography', 'ide', 'orca', 'interface', 'app', 'ui']}
           className="space-y-2"
         >
-          <Label>IDE Font</Label>
+          <Label>{t('settings.appearance.typography.label')}</Label>
           <FontAutocomplete
             value={settings.appFontFamily}
             suggestions={fontSuggestions}
@@ -265,22 +268,22 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, LAYOUT_ENTRIES) ? (
       <section key="layout" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Layout</h3>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.layout.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Default layout when creating new worktrees.
+            {t('settings.appearance.layout.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Open Right Sidebar by Default"
-          description="Automatically expand the file explorer panel when creating a new worktree."
+          title={t('settings.appearance.layout.rightSidebar.label')}
+          description={t('settings.appearance.layout.rightSidebar.description')}
           keywords={['layout', 'file explorer', 'sidebar']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Open Right Sidebar by Default</Label>
+            <Label>{t('settings.appearance.layout.rightSidebar.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Automatically expand the file explorer panel when creating a new worktree.
+              {t('settings.appearance.layout.rightSidebar.description')}
             </p>
           </div>
           <ToggleSwitchButton
@@ -292,15 +295,15 @@ export function AppearancePane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Show Git-Ignored Files"
-          description="Show files matched by .gitignore in the file explorer."
+          title={t('settings.appearance.layout.gitIgnored.label')}
+          description={t('settings.appearance.layout.gitIgnored.description')}
           keywords={['git', 'gitignore', 'ignored', 'file explorer', 'sidebar', 'hide']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Show Git-Ignored Files</Label>
+            <Label>{t('settings.appearance.layout.gitIgnored.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Turn off to hide files matched by .gitignore from the file explorer.
+              {t('settings.appearance.layout.gitIgnored.description')}
             </p>
           </div>
           <ToggleSwitchButton
@@ -315,21 +318,23 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, TITLEBAR_ENTRIES) ? (
       <section key="titlebar" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Titlebar</h3>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.titlebar.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Control what appears in the application titlebar.
+            {t('settings.appearance.titlebar.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Titlebar App Name"
-          description="Show Orca in the titlebar."
+          title={t('settings.appearance.titlebar.appName.label')}
+          description={t('settings.appearance.titlebar.appName.description')}
           keywords={['titlebar', 'orca', 'app', 'name', 'brand']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Titlebar App Name</Label>
-            <p className="text-xs text-muted-foreground">Show Orca in the titlebar.</p>
+            <Label>{t('settings.appearance.titlebar.appName.label')}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t('settings.appearance.titlebar.appName.description')}
+            </p>
           </div>
           <ToggleSwitchButton
             checked={settings.showTitlebarAppName}
@@ -341,10 +346,9 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, STATUS_BAR_ENTRIES) ? (
       <section key="status-bar" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Status Bar</h3>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.statusBar.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Choose which indicators appear at the bottom of the window. You can also right-click the
-            status bar for the same toggles.
+            {t('settings.appearance.statusBar.description')}
           </p>
         </div>
 
@@ -375,19 +379,19 @@ export function AppearancePane({
     matchesSettingsSearch(searchQuery, SIDEBAR_ENTRIES) ? (
       <section key="sidebar" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Sidebar</h3>
+          <h3 className="text-sm font-semibold">{t('settings.appearance.sidebar.title')}</h3>
         </div>
 
         <SearchableSetting
-          title="Show Tasks Button"
-          description="Show the Tasks button at the top of the left sidebar."
+          title={t('settings.appearance.sidebar.tasksButton.label')}
+          description={t('settings.appearance.sidebar.tasksButton.description')}
           keywords={['tasks', 'sidebar', 'button', 'hide', 'show', 'github', 'linear']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Show Tasks Button</Label>
+            <Label>{t('settings.appearance.sidebar.tasksButton.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Show the Tasks button at the top of the left sidebar.
+              {t('settings.appearance.sidebar.tasksButton.description')}
             </p>
           </div>
           <ToggleSwitchButton

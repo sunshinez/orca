@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SshConnectionState } from '../../../../shared/ssh-types'
 import { SshDestructiveActionDialog } from './SshDestructiveActionDialog'
 import { isSshTargetConnecting, type SshTargetBusyAction } from './ssh-target-action-state'
@@ -28,6 +29,7 @@ export function SshTargetDestructiveActions({
   onTerminateSessions,
   children
 }: SshTargetDestructiveActionsProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [pendingRemove, setPendingRemove] = useState<PendingTargetAction | null>(null)
   const [pendingReset, setPendingReset] = useState<PendingTargetAction | null>(null)
   const [pendingTerminate, setPendingTerminate] = useState<PendingTargetAction | null>(null)
@@ -140,11 +142,11 @@ export function SshTargetDestructiveActions({
 
       <SshDestructiveActionDialog
         open={!!pendingRemove}
-        title="Remove SSH Target"
-        description="This will remove the target and end any active remote terminals."
+        title={t('settings.ssh.dialog.removeTitle')}
+        description={t('settings.ssh.dialog.removeDescription')}
         targetLabel={pendingRemove?.label}
-        actionLabel="Remove"
-        busyLabel="Removing"
+        actionLabel={t('settings.ssh.dialog.removeAction')}
+        busyLabel={t('settings.ssh.dialog.removeBusy')}
         isBusy={pendingRemoveIsBusy}
         onOpenChange={(open) => {
           if (pendingRemoveIsBusy) {
@@ -161,11 +163,11 @@ export function SshTargetDestructiveActions({
 
       <SshDestructiveActionDialog
         open={!!pendingReset && (!pendingResetBlockedByConnection || pendingResetIsBusy)}
-        title="Reset Remote Relay?"
-        description="This force-stops the remote relay for this SSH target. Active remote terminals and port forwards for this target will end."
+        title={t('settings.ssh.dialog.resetTitle')}
+        description={t('settings.ssh.dialog.resetDescription')}
         targetLabel={pendingReset?.label}
-        actionLabel="Reset Relay"
-        busyLabel="Resetting"
+        actionLabel={t('settings.ssh.dialog.resetAction')}
+        busyLabel={t('settings.ssh.dialog.resetBusy')}
         isBusy={pendingResetIsBusy}
         onOpenChange={(open) => {
           if (pendingResetIsBusy) {
@@ -180,11 +182,11 @@ export function SshTargetDestructiveActions({
 
       <SshDestructiveActionDialog
         open={!!pendingTerminate}
-        title="End Remote Terminals?"
-        description="This will stop active terminal sessions on this SSH target. Reconnecting will not restore them."
+        title={t('settings.ssh.dialog.terminateTitle')}
+        description={t('settings.ssh.dialog.terminateDescription')}
         targetLabel={pendingTerminate?.label}
-        actionLabel="End Terminals"
-        busyLabel="Ending"
+        actionLabel={t('settings.ssh.dialog.terminateAction')}
+        busyLabel={t('settings.ssh.dialog.terminateBusy')}
         isBusy={pendingTerminateIsBusy}
         onOpenChange={(open) => {
           if (pendingTerminateIsBusy) {

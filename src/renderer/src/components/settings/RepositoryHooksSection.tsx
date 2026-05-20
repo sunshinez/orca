@@ -1,5 +1,7 @@
 /* eslint-disable max-lines -- Why: the YAML status card, issue-command editor, policy grid, and legacy-hook section form one cohesive settings surface; splitting them across files would scatter tightly coupled state and prop drilling. */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type {
   HookCommandSourcePolicy,
   OrcaHooks,
@@ -36,53 +38,67 @@ type HookSettingsPolicyDraft = Partial<
   Pick<RepoHookSettings, 'setupRunPolicy' | 'commandSourcePolicy'>
 >
 
-const SETUP_RUN_POLICY_OPTIONS: PolicyOption<SetupRunPolicy>[] = [
-  { policy: 'ask', label: 'Ask every time', description: 'Prompt before running setup.' },
-  { policy: 'run-by-default', label: 'Run by default', description: 'Run setup automatically.' },
-  {
-    policy: 'skip-by-default',
-    label: 'Skip by default',
-    description: 'Only run setup when chosen.'
-  }
-]
+function getSetupRunPolicyOptions(t: TFunction): PolicyOption<SetupRunPolicy>[] {
+  return [
+    {
+      policy: 'ask',
+      label: t('settings.repoHooks.setupRunPolicy.askLabel'),
+      description: t('settings.repoHooks.setupRunPolicy.askDescription')
+    },
+    {
+      policy: 'run-by-default',
+      label: t('settings.repoHooks.setupRunPolicy.runByDefaultLabel'),
+      description: t('settings.repoHooks.setupRunPolicy.runByDefaultDescription')
+    },
+    {
+      policy: 'skip-by-default',
+      label: t('settings.repoHooks.setupRunPolicy.skipByDefaultLabel'),
+      description: t('settings.repoHooks.setupRunPolicy.skipByDefaultDescription')
+    }
+  ]
+}
 
-const COMMAND_SOURCE_POLICY_OPTIONS: PolicyOption<HookCommandSourcePolicy>[] = [
-  {
-    policy: 'shared-only',
-    label: 'Use orca.yaml only',
-    description: 'Run only committed repo commands; ignore local Settings commands.'
-  },
-  {
-    policy: 'local-only',
-    label: 'Use local only',
-    description: 'Ignore repo commands and run only your local Settings commands.'
-  },
-  {
-    policy: 'run-both',
-    label: 'Run both',
-    description: 'Run orca.yaml first, then your local Settings command.'
-  }
-]
+function getCommandSourcePolicyOptions(t: TFunction): PolicyOption<HookCommandSourcePolicy>[] {
+  return [
+    {
+      policy: 'shared-only',
+      label: t('settings.repoHooks.commandSourcePolicy.sharedOnlyLabel'),
+      description: t('settings.repoHooks.commandSourcePolicy.sharedOnlyDescription')
+    },
+    {
+      policy: 'local-only',
+      label: t('settings.repoHooks.commandSourcePolicy.localOnlyLabel'),
+      description: t('settings.repoHooks.commandSourcePolicy.localOnlyDescription')
+    },
+    {
+      policy: 'run-both',
+      label: t('settings.repoHooks.commandSourcePolicy.runBothLabel'),
+      description: t('settings.repoHooks.commandSourcePolicy.runBothDescription')
+    }
+  ]
+}
 
-const LOCAL_HOOK_FIELDS: {
+function getLocalHookFields(t: TFunction): {
   name: LocalHookName
   label: string
   description: string
   placeholder: string
-}[] = [
-  {
-    name: 'setup',
-    label: 'Local setup command',
-    description: 'Runs after a new workspace is created when the source policy includes local.',
-    placeholder: 'cp "$ORCA_ROOT_PATH/.env" "$ORCA_WORKTREE_PATH/.env"'
-  },
-  {
-    name: 'archive',
-    label: 'Local archive command',
-    description: 'Runs before a local worktree is archived or removed.',
-    placeholder: 'echo "Cleaning up $ORCA_WORKSPACE_NAME"'
-  }
-]
+}[] {
+  return [
+    {
+      name: 'setup',
+      label: t('settings.repoHooks.localSetupCommandLabel'),
+      description: t('settings.repoHooks.localSetupCommandDescription'),
+      placeholder: 'cp "$ORCA_ROOT_PATH/.env" "$ORCA_WORKTREE_PATH/.env"'
+    },
+    {
+      name: 'archive',
+      label: t('settings.repoHooks.localArchiveCommandLabel'),
+      description: t('settings.repoHooks.localArchiveCommandDescription'),
+      placeholder: 'echo "Cleaning up $ORCA_WORKSPACE_NAME"'
+    }
+  ]
+}
 
 export function scriptToCommandRows(script: string | undefined): LocalCommandRow[] {
   if (!script) {
@@ -140,38 +156,31 @@ const EXAMPLE_TEMPLATE = `scripts:
 issueCommand: |
   Complete {{artifact_url}}`
 
-const YAML_STATE_STYLES: Record<
-  string,
-  { card: string; title: string; heading: string; description: string }
-> = {
+const YAML_STATE_STYLES: Record<string, { card: string; title: string }> = {
   loaded: {
     card: 'border-emerald-500/20 bg-emerald-500/5',
-    title: 'text-emerald-700 dark:text-emerald-300',
-    heading: 'Using `orca.yaml`',
-    description:
-      'Shared hook and issue-automation defaults are defined in the repo and available to everyone who uses it.'
+    title: 'text-emerald-700 dark:text-emerald-300'
   },
   'update-available': {
     card: 'border-amber-500/20 bg-amber-500/5',
-    title: 'text-amber-700 dark:text-amber-300',
-    heading: '`orca.yaml` could not be parsed',
-    description:
-      'The file contains configuration keys that this version of Orca does not recognize. You may need to update Orca, or check the file for typos.'
+    title: 'text-amber-700 dark:text-amber-300'
   },
   invalid: {
     card: 'border-amber-500/20 bg-amber-500/5',
-    title: 'text-amber-700 dark:text-amber-300',
-    heading: '`orca.yaml` could not be parsed',
-    description:
-      'The core configuration file exists in the repo root, but Orca could not parse the supported hook definitions yet.'
+    title: 'text-amber-700 dark:text-amber-300'
   },
   missing: {
     card: 'border-border/50 bg-muted/20',
-    title: 'text-foreground',
-    heading: 'No `orca.yaml` detected',
-    description:
-      'Add an `orca.yaml` file to enable shared setup, archive, or issue-automation defaults for this repo. Example template:'
+    title: 'text-foreground'
   }
+}
+
+function getParseErrorFixes(t: TFunction): string[] {
+  return [
+    t('settings.repoHooks.parseErrorFix1'),
+    t('settings.repoHooks.parseErrorFix2'),
+    t('settings.repoHooks.parseErrorFix3')
+  ]
 }
 
 /** Shared button grid for setup run-policy selectors. */
@@ -222,10 +231,13 @@ function ExampleTemplateCard({
   copiedTemplate: boolean
   onCopyTemplate: () => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <div className="space-y-2">
       <p className="text-[10px] tracking-[0.18em] text-muted-foreground">
-        Example <code className="rounded bg-muted px-1 py-0.5">orca.yaml</code> template
+        {t('settings.repoHooks.exampleTemplatePrefix')}{' '}
+        <code className="rounded bg-muted px-1 py-0.5">orca.yaml</code>{' '}
+        {t('settings.repoHooks.exampleTemplateSuffix')}
       </p>
       <div className="relative rounded-lg border border-border/50 bg-background/70">
         <Button
@@ -237,7 +249,9 @@ function ExampleTemplateCard({
           }`}
           onClick={onCopyTemplate}
         >
-          {copiedTemplate ? 'Copied' : 'Copy'}
+          {copiedTemplate
+            ? t('settings.repoHooks.copiedButton')
+            : t('settings.repoHooks.copyButton')}
         </Button>
         <pre className="overflow-x-auto whitespace-pre-wrap break-words p-3 pr-16 font-mono text-[11px] leading-5 text-muted-foreground">
           {EXAMPLE_TEMPLATE}
@@ -256,6 +270,7 @@ export function RepositoryHooksSection({
   onCopyTemplate,
   onUpdateHookSettings
 }: RepositoryHooksSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const settings = useAppStore((s) => s.settings)
   // Why: distinguish "file has unrecognised top-level keys" from "file is
   // genuinely malformed" so users see a helpful update prompt instead of a
@@ -301,6 +316,33 @@ export function RepositoryHooksSection({
   const lastCommittedIssueCommandRef = useRef('')
 
   localCommandsRepoHookSettingsRef.current = repo.hookSettings
+
+  const yamlStateTexts = useMemo(
+    () => ({
+      loaded: {
+        heading: t('settings.repoHooks.yamlState.loadedHeading'),
+        description: t('settings.repoHooks.yamlState.loadedDescription')
+      },
+      'update-available': {
+        heading: t('settings.repoHooks.yamlState.updateAvailableHeading'),
+        description: t('settings.repoHooks.yamlState.updateAvailableDescription')
+      },
+      invalid: {
+        heading: t('settings.repoHooks.yamlState.invalidHeading'),
+        description: t('settings.repoHooks.yamlState.invalidDescription')
+      },
+      missing: {
+        heading: t('settings.repoHooks.yamlState.missingHeading'),
+        description: t('settings.repoHooks.yamlState.missingDescription')
+      }
+    }),
+    [t]
+  )
+
+  const setupRunPolicyOptions = useMemo(() => getSetupRunPolicyOptions(t), [t])
+  const commandSourcePolicyOptions = useMemo(() => getCommandSourcePolicyOptions(t), [t])
+  const localHookFields = useMemo(() => getLocalHookFields(t), [t])
+  const parseErrorFixes = useMemo(() => getParseErrorFixes(t), [t])
 
   const setAndMaybePersistHookSettings = useCallback(
     (nextSettings: RepoHookSettings, shouldPersist: boolean) => {
@@ -466,35 +508,31 @@ export function RepositoryHooksSection({
       setIssueCommandSaveError(null)
     } catch (err) {
       console.error('[RepositoryHooksSection] Failed to write issue command:', err)
-      const message = err instanceof Error ? err.message : 'Failed to save GitHub issue command.'
+      const message =
+        err instanceof Error ? err.message : t('settings.repoHooks.toast.saveIssueCommandFailed')
       setIssueCommandSaveError(message)
       toast.error(message)
     }
-  }, [issueCommandDraft, repo.id, settings])
+  }, [issueCommandDraft, repo.id, settings, t])
 
   return (
     <section className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-sm font-semibold">Worktree Hooks</h2>
-        <p className="text-xs text-muted-foreground">
-          Configure shared repo hooks from `orca.yaml` and personal commands stored locally on this
-          machine.
-        </p>
+        <h2 className="text-sm font-semibold">{t('settings.repoHooks.title')}</h2>
+        <p className="text-xs text-muted-foreground">{t('settings.repoHooks.description')}</p>
       </div>
 
       <SearchableSetting
-        title="orca.yaml hooks"
-        description="Shared setup, archive, and issue automation commands for this repository."
+        title={t('settings.repoHooks.yamlHooksTitle')}
+        description={t('settings.repoHooks.yamlHooksDescription')}
         keywords={['hooks', 'setup', 'archive', 'yaml']}
       >
         <div className={`space-y-3 rounded-xl border p-4 ${YAML_STATE_STYLES[yamlState].card}`}>
           <div className="space-y-1">
             <p className={`text-sm font-medium ${YAML_STATE_STYLES[yamlState].title}`}>
-              {YAML_STATE_STYLES[yamlState].heading}
+              {yamlStateTexts[yamlState].heading}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {YAML_STATE_STYLES[yamlState].description}
-            </p>
+            <p className="text-xs text-muted-foreground">{yamlStateTexts[yamlState].description}</p>
           </div>
 
           {yamlState === 'loaded' ? (
@@ -505,7 +543,7 @@ export function RepositoryHooksSection({
                 </pre>
               </div>
               <p className="text-xs text-muted-foreground">
-                Edit `orca.yaml` in the repository if you need to change these shared commands.
+                {t('settings.repoHooks.editYamlHint')}
               </p>
             </div>
           ) : yamlState === 'update-available' ? (
@@ -519,23 +557,22 @@ export function RepositoryHooksSection({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <p className="text-base font-semibold text-amber-900 dark:text-amber-100">
-                      `orca.yaml` could not be parsed
+                      {yamlStateTexts.invalid.heading}
                     </p>
                     <p className="text-sm leading-6 text-muted-foreground">
                       {/* Why: once a repo has an `orca.yaml`, the failure mode is usually bad shape
                       rather than a missing concept. Showing a repair-oriented explanation and
                       template here lets maintainers fix the committed file without needing the doc. */}
-                      The file is present, but Orca could not find valid `scripts` or `issueCommand`
-                      definitions in the expected format.
+                      {t('settings.repoHooks.invalidCardDescription')}
                     </p>
                   </div>
 
                   <div className="space-y-3">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      Recommended fixes
+                      {t('settings.repoHooks.recommendedFixes')}
                     </p>
                     <ol className="space-y-2.5 text-sm text-muted-foreground">
-                      {PARSE_ERROR_FIXES.map((fix, index) => (
+                      {parseErrorFixes.map((fix, index) => (
                         <li key={fix} className="flex items-start gap-3">
                           <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">
                             {index + 1}
@@ -560,21 +597,23 @@ export function RepositoryHooksSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Local Settings Commands"
-        description="Personal setup and archive commands stored locally on this machine."
+        title={t('settings.repoHooks.localCommandsTitle')}
+        description={t('settings.repoHooks.localCommandsDescription')}
         keywords={['local', 'personal', 'setup', 'archive']}
       >
         <div className="space-y-4 rounded-2xl border border-border/50 bg-background/80 p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <h5 className="text-sm font-semibold">Local Settings Commands</h5>
+              <h5 className="text-sm font-semibold">
+                {t('settings.repoHooks.localCommandsHeaderTitle')}
+              </h5>
               <p className="text-xs text-muted-foreground">
-                Stored in Orca on this machine. These commands are not committed to the repository.
+                {t('settings.repoHooks.localCommandsHeaderDescription')}
               </p>
             </div>
             {localHookEntries.length > 0 ? (
               <Button type="button" variant="outline" size="sm" onClick={handleClearLocalCommands}>
-                Clear Local
+                {t('settings.repoHooks.clearLocal')}
               </Button>
             ) : null}
           </div>
@@ -591,7 +630,7 @@ export function RepositoryHooksSection({
           </div>
 
           <div className="grid gap-3">
-            {LOCAL_HOOK_FIELDS.map((field) => {
+            {localHookFields.map((field) => {
               const commands = localCommandsDraft[field.name]
               return (
                 <div key={field.name} className="space-y-2">
@@ -613,14 +652,14 @@ export function RepositoryHooksSection({
                       }
                     >
                       <Plus />
-                      Add Command
+                      {t('settings.repoHooks.addCommand')}
                     </Button>
                   </div>
 
                   <div className="overflow-hidden rounded-lg border border-border/50">
                     {commands.length === 0 ? (
                       <div className="px-3 py-4 text-sm text-muted-foreground">
-                        No local {field.name} commands configured.
+                        {t('settings.repoHooks.noLocalCommands', { hookName: field.label })}
                       </div>
                     ) : (
                       <div className="divide-y divide-border/50">
@@ -657,14 +696,21 @@ export function RepositoryHooksSection({
                                   )
                                 }
                               }}
-                              placeholder={index === 0 ? field.placeholder : 'Command'}
+                              placeholder={
+                                index === 0
+                                  ? field.placeholder
+                                  : t('settings.repoHooks.commandPlaceholder')
+                              }
                               className="h-8 font-mono text-xs"
                             />
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon-sm"
-                              aria-label={`Remove ${field.label} ${index + 1}`}
+                              aria-label={t('settings.repoHooks.removeCommandAriaLabel', {
+                                label: field.label,
+                                index: index + 1
+                              })}
                               onClick={() =>
                                 updateLocalCommandsDraft(
                                   field.name,
@@ -689,20 +735,22 @@ export function RepositoryHooksSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Command Source"
-        description="Choose whether Orca runs commands from `orca.yaml`, local Settings, or both."
+        title={t('settings.repoHooks.commandSourceTitle')}
+        description={t('settings.repoHooks.commandSourceDescription')}
         keywords={['command source', 'local', 'shared', 'orca.yaml', 'both', 'authoritative']}
       >
         <div className="space-y-3 rounded-2xl border border-border/50 bg-background/80 p-4 shadow-sm">
           <div className="space-y-1">
-            <h5 className="text-sm font-semibold">Command Source</h5>
+            <h5 className="text-sm font-semibold">
+              {t('settings.repoHooks.commandSourceHeaderTitle')}
+            </h5>
             <p className="text-xs text-muted-foreground">
-              Choose whether Orca runs commands from `orca.yaml`, local Settings, or both.
+              {t('settings.repoHooks.commandSourceHeaderDescription')}
             </p>
           </div>
 
           <PolicyOptionGrid
-            options={COMMAND_SOURCE_POLICY_OPTIONS}
+            options={commandSourcePolicyOptions}
             selected={selectedCommandSourcePolicy}
             onSelect={(policy) => updateHookSettingsPolicyDraft({ commandSourcePolicy: policy })}
             columns="md:grid-cols-3"
@@ -711,20 +759,22 @@ export function RepositoryHooksSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="When to Run Setup"
-        description="Choose the default behavior when a setup command is available."
+        title={t('settings.repoHooks.whenToRunSetupTitle')}
+        description={t('settings.repoHooks.whenToRunSetupDescription')}
         keywords={['setup run policy', 'ask', 'run by default', 'skip by default']}
       >
         <div className="space-y-3 rounded-2xl border border-border/50 bg-background/80 p-4 shadow-sm">
           <div className="space-y-1">
-            <h5 className="text-sm font-semibold">When to Run Setup</h5>
+            <h5 className="text-sm font-semibold">
+              {t('settings.repoHooks.whenToRunSetupHeaderTitle')}
+            </h5>
             <p className="text-xs text-muted-foreground">
-              Choose the default behavior when a setup command is available.
+              {t('settings.repoHooks.whenToRunSetupHeaderDescription')}
             </p>
           </div>
 
           <PolicyOptionGrid
-            options={SETUP_RUN_POLICY_OPTIONS}
+            options={setupRunPolicyOptions}
             selected={selectedSetupRunPolicy}
             onSelect={(policy) => updateHookSettingsPolicyDraft({ setupRunPolicy: policy })}
             columns="md:grid-cols-3"
@@ -733,33 +783,38 @@ export function RepositoryHooksSection({
       </SearchableSetting>
 
       <SearchableSetting
-        title="Custom GitHub Issue Command"
-        description="Optional per-user override for the linked-issue command."
+        title={t('settings.repoHooks.customIssueCommandTitle')}
+        description={t('settings.repoHooks.customIssueCommandDescription')}
         keywords={['github issue command', 'issue command', 'workflow', 'agent', 'github']}
       >
         <div className="space-y-3 rounded-2xl border border-border/50 bg-background/80 p-4 shadow-sm">
           <div className="space-y-1">
-            <h5 className="text-sm font-semibold">Custom GitHub Issue Command</h5>
+            <h5 className="text-sm font-semibold">
+              {t('settings.repoHooks.customIssueCommandHeaderTitle')}
+            </h5>
           </div>
           <div className="space-y-2">
             <textarea
               value={issueCommandDraft}
               onChange={(e) => setIssueCommandDraft(e.target.value)}
               onBlur={commitIssueCommand}
-              placeholder="Complete {{artifact_url}}"
+              placeholder={t('settings.repoHooks.issueCommandPlaceholder')}
               rows={5}
               className="w-full min-w-0 resize-y rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
             <p className="text-xs text-muted-foreground">
-              Use <code className="rounded bg-muted px-1 py-0.5">{'{{artifact_url}}'}</code> for the
-              linked issue or PR URL. Leave empty to use the built-in{' '}
+              {t('settings.repoHooks.issueCommandHelper1Prefix')}{' '}
+              <code className="rounded bg-muted px-1 py-0.5">{'{{artifact_url}}'}</code>{' '}
+              {t('settings.repoHooks.issueCommandHelper1Middle')}{' '}
               <code className="rounded bg-muted px-1 py-0.5">Complete {'{{artifact_url}}'}</code>{' '}
-              default.
+              {t('settings.repoHooks.issueCommandHelper1Suffix')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Leave blank to use the repo default from{' '}
+              {t('settings.repoHooks.issueCommandHelper2Prefix')}{' '}
               <code className="rounded bg-muted px-1 py-0.5">orca.yaml</code>
-              {hasSharedIssueCommand ? '.' : ' when one exists.'}
+              {hasSharedIssueCommand
+                ? t('settings.repoHooks.issueCommandHelper2SuffixShared')
+                : t('settings.repoHooks.issueCommandHelper2SuffixMissing')}
             </p>
             {issueCommandSaveError ? (
               <p className="text-xs text-destructive">{issueCommandSaveError}</p>
@@ -771,11 +826,6 @@ export function RepositoryHooksSection({
   )
 }
 
-const PARSE_ERROR_FIXES = [
-  'Check the indentation under `scripts:`. Hook keys should use two spaces, and command lines should use four.',
-  'Define only the supported keys: `scripts`, `setup`, `archive`, and `issueCommand`.',
-  'Compare your file against the working template below and copy that shape if needed.'
-]
 function renderYamlScriptPreview(hooks: OrcaHooks | null): string {
   const fmt = (key: string, cmd?: string): string =>
     cmd ? `\n  ${key}: |\n${cmd.replace(/^/gm, '    ')}` : ''

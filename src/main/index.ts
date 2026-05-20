@@ -895,7 +895,8 @@ app.whenReady().then(async () => {
         showTitlebarAppName: settings?.showTitlebarAppName !== false,
         statusBarVisible: ui?.statusBarVisible !== false
       }
-    }
+    },
+    getLanguage: () => store?.getSettings().language
   })
   // Why: E2E tests launch parallel Electron instances that would all race to
   // bind the default fixed port, crashing on EADDRINUSE. Port 0 lets the OS

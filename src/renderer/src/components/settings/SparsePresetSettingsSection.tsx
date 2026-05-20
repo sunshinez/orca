@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bookmark, LoaderCircle, Pencil, Plus, Save, Trash2, X } from 'lucide-react'
 import type { SparsePreset } from '../../../../shared/types'
 import { useAppStore } from '../../store'
@@ -25,6 +26,7 @@ function SparsePresetDirectoryPreview({
 }: {
   directories: string[]
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const visibleDirectories = directories.slice(0, 6)
   const hiddenCount = directories.length - visibleDirectories.length
 
@@ -41,7 +43,7 @@ function SparsePresetDirectoryPreview({
       ))}
       {hiddenCount > 0 ? (
         <span className="rounded-md border border-border/50 bg-muted/35 px-2 py-1 text-[11px] text-muted-foreground">
-          +{hiddenCount} more
+          {t('settings.sparsePresets.moreDirectories', { count: hiddenCount })}
         </span>
       ) : null}
     </div>
@@ -51,6 +53,7 @@ function SparsePresetDirectoryPreview({
 export function SparsePresetSettingsSection({
   repoId
 }: SparsePresetSettingsSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const presets = useAppStore((s) => s.sparsePresetsByRepo[repoId])
   const fetchSparsePresets = useAppStore((s) => s.fetchSparsePresets)
   const saveSparsePreset = useAppStore((s) => s.saveSparsePreset)
@@ -79,11 +82,11 @@ export function SparsePresetSettingsSection({
 
   const nameError =
     draft && trimmedName.length === 0
-      ? 'Name is required.'
+      ? t('settings.sparsePresets.nameRequired')
       : trimmedName.length > 80
-        ? 'Name must be 80 characters or fewer.'
+        ? t('settings.sparsePresets.nameTooLong')
         : collidingPreset
-          ? `"${collidingPreset.name}" already exists.`
+          ? t('settings.sparsePresets.nameExists', { name: collidingPreset.name })
           : null
   const canSaveDraft =
     !!draft && !submitting && !nameError && parsedDirectories !== null && !parsedDirectories.error
@@ -149,17 +152,19 @@ export function SparsePresetSettingsSection({
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="space-y-0.5">
             <h5 className="text-sm font-semibold">
-              {draft.mode === 'new' ? 'New Preset' : 'Edit Preset'}
+              {draft.mode === 'new'
+                ? t('settings.sparsePresets.newPresetTitle')
+                : t('settings.sparsePresets.editPresetTitle')}
             </h5>
             <p className="text-xs text-muted-foreground">
-              Saved directories are used when creating sparse worktrees for this repository.
+              {t('settings.sparsePresets.editorDescription')}
             </p>
           </div>
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
-            aria-label="Cancel preset edit"
+            aria-label={t('settings.sparsePresets.cancelEditAriaLabel')}
             onClick={() => setDraft(null)}
             disabled={submitting}
           >
@@ -169,12 +174,14 @@ export function SparsePresetSettingsSection({
 
         <div className="grid gap-4 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <div className="space-y-2">
-            <Label htmlFor="sparse-preset-settings-name">Name</Label>
+            <Label htmlFor="sparse-preset-settings-name">
+              {t('settings.sparsePresets.nameLabel')}
+            </Label>
             <Input
               id="sparse-preset-settings-name"
               value={draft.name}
               onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-              placeholder="e.g. web-only"
+              placeholder={t('settings.sparsePresets.namePlaceholder')}
               maxLength={80}
               autoComplete="off"
               spellCheck={false}
@@ -184,12 +191,14 @@ export function SparsePresetSettingsSection({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sparse-preset-settings-directories">Directories</Label>
+            <Label htmlFor="sparse-preset-settings-directories">
+              {t('settings.sparsePresets.directoriesLabel')}
+            </Label>
             <textarea
               id="sparse-preset-settings-directories"
               value={draft.directoriesText}
               onChange={(event) => setDraft({ ...draft, directoriesText: event.target.value })}
-              placeholder={`packages/web\nshared/ui`}
+              placeholder={t('settings.sparsePresets.directoriesPlaceholder')}
               rows={5}
               spellCheck={false}
               className="w-full min-w-0 resize-y rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -199,9 +208,11 @@ export function SparsePresetSettingsSection({
             ) : (
               <p className="text-xs text-muted-foreground">
                 {parsedDirectories?.directories.length === 1
-                  ? '1 directory will be saved.'
-                  : `${parsedDirectories?.directories.length ?? 0} directories will be saved.`}{' '}
-                Use repo-relative paths like packages/web or apps/api.
+                  ? t('settings.sparsePresets.directoryWillBeSaved')
+                  : t('settings.sparsePresets.directoriesWillBeSaved', {
+                      count: parsedDirectories?.directories.length ?? 0
+                    })}{' '}
+                {t('settings.sparsePresets.directoriesHint')}
               </p>
             )}
           </div>
@@ -215,7 +226,7 @@ export function SparsePresetSettingsSection({
             onClick={() => setDraft(null)}
             disabled={submitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"
@@ -228,7 +239,7 @@ export function SparsePresetSettingsSection({
             ) : (
               <Save className="size-3.5" />
             )}
-            Save Preset
+            {t('settings.sparsePresets.savePreset')}
           </Button>
         </div>
       </div>
@@ -239,10 +250,8 @@ export function SparsePresetSettingsSection({
     <section className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Sparse Checkout Presets</h3>
-          <p className="text-xs text-muted-foreground">
-            Manage saved directory sets for sparse worktree creation.
-          </p>
+          <h3 className="text-sm font-semibold">{t('settings.sparsePresets.title')}</h3>
+          <p className="text-xs text-muted-foreground">{t('settings.sparsePresets.description')}</p>
         </div>
         <Button
           type="button"
@@ -252,7 +261,7 @@ export function SparsePresetSettingsSection({
           disabled={!!draft}
         >
           <Plus className="size-3.5" />
-          New Preset
+          {t('settings.sparsePresets.newPresetButton')}
         </Button>
       </div>
 
@@ -260,11 +269,11 @@ export function SparsePresetSettingsSection({
 
       {presets === undefined ? (
         <div className="rounded-xl border border-dashed border-border/60 bg-background/60 px-4 py-6 text-sm text-muted-foreground">
-          Loading sparse presets...
+          {t('settings.sparsePresets.loading')}
         </div>
       ) : sortedPresets.length === 0 && !draft ? (
         <div className="rounded-xl border border-dashed border-border/60 bg-background/60 px-4 py-6 text-sm text-muted-foreground">
-          No sparse presets saved for this repository.
+          {t('settings.sparsePresets.empty')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -287,11 +296,15 @@ export function SparsePresetSettingsSection({
                       <h4 className="min-w-0 truncate text-sm font-medium">{preset.name}</h4>
                       <span className="text-[11px] text-muted-foreground">
                         {preset.directories.length === 1
-                          ? '1 directory'
-                          : `${preset.directories.length} directories`}
+                          ? t('settings.sparsePresets.directoryCountSingular')
+                          : t('settings.sparsePresets.directoryCountPlural', {
+                              count: preset.directories.length
+                            })}
                       </span>
                       <span className="text-[11px] text-muted-foreground">
-                        {updatedLabel ? `Updated ${updatedLabel}` : 'Updated date unknown'}
+                        {updatedLabel
+                          ? t('settings.sparsePresets.updatedAt', { date: updatedLabel })
+                          : t('settings.sparsePresets.updatedDateUnknown')}
                       </span>
                     </div>
                     <SparsePresetDirectoryPreview directories={preset.directories} />
@@ -301,7 +314,7 @@ export function SparsePresetSettingsSection({
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Edit ${preset.name}`}
+                      aria-label={t('settings.sparsePresets.editAriaLabel', { name: preset.name })}
                       onClick={() => startEditPreset(preset)}
                       disabled={submitting}
                     >
@@ -311,7 +324,9 @@ export function SparsePresetSettingsSection({
                       type="button"
                       variant={confirmingDeleteId === preset.id ? 'destructive' : 'ghost'}
                       size="sm"
-                      aria-label={`Delete ${preset.name}`}
+                      aria-label={t('settings.sparsePresets.deleteAriaLabel', {
+                        name: preset.name
+                      })}
                       onClick={() => void handleDeletePreset(preset)}
                       onBlur={() => setConfirmingDeleteId(null)}
                       disabled={submitting}
@@ -321,7 +336,7 @@ export function SparsePresetSettingsSection({
                       )}
                     >
                       <Trash2 className="size-3.5" />
-                      {confirmingDeleteId === preset.id ? 'Confirm' : 'Delete'}
+                      {confirmingDeleteId === preset.id ? t('common.confirm') : t('common.delete')}
                     </Button>
                   </div>
                 </div>

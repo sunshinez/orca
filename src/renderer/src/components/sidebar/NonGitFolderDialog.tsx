@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -14,6 +15,7 @@ import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { buildDismissedOnboardingFolderAgentStartup } from '@/lib/onboarding-folder-agent-startup'
 
 const NonGitFolderDialog = React.memo(function NonGitFolderDialog() {
+  const { t } = useTranslation()
   const activeModal = useAppStore((s) => s.activeModal)
   const modalData = useAppStore((s) => s.modalData)
   const closeModal = useAppStore((s) => s.closeModal)
@@ -62,14 +64,14 @@ const NonGitFolderDialog = React.memo(function NonGitFolderDialog() {
         } catch (err) {
           // This code path calls addRemote directly (not through the store),
           // so the store's toast handling does not apply.
-          toast.error(err instanceof Error ? err.message : 'Failed to add remote folder')
+          toast.error(err instanceof Error ? err.message : t('sidebar.nonGitFolder.addFailed'))
         }
       })()
     } else if (folderPath) {
       void addNonGitFolder(folderPath)
     }
     closeModal()
-  }, [addNonGitFolder, closeModal, folderPath, connectionId])
+  }, [addNonGitFolder, closeModal, folderPath, connectionId, t])
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -84,10 +86,9 @@ const NonGitFolderDialog = React.memo(function NonGitFolderDialog() {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-sm sm:max-w-sm" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="text-sm">Open as Folder</DialogTitle>
+          <DialogTitle className="text-sm">{t('sidebar.nonGitFolder.title')}</DialogTitle>
           <DialogDescription className="text-xs">
-            This folder isn&apos;t a Git repository. You&apos;ll have the editor, terminal, and
-            search, but Git-based features won&apos;t be available.
+            {t('sidebar.nonGitFolder.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -99,9 +100,9 @@ const NonGitFolderDialog = React.memo(function NonGitFolderDialog() {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
+            {t('sidebar.nonGitFolder.cancel')}
           </Button>
-          <Button onClick={handleConfirm}>Open as Folder</Button>
+          <Button onClick={handleConfirm}>{t('sidebar.nonGitFolder.open')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

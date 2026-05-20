@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Copy, FolderOpen, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
@@ -19,54 +21,55 @@ type CliSectionProps = {
   currentPlatform: string
 }
 
-function getRevealLabel(platform: string): string {
+function getRevealLabel(platform: string, t: TFunction): string {
   if (platform === 'darwin') {
-    return 'Show in Finder'
+    return t('settings.cli.revealLabelDarwin')
   }
   if (platform === 'win32') {
-    return 'Show in Explorer'
+    return t('settings.cli.revealLabelWin32')
   }
-  return 'Show in File Manager'
+  return t('settings.cli.revealLabelDefault')
 }
 
-function getInstallDescription(platform: string): string {
+function getInstallDescription(platform: string, t: TFunction): string {
   if (platform === 'darwin') {
-    return 'Register `orca` in /usr/local/bin.'
+    return t('settings.cli.installDescriptionDarwin')
   }
   if (platform === 'linux') {
-    return 'Register `orca` in ~/.local/bin.'
+    return t('settings.cli.installDescriptionLinux')
   }
   if (platform === 'win32') {
-    return 'Register `orca` in your user PATH.'
+    return t('settings.cli.installDescriptionWin32')
   }
-  return 'CLI registration is not yet available on this platform.'
+  return t('settings.cli.installDescriptionUnsupported')
 }
 
 export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<CliInstallStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [busyAction, setBusyAction] = useState<'install' | 'remove' | null>(null)
 
-  const refreshStatus = async (): Promise<void> => {
+  const refreshStatus = useCallback(async (): Promise<void> => {
     setLoading(true)
     try {
       setStatus(await window.api.cli.getInstallStatus())
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load CLI status.')
+      toast.error(error instanceof Error ? error.message : t('settings.cli.toast.loadStatusFailed'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     void refreshStatus()
-  }, [])
+  }, [refreshStatus])
 
   const isEnabled = status?.state === 'installed'
   const isSupported = status?.supported ?? false
   const isBrowserManaged = status?.unsupportedReason === 'launch_mode_unavailable'
-  const revealLabel = getRevealLabel(currentPlatform)
+  const revealLabel = getRevealLabel(currentPlatform, t)
   const canRevealCommandPath =
     status?.commandPath != null && ['installed', 'stale', 'conflict'].includes(status.state)
 
@@ -76,9 +79,9 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
       const next = await window.api.cli.install()
       setStatus(next)
       setDialogOpen(false)
-      toast.success('Registered `orca` in PATH.')
+      toast.success(t('settings.cli.toast.registered'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to register `orca` in PATH.')
+      toast.error(error instanceof Error ? error.message : t('settings.cli.toast.registerFailed'))
     } finally {
       setBusyAction(null)
     }
@@ -90,9 +93,9 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
       const next = await window.api.cli.remove()
       setStatus(next)
       setDialogOpen(false)
-      toast.success('Removed `orca` from PATH.')
+      toast.success(t('settings.cli.toast.removed'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to remove `orca` from PATH.')
+      toast.error(error instanceof Error ? error.message : t('settings.cli.toast.removeFailed'))
     } finally {
       setBusyAction(null)
     }
@@ -101,30 +104,29 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
   const handleCopySkillInstallCommand = async (command: string): Promise<void> => {
     try {
       await window.api.ui.writeClipboardText(command)
-      toast.success('Copied skill install command.')
+      toast.success(t('settings.cli.toast.copySkillCommandSuccess'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to copy install command.')
+      toast.error(
+        error instanceof Error ? error.message : t('settings.cli.toast.copySkillCommandFailed')
+      )
     }
   }
 
   return (
     <section className="space-y-4">
       <div className="space-y-1">
-        <h2 className="text-sm font-semibold">Orca CLI</h2>
-        <p className="text-xs text-muted-foreground">
-          Use Orca from your terminal to open the app, manage worktrees, and interact with Orca
-          terminals.
-        </p>
+        <h2 className="text-sm font-semibold">{t('settings.cli.title')}</h2>
+        <p className="text-xs text-muted-foreground">{t('settings.cli.description')}</p>
       </div>
 
       <div className="space-y-3 rounded-xl border border-border/60 bg-card/50 p-4">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <Label>Shell command</Label>
+            <Label>{t('settings.cli.shellCommandLabel')}</Label>
             <p className="text-xs text-muted-foreground">
               {loading
-                ? 'Checking CLI registration…'
-                : (status?.detail ?? getInstallDescription(currentPlatform))}
+                ? t('settings.cli.checkingStatus')
+                : (status?.detail ?? getInstallDescription(currentPlatform, t))}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -136,13 +138,13 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
                     size="icon-xs"
                     onClick={() => void refreshStatus()}
                     disabled={loading || busyAction !== null}
-                    aria-label="Refresh CLI status"
+                    aria-label={t('settings.cli.refreshAriaLabel')}
                   >
                     <RefreshCw className="size-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={6}>
-                  Refresh
+                  {t('settings.cli.refreshTooltip')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -168,20 +170,20 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
 
         {status?.commandPath ? (
           <p className="text-xs text-muted-foreground">
-            Command path:{' '}
+            {t('settings.cli.commandPathLabel')}{' '}
             <code className="rounded bg-muted px-1 py-0.5 text-[11px]">{status.commandPath}</code>
           </p>
         ) : null}
 
         {status?.state === 'stale' && status.currentTarget ? (
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            Existing launcher target: <code>{status.currentTarget}</code>
+            {t('settings.cli.existingLauncherTarget')} <code>{status.currentTarget}</code>
           </p>
         ) : null}
 
         {status?.state === 'installed' && !status.pathConfigured && status.pathDirectory ? (
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            {status.pathDirectory} is not currently visible on PATH for this shell.
+            {t('settings.cli.pathNotVisible', { path: status.pathDirectory })}
           </p>
         ) : null}
 
@@ -207,15 +209,15 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
         {!isBrowserManaged ? (
           <div className="border-t border-border/60 pt-3">
             <div className="space-y-0.5">
-              <Label>Agent skills</Label>
+              <Label>{t('settings.cli.agentSkillsLabel')}</Label>
               <p className="text-xs text-muted-foreground">
-                Install skills so agents know how to use Orca and report status.
+                {t('settings.cli.agentSkillsDescription')}
               </p>
             </div>
 
             <div className="mt-3 space-y-3">
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">CLI skill</p>
+                <p className="text-xs text-muted-foreground">{t('settings.cli.cliSkillLabel')}</p>
                 <div className="inline-flex max-w-full items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
                   <code className="overflow-x-auto whitespace-nowrap text-[11px] text-muted-foreground">
                     {ORCA_CLI_SKILL_INSTALL_COMMAND}
@@ -229,13 +231,13 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
                           onClick={() =>
                             void handleCopySkillInstallCommand(ORCA_CLI_SKILL_INSTALL_COMMAND)
                           }
-                          aria-label="Copy CLI skill install command"
+                          aria-label={t('settings.cli.copySkillInstallCommandAriaLabel')}
                         >
                           <Copy className="size-3.5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" sideOffset={6}>
-                        Copy
+                        {t('settings.cli.copyTooltip')}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -250,17 +252,21 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {isEnabled ? 'Remove `orca` from PATH?' : 'Register `orca` in PATH?'}
+              {isEnabled
+                ? t('settings.cli.dialog.removeTitle')
+                : t('settings.cli.dialog.registerTitle')}
             </DialogTitle>
             <DialogDescription>
               {isEnabled
-                ? 'This removes the shell command symlink. Orca itself remains installed.'
-                : `Orca will register ${status?.commandPath ?? '`orca`'} so the command works from your terminal.`}
+                ? t('settings.cli.dialog.removeDescription')
+                : t('settings.cli.dialog.registerDescription', {
+                    commandPath: status?.commandPath ?? '`orca`'
+                  })}
             </DialogDescription>
           </DialogHeader>
           {status?.commandPath ? (
             <p className="text-xs text-muted-foreground">
-              Target path:{' '}
+              {t('settings.cli.dialog.targetPathLabel')}{' '}
               <code className="rounded bg-muted px-1 py-0.5 text-[11px]">{status.commandPath}</code>
             </p>
           ) : null}
@@ -270,19 +276,19 @@ export function CliSection({ currentPlatform }: CliSectionProps): React.JSX.Elem
               onClick={() => setDialogOpen(false)}
               disabled={busyAction !== null}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={() => void (isEnabled ? handleRemove() : handleInstall())}
               disabled={busyAction !== null || !isSupported}
             >
               {busyAction === 'remove'
-                ? 'Removing…'
+                ? t('settings.cli.dialog.removing')
                 : busyAction === 'install'
-                  ? 'Registering…'
+                  ? t('settings.cli.dialog.registering')
                   : isEnabled
-                    ? 'Remove'
-                    : 'Register'}
+                    ? t('settings.cli.dialog.remove')
+                    : t('settings.cli.dialog.register')}
             </Button>
           </DialogFooter>
         </DialogContent>

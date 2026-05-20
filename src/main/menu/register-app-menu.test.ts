@@ -39,7 +39,8 @@ function buildMenuOptions() {
       showTasksButton: true,
       showTitlebarAppName: true,
       statusBarVisible: true
-    }))
+    })),
+    getLanguage: vi.fn(() => undefined)
   }
 }
 

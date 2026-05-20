@@ -1,127 +1,123 @@
+import type { TFunction } from 'i18next'
 import type { SettingsSearchEntry } from './settings-search'
 
-export const GENERAL_WORKSPACE_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Workspace Directory',
-    description: 'Root directory where worktree folders are created.',
-    keywords: ['workspace', 'folder', 'path', 'worktree']
-  },
-  {
-    title: 'Nest Workspaces',
-    description: 'Create worktrees inside a repo-named subfolder.',
-    keywords: ['nested', 'subfolder', 'directory']
-  },
-  {
-    title: 'Ask Before Deleting Worktrees',
-    description: 'Show a confirmation dialog before deleting a worktree.',
-    keywords: ['delete', 'worktree', 'confirm', 'dialog', 'skip', 'prompt']
-  },
-  {
-    title: 'Ask Before Deleting Automations',
-    description: 'Show a confirmation dialog before deleting an automation and its run history.',
-    keywords: ['delete', 'automation', 'confirm', 'dialog', 'skip', 'prompt']
-  },
-  {
-    title: 'Open In Menu',
-    description: 'Add custom launchers to the worktree Open in menu.',
-    keywords: ['open in', 'editor', 'launcher', 'cursor', 'zed', 'command', 'vscode']
-  }
-]
+export function getGeneralWorkspaceSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    {
+      title: t('settings.general.workspace.directory.label'),
+      description: t('settings.general.workspace.directory.description'),
+      keywords: ['workspace', 'folder', 'path', 'worktree']
+    },
+    {
+      title: t('settings.general.workspace.nest.label'),
+      description: t('settings.general.workspace.nest.description'),
+      keywords: ['nested', 'subfolder', 'directory']
+    },
+    {
+      title: t('settings.general.workspace.askBeforeDeletingWorktrees.label'),
+      description: t('settings.general.workspace.askBeforeDeletingWorktrees.description'),
+      keywords: ['delete', 'worktree', 'confirm', 'dialog', 'skip', 'prompt']
+    },
+    {
+      title: t('settings.general.workspace.askBeforeDeletingAutomations.label'),
+      description: t('settings.general.workspace.askBeforeDeletingAutomations.description'),
+      keywords: ['delete', 'automation', 'confirm', 'dialog', 'skip', 'prompt']
+    },
+    {
+      title: t('settings.general.openInMenu.title'),
+      description: t('settings.general.openInMenu.description'),
+      keywords: ['open in', 'editor', 'launcher', 'cursor', 'zed', 'command', 'vscode']
+    }
+  ]
+}
 
-export const GENERAL_EDITOR_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Auto Save Files',
-    description: 'Save editor and editable diff changes automatically after a short pause.',
-    keywords: ['autosave', 'save']
-  },
-  {
-    title: 'Auto Save Delay',
-    description: 'How long Orca waits after your last edit before saving automatically.',
-    keywords: ['autosave', 'delay', 'milliseconds']
-  },
-  {
-    title: 'Default Diff View',
-    description: 'Preferred presentation format for showing git diffs by default.',
-    keywords: ['diff', 'view', 'inline', 'side-by-side', 'split']
-  },
-  {
-    title: 'Default Diff File Tree',
-    description: 'Show or hide the file tree when opening combined diff views.',
-    keywords: ['diff', 'tree', 'file tree', 'combined diff', 'sidebar']
-  },
-  {
-    title: 'Minimap',
-    description: 'Show the minimap overview when editing a file.',
-    keywords: ['minimap', 'overview', 'code', 'scroll']
-  },
-  {
-    title: 'Markdown Review Notes',
-    description: 'Show local markdown review note controls in rich editor mode.',
-    keywords: ['markdown', 'review', 'notes', 'annotations', 'agents']
-  }
-]
+export function getGeneralEditorSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    {
+      title: t('settings.general.editor.autoSave.label'),
+      description: t('settings.general.editor.autoSave.description'),
+      keywords: ['autosave', 'save']
+    },
+    {
+      title: t('settings.general.editor.autoSaveDelay.label'),
+      description: t('settings.general.editor.autoSaveDelay.description'),
+      keywords: ['autosave', 'delay', 'milliseconds']
+    },
+    {
+      title: t('settings.general.editor.defaultDiffView.label'),
+      description: t('settings.general.editor.defaultDiffView.description'),
+      keywords: ['diff', 'view', 'inline', 'side-by-side', 'split']
+    },
+    {
+      title: t('settings.general.editor.defaultDiffFileTree.label'),
+      description: t('settings.general.editor.defaultDiffFileTree.description'),
+      keywords: ['diff', 'tree', 'file tree', 'combined diff', 'sidebar']
+    },
+    {
+      title: t('settings.general.editor.minimap.label'),
+      description: t('settings.general.editor.minimap.description'),
+      keywords: ['minimap', 'overview', 'code', 'scroll']
+    },
+    {
+      title: t('settings.general.editor.markdownReviewNotes.label'),
+      description: t('settings.general.editor.markdownReviewNotes.description'),
+      keywords: ['markdown', 'review', 'notes', 'annotations', 'agents']
+    }
+  ]
+}
 
-export const GENERAL_CLI_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Shell command',
-    description: 'Register or remove the orca shell command.',
-    keywords: ['cli', 'path', 'terminal', 'command']
-  },
-  {
-    title: 'Agent skill',
-    description: 'Install the Orca skill so agents know to use the orca CLI.',
-    keywords: ['skill', 'agents', 'npx']
-  }
-]
+export function getGeneralCliSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    {
+      title: t('settings.cli.shellCommandLabel'),
+      description: t('settings.cli.description'),
+      keywords: ['cli', 'path', 'terminal', 'command']
+    },
+    {
+      title: t('settings.cli.agentSkillsLabel'),
+      description: t('settings.cli.agentSkillsDescription'),
+      keywords: ['skill', 'agents', 'npx']
+    }
+  ]
+}
 
-export const GENERAL_UPDATE_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Check for Updates',
-    description: 'Check for app updates and install a newer Orca version.',
-    keywords: ['update', 'version', 'release notes', 'download']
-  }
-]
+export function getGeneralUpdateSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    {
+      title: t('settings.general.updates.check.label'),
+      description: t('settings.general.updates.check.description'),
+      keywords: ['update', 'version', 'release notes', 'download']
+    }
+  ]
+}
 
-export const GENERAL_CACHE_TIMER_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Prompt Cache Timer',
-    description: 'Countdown timer showing time until prompt cache expires (Claude agents).',
-    keywords: ['cache', 'timer', 'prompt', 'ttl', 'claude', 'cost', 'tokens']
-  }
-]
+export function getGeneralCacheTimerSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    {
+      title: t('settings.general.cacheTimer.title'),
+      description: t('settings.general.cacheTimer.description'),
+      keywords: ['cache', 'timer', 'prompt', 'ttl', 'claude', 'cost', 'tokens']
+    }
+  ]
+}
 
-export const GENERAL_AGENT_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Default Agent',
-    description: 'Pre-select an AI coding agent in the new-workspace composer.',
-    keywords: [
-      'agent',
-      'default',
-      'claude',
-      'codex',
-      'opencode',
-      'pi',
-      'gemini',
-      'aider',
-      'copilot',
-      'grok'
-    ]
-  }
-]
+export function getGeneralSupportSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    {
+      title: t('settings.general.support.starGithub.label'),
+      description: t('settings.general.support.starGithub.description'),
+      keywords: ['star', 'github', 'support', 'feedback', 'like']
+    }
+  ]
+}
 
-export const GENERAL_SUPPORT_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Star Orca on GitHub',
-    description: 'Support the project with a GitHub star via the gh CLI.',
-    keywords: ['star', 'github', 'support', 'feedback', 'like']
-  }
-]
-
-export const GENERAL_PANE_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  ...GENERAL_WORKSPACE_SEARCH_ENTRIES,
-  ...GENERAL_EDITOR_SEARCH_ENTRIES,
-  ...GENERAL_CLI_SEARCH_ENTRIES,
-  ...GENERAL_CACHE_TIMER_SEARCH_ENTRIES,
-  ...GENERAL_UPDATE_SEARCH_ENTRIES,
-  ...GENERAL_SUPPORT_SEARCH_ENTRIES
-]
+export function getGeneralPaneSearchEntries(t: TFunction): SettingsSearchEntry[] {
+  return [
+    ...getGeneralWorkspaceSearchEntries(t),
+    ...getGeneralEditorSearchEntries(t),
+    ...getGeneralCliSearchEntries(t),
+    ...getGeneralCacheTimerSearchEntries(t),
+    ...getGeneralUpdateSearchEntries(t),
+    ...getGeneralSupportSearchEntries(t)
+  ]
+}

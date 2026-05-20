@@ -2,7 +2,8 @@
    server selection, saved server mutation, and confirmation dialogs together so
    the state transitions stay auditable. */
 import { Loader2, Plus, RefreshCw, Share2, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type { GlobalSettings } from '../../../../shared/types'
 import type { PublicKnownRuntimeEnvironment } from '../../../../shared/runtime-environments'
@@ -21,8 +22,8 @@ import {
 } from '../ui/dialog'
 import { RuntimePairingUrlGenerator } from './RuntimePairingUrlGenerator'
 import {
-  RUNTIME_ENVIRONMENTS_SEARCH_ENTRY,
-  WEB_RUNTIME_ENVIRONMENTS_SEARCH_ENTRY
+  getRuntimeEnvironmentsSearchEntry,
+  getWebRuntimeEnvironmentsSearchEntry
 } from './runtime-environments-search'
 
 const LOCAL_RUNTIME_VALUE = '__local__'
@@ -41,6 +42,7 @@ export function RuntimeEnvironmentsPane({
   canGeneratePairingUrl = true,
   allowLocalRuntime = true
 }: RuntimeEnvironmentsPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [environments, setEnvironments] = useState<PublicKnownRuntimeEnvironment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -60,23 +62,25 @@ export function RuntimeEnvironmentsPane({
   const isBusy = isSaving || switchingValue !== null || removingId !== null
   const removingActiveServer = pendingRemove?.id === settings.activeRuntimeEnvironmentId
   const searchEntry = canGeneratePairingUrl
-    ? RUNTIME_ENVIRONMENTS_SEARCH_ENTRY
-    : WEB_RUNTIME_ENVIRONMENTS_SEARCH_ENTRY
+    ? getRuntimeEnvironmentsSearchEntry(t)
+    : getWebRuntimeEnvironmentsSearchEntry(t)
 
-  const loadEnvironments = async (): Promise<void> => {
+  const loadEnvironments = useCallback(async (): Promise<void> => {
     setIsLoading(true)
     try {
       setEnvironments(await window.api.runtimeEnvironments.list())
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load runtime environments.')
+      toast.error(
+        error instanceof Error ? error.message : t('settings.runtimeEnvironments.toasts.loadError')
+      )
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     void loadEnvironments()
-  }, [])
+  }, [loadEnvironments])
 
   const closeAddServerForm = (): void => {
     if (isSaving) {
@@ -91,14 +95,14 @@ export function RuntimeEnvironmentsPane({
     const trimmedName = name.trim()
     const trimmedPairingCode = pairingCode.trim()
     if (!trimmedName || !trimmedPairingCode) {
-      toast.error('Name and pairing code are required.')
+      toast.error(t('settings.runtimeEnvironments.toasts.nameAndCodeRequired'))
       return
     }
     const duplicate = environments.find(
       (environment) => environment.name.trim().toLowerCase() === trimmedName.toLowerCase()
     )
     if (duplicate) {
-      toast.error(`A server named "${duplicate.name}" already exists.`)
+      toast.error(t('settings.runtimeEnvironments.toasts.duplicateName', { name: duplicate.name }))
       return
     }
     setIsSaving(true)
@@ -123,13 +127,19 @@ export function RuntimeEnvironmentsPane({
           await loadEnvironments()
           return
         }
-        toast.success(`Connected to ${result.environment.name}.`)
+        toast.success(
+          t('settings.runtimeEnvironments.toasts.connectedTo', { name: result.environment.name })
+        )
       } else {
-        toast.success(`Saved ${result.environment.name}. Use Active Server to switch when ready.`)
+        toast.success(
+          t('settings.runtimeEnvironments.toasts.saved', { name: result.environment.name })
+        )
       }
       setAddServerFormOpen(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save runtime environment.')
+      toast.error(
+        error instanceof Error ? error.message : t('settings.runtimeEnvironments.toasts.saveError')
+      )
     } finally {
       setIsSaving(false)
     }
@@ -146,24 +156,28 @@ export function RuntimeEnvironmentsPane({
         if (!switched) {
           setRemoveError(
             allowLocalRuntime
-              ? 'Could not switch to Local desktop. Fix the issue and try again.'
-              : 'Could not disconnect from this server. Fix the issue and try again.'
+              ? t('settings.runtimeEnvironments.toasts.switchToLocalError')
+              : t('settings.runtimeEnvironments.toasts.disconnectError')
           )
           return false
         }
         if (!allowLocalRuntime) {
           await loadEnvironments()
-          toast.success(`Removed ${environment.name}.`)
+          toast.success(
+            t('settings.runtimeEnvironments.toasts.removed', { name: environment.name })
+          )
           return true
         }
       }
       await window.api.runtimeEnvironments.remove({ selector: environment.id })
       await loadEnvironments()
-      toast.success(`Removed ${environment.name}.`)
+      toast.success(t('settings.runtimeEnvironments.toasts.removed', { name: environment.name }))
       return true
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to remove runtime environment.'
+        error instanceof Error
+          ? error.message
+          : t('settings.runtimeEnvironments.toasts.removeError')
       setRemoveError(message)
       toast.error(message)
       return false
@@ -183,13 +197,18 @@ export function RuntimeEnvironmentsPane({
         allowLocalRuntime && value === LOCAL_RUNTIME_VALUE ? null : value
       )
       if (switched) {
-        toast.success(`Switched to ${getEnvironmentLabel(value)}.`)
+        toast.success(
+          t('settings.runtimeEnvironments.toasts.switchedTo', { name: getEnvironmentLabel(value) })
+        )
         return true
       }
-      setSwitchError('Could not switch servers. Fix the issue and try again.')
+      setSwitchError(t('settings.runtimeEnvironments.errors.switchServers'))
       return false
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to switch servers.'
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('settings.runtimeEnvironments.errors.switchFailed')
       setSwitchError(message)
       toast.error(message)
       return false
@@ -198,30 +217,35 @@ export function RuntimeEnvironmentsPane({
     }
   }
 
-  const getEnvironmentLabel = (value: string): string => {
+  function getEnvironmentLabel(value: string): string {
     if (value === LOCAL_RUNTIME_VALUE) {
-      return 'Local desktop'
+      return t('settings.runtimeEnvironments.localDesktop')
     }
     if (value === NO_RUNTIME_VALUE) {
-      return 'No server connected'
+      return t('settings.runtimeEnvironments.noServerConnected')
     }
-    return environments.find((environment) => environment.id === value)?.name ?? 'remote server'
+    return (
+      environments.find((environment) => environment.id === value)?.name ??
+      t('settings.runtimeEnvironments.remoteServerFallback')
+    )
   }
 
   return (
     <SearchableSetting
-      title={searchEntry.title}
-      description={searchEntry.description}
+      title={t('settings.runtimeEnvironments.activeServer.title')}
+      description={t('settings.runtimeEnvironments.activeServer.description')}
       keywords={searchEntry.keywords}
       className="space-y-4 px-1 py-2"
     >
       <div className="space-y-2">
         <div className="space-y-1">
-          <Label id="runtime-active-server-label">Active Server</Label>
+          <Label id="runtime-active-server-label">
+            {t('settings.runtimeEnvironments.activeServer.label')}
+          </Label>
           <p className="text-xs text-muted-foreground">
             {allowLocalRuntime
-              ? "Local keeps today's desktop behavior. Saved servers route supported client calls through the remote runtime."
-              : 'Saved servers route this browser through a paired Orca runtime.'}
+              ? t('settings.runtimeEnvironments.activeServer.localDescription')
+              : t('settings.runtimeEnvironments.activeServer.webDescription')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -244,10 +268,12 @@ export function RuntimeEnvironmentsPane({
             </SelectTrigger>
             <SelectContent>
               {allowLocalRuntime ? (
-                <SelectItem value={LOCAL_RUNTIME_VALUE}>Local desktop</SelectItem>
+                <SelectItem value={LOCAL_RUNTIME_VALUE}>
+                  {t('settings.runtimeEnvironments.localDesktop')}
+                </SelectItem>
               ) : environments.length === 0 ? (
                 <SelectItem value={NO_RUNTIME_VALUE} disabled>
-                  No server connected
+                  {t('settings.runtimeEnvironments.noServerConnected')}
                 </SelectItem>
               ) : null}
               {environments.map((environment) => (
@@ -261,8 +287,8 @@ export function RuntimeEnvironmentsPane({
             type="button"
             variant="outline"
             size="icon-sm"
-            aria-label="Refresh servers"
-            title="Refresh servers"
+            aria-label={t('settings.runtimeEnvironments.refreshServers')}
+            title={t('settings.runtimeEnvironments.refreshServers')}
             onClick={() => void loadEnvironments()}
             disabled={isLoading || isBusy}
           >
@@ -273,7 +299,9 @@ export function RuntimeEnvironmentsPane({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-medium">Saved Servers</div>
+          <div className="text-sm font-medium">
+            {t('settings.runtimeEnvironments.savedServers')}
+          </div>
           {addServerFormOpen ? null : (
             <Button
               type="button"
@@ -284,7 +312,7 @@ export function RuntimeEnvironmentsPane({
               disabled={isBusy}
             >
               <Plus />
-              Add Server
+              {t('settings.runtimeEnvironments.addServer')}
             </Button>
           )}
         </div>
@@ -299,29 +327,34 @@ export function RuntimeEnvironmentsPane({
           >
             <div className="grid gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
               <div className="space-y-1">
-                <Label htmlFor="runtime-server-name">Server name</Label>
+                <Label htmlFor="runtime-server-name">
+                  {t('settings.runtimeEnvironments.serverName')}
+                </Label>
                 <Input
                   id="runtime-server-name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="Dev box"
+                  placeholder={t('settings.runtimeEnvironments.serverNamePlaceholder')}
                   className="h-8 text-xs"
                   autoFocus
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="runtime-server-pairing-code">Pairing code</Label>
+                <Label htmlFor="runtime-server-pairing-code">
+                  {t('settings.runtimeEnvironments.pairingCode')}
+                </Label>
                 <Input
                   id="runtime-server-pairing-code"
                   aria-describedby="runtime-server-pairing-code-help"
                   value={pairingCode}
                   onChange={(event) => setPairingCode(event.target.value)}
-                  placeholder="orca://pair#..."
+                  placeholder={t('settings.runtimeEnvironments.pairingCodePlaceholder')}
                   className="h-8 min-w-0 font-mono text-xs"
                 />
                 <p id="runtime-server-pairing-code-help" className="text-xs text-muted-foreground">
-                  Run <span className="font-mono">orca serve --pairing-address &lt;host&gt;</span>{' '}
-                  on the server and paste the printed pairing URL.
+                  {t('settings.runtimeEnvironments.pairingCodeHelp1')}{' '}
+                  <span className="font-mono">orca serve --pairing-address &lt;host&gt;</span>{' '}
+                  {t('settings.runtimeEnvironments.pairingCodeHelp2')}
                 </p>
               </div>
             </div>
@@ -333,7 +366,7 @@ export function RuntimeEnvironmentsPane({
                 onClick={closeAddServerForm}
                 disabled={isSaving}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -341,7 +374,7 @@ export function RuntimeEnvironmentsPane({
                 disabled={isBusy || !name.trim() || !pairingCode.trim()}
               >
                 {isSaving ? <Loader2 className="animate-spin" /> : <Plus />}
-                Add Server
+                {t('settings.runtimeEnvironments.addServer')}
               </Button>
             </div>
           </form>
@@ -349,7 +382,9 @@ export function RuntimeEnvironmentsPane({
 
         <div className="rounded-lg border border-border/50">
           {environments.length === 0 ? (
-            <div className="px-3 py-4 text-sm text-muted-foreground">No saved servers.</div>
+            <div className="px-3 py-4 text-sm text-muted-foreground">
+              {t('settings.runtimeEnvironments.noSavedServers')}
+            </div>
           ) : (
             <div className="divide-y divide-border/50">
               {environments.map((environment) => (
@@ -360,7 +395,8 @@ export function RuntimeEnvironmentsPane({
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium">{environment.name}</div>
                     <div className="truncate font-mono text-xs text-muted-foreground">
-                      {environment.endpoints[0]?.endpoint ?? 'No endpoint'}
+                      {environment.endpoints[0]?.endpoint ??
+                        t('settings.runtimeEnvironments.noEndpoint')}
                     </div>
                   </div>
                   <Button
@@ -372,7 +408,9 @@ export function RuntimeEnvironmentsPane({
                       setPendingRemove(environment)
                     }}
                     disabled={isBusy}
-                    aria-label={`Remove ${environment.name}`}
+                    aria-label={t('settings.runtimeEnvironments.removeServerAriaLabel', {
+                      name: environment.name
+                    })}
                   >
                     <Trash2 />
                   </Button>
@@ -387,9 +425,11 @@ export function RuntimeEnvironmentsPane({
         <div className="overflow-hidden rounded-lg border border-border/50">
           <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
             <div className="min-w-0 space-y-0.5">
-              <div className="text-sm font-medium">Share this Orca server</div>
+              <div className="text-sm font-medium">
+                {t('settings.runtimeEnvironments.shareServer.title')}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Create a revocable access grant so a browser or another Orca client can connect.
+                {t('settings.runtimeEnvironments.shareServer.description')}
               </p>
             </div>
             <Button
@@ -400,7 +440,9 @@ export function RuntimeEnvironmentsPane({
               onClick={() => setShareServerFormOpen((open) => !open)}
             >
               <Share2 />
-              {shareServerFormOpen ? 'Hide Form' : 'New Link'}
+              {shareServerFormOpen
+                ? t('settings.runtimeEnvironments.shareServer.hideForm')
+                : t('settings.runtimeEnvironments.shareServer.newLink')}
             </Button>
           </div>
           <div className="border-t border-border/40 px-3 py-3">
@@ -424,15 +466,18 @@ export function RuntimeEnvironmentsPane({
       >
         <DialogContent className="max-w-sm sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle className="text-sm">Switch Server</DialogTitle>
+            <DialogTitle className="text-sm">
+              {t('settings.runtimeEnvironments.switchServer.title')}
+            </DialogTitle>
             <DialogDescription>
-              Orca will close remote terminals and browser tabs from the current server before
-              loading projects from the next server.
+              {t('settings.runtimeEnvironments.switchServer.description')}
             </DialogDescription>
           </DialogHeader>
           {pendingSwitchValue ? (
             <div className="rounded-md border border-border/70 bg-muted/35 px-3 py-2 text-xs">
-              <div className="text-muted-foreground">Switch to</div>
+              <div className="text-muted-foreground">
+                {t('settings.runtimeEnvironments.switchServer.switchTo')}
+              </div>
               <div className="mt-0.5 truncate font-medium">
                 {getEnvironmentLabel(pendingSwitchValue)}
               </div>
@@ -448,7 +493,7 @@ export function RuntimeEnvironmentsPane({
               }}
               disabled={switchingValue !== null}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -465,7 +510,7 @@ export function RuntimeEnvironmentsPane({
               disabled={switchingValue !== null}
             >
               {switchingValue !== null ? <Loader2 className="animate-spin" /> : null}
-              Switch
+              {t('settings.runtimeEnvironments.switchServer.switch')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -482,20 +527,23 @@ export function RuntimeEnvironmentsPane({
       >
         <DialogContent className="max-w-sm sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle className="text-sm">Remove Server</DialogTitle>
+            <DialogTitle className="text-sm">
+              {t('settings.runtimeEnvironments.removeServer.title')}
+            </DialogTitle>
             <DialogDescription>
               {removingActiveServer
                 ? allowLocalRuntime
-                  ? 'Removing the active server first switches Orca back to Local desktop and closes remote terminals and browser tabs for that server.'
-                  : 'Removing the active server disconnects this browser and closes remote terminals and browser tabs for that server.'
-                : 'This removes the saved server from Orca. It does not change the active server.'}
+                  ? t('settings.runtimeEnvironments.removeServer.activeLocalDescription')
+                  : t('settings.runtimeEnvironments.removeServer.activeWebDescription')
+                : t('settings.runtimeEnvironments.removeServer.inactiveDescription')}
             </DialogDescription>
           </DialogHeader>
           {pendingRemove ? (
             <div className="rounded-md border border-border/70 bg-muted/35 px-3 py-2 text-xs">
               <div className="truncate font-medium">{pendingRemove.name}</div>
               <div className="mt-0.5 truncate font-mono text-muted-foreground">
-                {pendingRemove.endpoints[0]?.endpoint ?? 'No endpoint'}
+                {pendingRemove.endpoints[0]?.endpoint ??
+                  t('settings.runtimeEnvironments.noEndpoint')}
               </div>
             </div>
           ) : null}
@@ -509,7 +557,7 @@ export function RuntimeEnvironmentsPane({
               }}
               disabled={removingId !== null}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -527,7 +575,7 @@ export function RuntimeEnvironmentsPane({
               disabled={removingId !== null}
             >
               {removingId !== null ? <Loader2 className="animate-spin" /> : <Trash2 />}
-              Remove
+              {t('common.remove')}
             </Button>
           </DialogFooter>
         </DialogContent>

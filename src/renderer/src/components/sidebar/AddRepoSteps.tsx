@@ -6,6 +6,7 @@
  * while the parent retains all state and handlers.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Folder, FolderOpen, Settings } from 'lucide-react'
 import { useAppStore } from '@/store'
@@ -25,6 +26,7 @@ export function useRemoteRepo(
   setAddedRepo: (repo: Repo | null) => void,
   closeModal: () => void
 ) {
+  const { t } = useTranslation()
   const [sshTargets, setSshTargets] = useState<(SshTarget & { state?: SshConnectionState })[]>([])
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null)
   const [remotePath, setRemotePath] = useState('~/')
@@ -86,13 +88,18 @@ export function useRemoteRepo(
     return unsubscribe
   }, [])
 
-  const handleConnectTarget = useCallback(async (targetId: string) => {
-    try {
-      await window.api.ssh.connect({ targetId })
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Connection failed')
-    }
-  }, [])
+  const handleConnectTarget = useCallback(
+    async (targetId: string) => {
+      try {
+        await window.api.ssh.connect({ targetId })
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : t('sidebar.addRepo.remote.connectionFailed')
+        )
+      }
+    },
+    [t]
+  )
 
   const handleAddRemoteRepo = useCallback(async () => {
     if (!selectedTargetId || !remotePath.trim()) {
@@ -124,7 +131,7 @@ export function useRemoteRepo(
         useAppStore.setState({ repos: updated })
       }
 
-      toast.success('Remote project added', { description: repo.displayName })
+      toast.success(t('sidebar.addRepo.remote.success'), { description: repo.displayName })
       setAddedRepo(repo)
       await fetchWorktrees(repo.id)
       setStep('setup')
@@ -145,7 +152,7 @@ export function useRemoteRepo(
     } finally {
       setIsAddingRemote(false)
     }
-  }, [selectedTargetId, remotePath, fetchWorktrees, setStep, setAddedRepo, closeModal])
+  }, [selectedTargetId, remotePath, fetchWorktrees, setStep, setAddedRepo, closeModal, t])
 
   return {
     sshTargets,
@@ -190,16 +197,15 @@ export function RemoteStep({
   onOpenSshSettings,
   onConnectTarget
 }: RemoteStepProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [browsing, setBrowsing] = useState(false)
 
   if (browsing && selectedTargetId) {
     return (
       <>
         <DialogHeader>
-          <DialogTitle>Browse remote filesystem</DialogTitle>
-          <DialogDescription>
-            Navigate to a directory and click Select to choose it.
-          </DialogDescription>
+          <DialogTitle>{t('sidebar.addRepo.remote.browseTitle')}</DialogTitle>
+          <DialogDescription>{t('sidebar.addRepo.remote.browseDescription')}</DialogDescription>
         </DialogHeader>
         <RemoteFileBrowser
           targetId={selectedTargetId}
@@ -217,18 +223,20 @@ export function RemoteStep({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Open remote project</DialogTitle>
-        <DialogDescription>
-          Choose a connected SSH target and enter the path to a Git repository.
-        </DialogDescription>
+        <DialogTitle>{t('sidebar.addRepo.remote.title')}</DialogTitle>
+        <DialogDescription>{t('sidebar.addRepo.remote.description')}</DialogDescription>
       </DialogHeader>
 
       <div className="space-y-3 pt-1">
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-muted-foreground">SSH target</label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            {t('sidebar.addRepo.remote.sshTargetLabel')}
+          </label>
           {sshTargets.length === 0 ? (
             <div className="space-y-1.5 py-1">
-              <p className="text-xs text-muted-foreground">No SSH targets configured.</p>
+              <p className="text-xs text-muted-foreground">
+                {t('sidebar.addRepo.remote.noSshTargets')}
+              </p>
               <Button
                 variant="outline"
                 size="sm"
@@ -236,7 +244,7 @@ export function RemoteStep({
                 onClick={onOpenSshSettings}
               >
                 <Settings className="size-3.5" />
-                Add in Settings
+                {t('sidebar.addRepo.remote.addInSettings')}
               </Button>
             </div>
           ) : (
@@ -255,7 +263,9 @@ export function RemoteStep({
         </div>
 
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-muted-foreground">Remote path</label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            {t('sidebar.addRepo.remote.remotePathLabel')}
+          </label>
           <div className="flex gap-2">
             <Input
               value={remotePath}
@@ -268,7 +278,7 @@ export function RemoteStep({
                   }
                 }
               }}
-              placeholder="/home/user/project"
+              placeholder={t('sidebar.addRepo.remote.remotePathPlaceholder')}
               className="h-8 text-xs flex-1"
               disabled={isAddingRemote || !selectedTargetId}
             />
@@ -291,7 +301,9 @@ export function RemoteStep({
           disabled={!selectedTargetId || !remotePath.trim() || isAddingRemote}
           className="w-full"
         >
-          {isAddingRemote ? 'Adding...' : 'Add remote project'}
+          {isAddingRemote
+            ? t('sidebar.addRepo.remote.adding')
+            : t('sidebar.addRepo.remote.addButton')}
         </Button>
       </div>
     </>
@@ -325,6 +337,7 @@ export function CloneStep({
   onPickDestination,
   onClone
 }: CloneStepProps): React.JSX.Element {
+  const { t } = useTranslation()
   const canClone = !!cloneUrl.trim() && !!cloneDestination.trim() && !isCloning
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
@@ -337,18 +350,20 @@ export function CloneStep({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Clone from URL</DialogTitle>
-        <DialogDescription>Enter the Git URL and choose where to clone it.</DialogDescription>
+        <DialogTitle>{t('sidebar.addRepo.clone.title')}</DialogTitle>
+        <DialogDescription>{t('sidebar.addRepo.clone.description')}</DialogDescription>
       </DialogHeader>
 
       <div className="space-y-3 pt-1">
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-muted-foreground">Git URL</label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            {t('sidebar.addRepo.clone.gitUrlLabel')}
+          </label>
           <Input
             value={cloneUrl}
             onChange={(e) => onUrlChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="https://github.com/user/repo.git"
+            placeholder={t('sidebar.addRepo.clone.gitUrlPlaceholder')}
             className="h-8 text-xs"
             disabled={isCloning}
             autoFocus
@@ -356,13 +371,15 @@ export function CloneStep({
         </div>
 
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-muted-foreground">Clone location</label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            {t('sidebar.addRepo.clone.cloneLocationLabel')}
+          </label>
           <div className="flex gap-2">
             <Input
               value={cloneDestination}
               onChange={(e) => onDestChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="/path/to/destination"
+              placeholder={t('sidebar.addRepo.clone.cloneLocationPlaceholder')}
               className="h-8 text-xs flex-1"
               disabled={isCloning}
             />
@@ -372,7 +389,11 @@ export function CloneStep({
               className="h-8 px-2 shrink-0"
               onClick={onPickDestination}
               disabled={isCloning || disableDestinationPicker}
-              title={disableDestinationPicker ? 'Enter a server path manually' : 'Choose folder'}
+              title={
+                disableDestinationPicker
+                  ? t('sidebar.addRepo.clone.enterServerPath')
+                  : t('sidebar.addRepo.clone.chooseFolder')
+              }
             >
               <Folder className="size-3.5" />
             </Button>
@@ -386,7 +407,7 @@ export function CloneStep({
           disabled={!cloneUrl.trim() || !cloneDestination.trim() || isCloning}
           className="w-full"
         >
-          {isCloning ? 'Cloning...' : 'Clone'}
+          {isCloning ? t('sidebar.addRepo.clone.cloning') : t('sidebar.addRepo.clone.cloneButton')}
         </Button>
 
         {/* Why: progress bar lives below the button so it doesn't push the

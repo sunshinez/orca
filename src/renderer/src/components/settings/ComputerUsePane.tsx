@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Accessibility, Camera, Copy, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
@@ -48,15 +49,18 @@ const PERMISSIONS: PermissionDefinition[] = [
   }
 ]
 
-function statusLabel(status: ComputerUsePermissionStatus | undefined): string {
+function statusLabel(
+  status: ComputerUsePermissionStatus | undefined,
+  tFn: (key: string) => string
+): string {
   switch (status) {
     case 'granted':
-      return 'Granted'
+      return tFn('settings.computerUse.status.granted')
     case 'unsupported':
-      return 'macOS only'
+      return tFn('settings.computerUse.status.unsupported')
     case 'not-granted':
     default:
-      return 'Not enabled'
+      return tFn('settings.computerUse.status.notEnabled')
   }
 }
 
@@ -68,6 +72,7 @@ function statusClass(status: ComputerUsePermissionStatus | undefined): string {
 }
 
 export function ComputerUsePane(): React.JSX.Element {
+  const { t } = useTranslation()
   const [platform, setPlatform] = useState<NodeJS.Platform | null>(null)
   const [states, setStates] = useState<ComputerUsePermissionState[]>([])
   const [loading, setLoading] = useState(true)
@@ -87,13 +92,11 @@ export function ComputerUsePane(): React.JSX.Element {
       setStates(result.permissions)
       setHelperUnavailableReason(result.helperUnavailableReason)
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Could not load Computer Use permissions'
-      )
+      toast.error(error instanceof Error ? error.message : t('settings.computerUse.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void refresh()
@@ -114,14 +117,12 @@ export function ComputerUsePane(): React.JSX.Element {
     try {
       const result = await window.api.computerUsePermissions.openSetup({ id })
       if (result.launchedHelper) {
-        toast.message('Opened macOS Privacy & Security')
+        toast.message(t('settings.computerUse.openedSettings'))
       } else {
-        toast.message('Computer Use permissions are only required on macOS')
+        toast.message(t('settings.computerUse.macosOnly'))
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Could not open Computer Use permissions'
-      )
+      toast.error(error instanceof Error ? error.message : t('settings.computerUse.openError'))
     } finally {
       setPendingId(null)
     }
@@ -130,9 +131,9 @@ export function ComputerUsePane(): React.JSX.Element {
   const copySkillInstallCommand = async (): Promise<void> => {
     try {
       await window.api.ui.writeClipboardText(COMPUTER_USE_SKILL_INSTALL_COMMAND)
-      toast.success('Copied skill install command.')
+      toast.success(t('settings.computerUse.copySuccess'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to copy install command.')
+      toast.error(error instanceof Error ? error.message : t('settings.computerUse.copyError'))
     }
   }
 
@@ -146,21 +147,18 @@ export function ComputerUsePane(): React.JSX.Element {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <ShieldCheck className="size-4" />
-                Allow Orca to use local apps when you ask.
+                {t('settings.computerUse.header')}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Computer Use needs macOS privacy permissions before agents can inspect and operate
-                app windows.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('settings.computerUse.subtitle')}</p>
               {helperUnavailableReason ? (
                 <p className="text-xs text-muted-foreground">
-                  Computer Use permissions are unavailable because {helperUnavailableReason}.
+                  {t('settings.computerUse.unavailableReason', { reason: helperUnavailableReason })}
                 </p>
               ) : null}
             </div>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void refresh()}>
               <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('common.refresh')}
             </Button>
           </div>
 
@@ -178,16 +176,20 @@ export function ComputerUsePane(): React.JSX.Element {
                     <div className="mt-0.5 text-muted-foreground">{permission.icon}</div>
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium">{permission.label}</span>
+                        <span className="text-sm font-medium">
+                          {t(`settings.computerUse.permission.${permission.id}.label`)}
+                        </span>
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${statusClass(
                             status
                           )}`}
                         >
-                          {statusLabel(status)}
+                          {statusLabel(status, t)}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">{permission.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t(`settings.computerUse.permission.${permission.id}.description`)}
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -200,7 +202,7 @@ export function ComputerUsePane(): React.JSX.Element {
                     className="shrink-0 gap-1.5"
                   >
                     <ExternalLink className="size-3.5" />
-                    {pending ? 'Opening...' : 'Open'}
+                    {pending ? t('settings.computerUse.opening') : t('settings.computerUse.open')}
                   </Button>
                 </div>
               )
@@ -211,9 +213,9 @@ export function ComputerUsePane(): React.JSX.Element {
 
       <div className="space-y-2 rounded-lg border border-border/60 px-4 py-3">
         <div className="space-y-1">
-          <p className="text-sm font-medium">Install Computer Use Skill</p>
+          <p className="text-sm font-medium">{t('settings.computerUse.installSkill.title')}</p>
           <p className="text-xs text-muted-foreground">
-            Run this once on your computer so agents know how to use Orca&apos;s computer controls.
+            {t('settings.computerUse.installSkill.description')}
           </p>
         </div>
         <div className="flex max-w-full items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
@@ -227,7 +229,7 @@ export function ComputerUsePane(): React.JSX.Element {
                   variant="ghost"
                   size="icon-xs"
                   onClick={() => void copySkillInstallCommand()}
-                  aria-label="Copy Computer Use skill install command"
+                  aria-label={t('settings.computerUse.copyAria')}
                 >
                   <Copy className="size-3.5" />
                 </Button>

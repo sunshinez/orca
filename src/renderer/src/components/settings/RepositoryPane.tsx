@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { OrcaHooks, Repo, RepoHookSettings } from '../../../../shared/types'
 import { getRepoKindLabel, isFolderRepo } from '../../../../shared/repo-kind'
 import { REPO_COLORS } from '../../../../shared/constants'
@@ -157,6 +158,7 @@ export function RepositoryPane({
   updateRepo,
   removeRepo
 }: RepositoryPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const isFolder = isFolderRepo(repo)
   const searchQuery = useAppStore((state) => state.settingsSearchQuery)
   const symlinksEnabled = useAppStore((state) => state.settings?.experimentalWorktreeSymlinks)
@@ -215,22 +217,23 @@ export function RepositoryPane({
       <section key="identity" className="space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold">Identity</h3>
+            <h3 className="text-sm font-semibold">{t('settings.repository.identity')}</h3>
             <p className="text-xs text-muted-foreground">
-              Repo-specific display details for the sidebar and tabs.
+              {t('settings.repository.identityDescription')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Type: <span className="text-foreground">{getRepoKindLabel(repo)}</span>
+              {t('settings.repository.type')}:{' '}
+              <span className="text-foreground">{getRepoKindLabel(repo)}</span>
             </p>
             {isFolder ? (
               <p className="text-xs text-muted-foreground">
-                Opened as folder. Git features are unavailable for this workspace.
+                {t('settings.repository.openedAsFolder')}
               </p>
             ) : null}
           </div>
           <SearchableSetting
-            title="Remove Repo"
-            description="Remove this repository from Orca."
+            title={t('settings.repository.removeRepo')}
+            description={t('settings.repository.removeRepoDescription')}
             keywords={[repo.displayName, 'delete', 'repository']}
           >
             <Button
@@ -241,18 +244,20 @@ export function RepositoryPane({
               className="gap-2"
             >
               <Trash2 className="size-3.5" />
-              {confirmingRemove === repo.id ? 'Confirm Remove' : 'Remove Repo'}
+              {confirmingRemove === repo.id
+                ? t('settings.repository.confirmRemove')
+                : t('settings.repository.removeRepo')}
             </Button>
           </SearchableSetting>
         </div>
 
         <SearchableSetting
-          title="Display Name"
-          description="Repo-specific display details for the sidebar and tabs."
+          title={t('settings.repository.displayName')}
+          description={t('settings.repository.identityDescription')}
           keywords={[repo.displayName, repo.path, 'repository name']}
           className="space-y-2"
         >
-          <Label className="text-sm font-semibold">Display Name</Label>
+          <Label className="text-sm font-semibold">{t('settings.repository.displayName')}</Label>
           <Input
             value={repo.displayName}
             onChange={(e) =>
@@ -265,12 +270,12 @@ export function RepositoryPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Badge Color"
-          description="Repo color used in the sidebar and tabs."
+          title={t('settings.repository.badgeColor')}
+          description={t('settings.repository.badgeColorDescription')}
           keywords={[repo.displayName, 'color', 'badge']}
           className="space-y-2"
         >
-          <Label className="text-sm font-semibold">Badge Color</Label>
+          <Label className="text-sm font-semibold">{t('settings.repository.badgeColor')}</Label>
           <div className="flex flex-wrap gap-2">
             {REPO_COLORS.map((color) => (
               <button
@@ -290,12 +295,14 @@ export function RepositoryPane({
 
         {!isFolder ? (
           <SearchableSetting
-            title="Default Worktree Base"
-            description="Default base branch or ref when creating worktrees."
+            title={t('settings.repository.defaultWorktreeBase')}
+            description={t('settings.repository.defaultWorktreeBaseDescription')}
             keywords={[repo.displayName, 'base ref', 'branch']}
             className="space-y-3"
           >
-            <Label className="text-sm font-semibold">Default Worktree Base</Label>
+            <Label className="text-sm font-semibold">
+              {t('settings.repository.defaultWorktreeBase')}
+            </Label>
             <BaseRefPicker
               repoId={repo.id}
               currentBaseRef={repo.worktreeBaseRef}

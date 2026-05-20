@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Loader2, Server, ServerOff } from 'lucide-react'
 import {
@@ -21,12 +22,15 @@ type SshDisconnectedDialogProps = {
   status: SshConnectionStatus
 }
 
-const STATUS_MESSAGES: Partial<Record<SshConnectionStatus, string>> = {
-  disconnected: 'This remote repository is not connected.',
-  reconnecting: 'Reconnecting to the remote host...',
-  'reconnection-failed': 'Reconnection to the remote host failed.',
-  error: 'The connection to the remote host encountered an error.',
-  'auth-failed': 'Authentication to the remote host failed.'
+function getStatusMessage(status: SshConnectionStatus, t: (key: string) => string): string {
+  const messages: Partial<Record<SshConnectionStatus, string>> = {
+    disconnected: t('sidebar.sshDisconnected.statusMessages.disconnected'),
+    reconnecting: t('sidebar.sshDisconnected.statusMessages.reconnecting'),
+    'reconnection-failed': t('sidebar.sshDisconnected.statusMessages.reconnectionFailed'),
+    error: t('sidebar.sshDisconnected.statusMessages.error'),
+    'auth-failed': t('sidebar.sshDisconnected.statusMessages.authFailed')
+  }
+  return messages[status] ?? t('sidebar.sshDisconnected.statusMessages.disconnected')
 }
 
 function isReconnectable(status: SshConnectionStatus): boolean {
@@ -40,6 +44,7 @@ export function SshDisconnectedDialog({
   targetLabel,
   status
 }: SshDisconnectedDialogProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [connecting, setConnecting] = useState(false)
 
   const handleReconnect = useCallback(async () => {
@@ -48,11 +53,13 @@ export function SshDisconnectedDialog({
       await window.api.ssh.connect({ targetId })
       onOpenChange(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Reconnection failed')
+      toast.error(
+        err instanceof Error ? err.message : t('sidebar.sshDisconnected.reconnectionFailed')
+      )
     } finally {
       setConnecting(false)
     }
-  }, [targetId, onOpenChange])
+  }, [targetId, onOpenChange, t])
 
   const isConnecting =
     connecting ||
@@ -60,8 +67,8 @@ export function SshDisconnectedDialog({
     status === 'deploying-relay' ||
     status === 'reconnecting'
   const message = isConnecting
-    ? 'Reconnecting to the remote host...'
-    : (STATUS_MESSAGES[status] ?? 'This remote repository is not connected.')
+    ? t('sidebar.sshDisconnected.reconnectingMessage')
+    : getStatusMessage(status, t)
   const showReconnect = isReconnectable(status)
 
   useEffect(() => {
@@ -98,7 +105,9 @@ export function SshDisconnectedDialog({
             ) : (
               <ServerOff className="size-4 text-muted-foreground" />
             )}
-            {isConnecting ? 'Reconnecting...' : 'SSH Disconnected'}
+            {isConnecting
+              ? t('sidebar.sshDisconnected.titleReconnecting')
+              : t('sidebar.sshDisconnected.titleDisconnected')}
           </DialogTitle>
           <DialogDescription className="text-xs">{message}</DialogDescription>
         </DialogHeader>
@@ -122,17 +131,17 @@ export function SshDisconnectedDialog({
             onClick={() => onOpenChange(false)}
             disabled={isConnecting}
           >
-            Dismiss
+            {t('sidebar.sshDisconnected.dismiss')}
           </Button>
           {showReconnect && (
             <Button size="sm" onClick={() => void handleReconnect()} disabled={isConnecting}>
               {isConnecting ? (
                 <>
                   <Loader2 className="size-3.5 animate-spin" />
-                  Connecting...
+                  {t('sidebar.sshDisconnected.connecting')}
                 </>
               ) : (
-                'Reconnect'
+                t('sidebar.sshDisconnected.reconnect')
               )}
             </Button>
           )}

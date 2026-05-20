@@ -2,6 +2,7 @@
    splitting individual settings into separate files would scatter related controls without a
    meaningful abstraction boundary. Mirrors the same decision made for GeneralPane.tsx. */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type {
   FloatingTerminalTriggerLocation,
   GlobalSettings,
@@ -93,6 +94,7 @@ export function TerminalPane({
   wslAvailable,
   pwshAvailable
 }: TerminalPaneProps): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((state) => state.settingsSearchQuery)
   const repos = useAppStore((state) => state.repos)
   const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
@@ -140,8 +142,8 @@ export function TerminalPane({
     isWindows && matchesSettingsSearch(searchQuery, TERMINAL_WINDOWS_SHELL_SEARCH_ENTRY) ? (
       <section key="windows-shell" className="space-y-4">
         <SearchableSetting
-          title="Default Shell"
-          description="Choose the default shell for new terminal panes on Windows."
+          title={t('settings.terminal.windowsShell.title')}
+          description={t('settings.terminal.windowsShell.description')}
           keywords={[
             'terminal',
             'windows',
@@ -153,7 +155,7 @@ export function TerminalPane({
           ]}
           className="space-y-2"
         >
-          <Label>Default Shell</Label>
+          <Label>{t('settings.terminal.windowsShell.title')}</Label>
           <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
             {[
               { label: 'PowerShell', value: 'powershell.exe' },
@@ -182,23 +184,23 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, TERMINAL_FLOATING_SEARCH_ENTRIES) ? (
       <section key="floating-terminal" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Floating Terminal</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.floating.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Global floating terminal tabs outside any repo or worktree.
+            {t('settings.terminal.floating.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Floating Terminal"
-          description="Enable the global floating terminal and choose where new tabs start."
+          title={t('settings.terminal.floating.title')}
+          description={t('settings.terminal.floating.description')}
           keywords={['terminal', 'global', 'floating', 'quick terminal', 'launch directory']}
           className="space-y-3"
         >
           <div className="flex items-center justify-between gap-4 px-1 py-2">
             <div className="space-y-0.5">
-              <Label>Enable Floating Terminal</Label>
+              <Label>{t('settings.terminal.floating.enable')}</Label>
               <p className="text-xs text-muted-foreground">
-                Shows the global terminal button and floating terminal panel.
+                {t('settings.terminal.floating.enableDescription')}
               </p>
             </div>
             <button
@@ -223,7 +225,7 @@ export function TerminalPane({
           </div>
 
           <div className="space-y-2">
-            <Label>Default Directory</Label>
+            <Label>{t('settings.terminal.floating.defaultDirectory')}</Label>
             <div className="flex max-w-xl gap-2">
               <Input
                 value={settings.floatingTerminalCwd || '~'}
@@ -246,12 +248,12 @@ export function TerminalPane({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Takes effect for new Floating Terminal tabs. Use ~ for your home directory.
+              {t('settings.terminal.floating.defaultDirectoryDescription')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Toggle Button Location</Label>
+            <Label>{t('settings.terminal.floating.toggleLocation')}</Label>
             <ToggleGroup
               type="single"
               value={settings.floatingTerminalTriggerLocation ?? 'floating-button'}
@@ -278,15 +280,15 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, TERMINAL_QUICK_COMMANDS_SEARCH_ENTRIES) ? (
       <section key="quick-commands" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Quick Commands</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.quickCommands.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Save global and repository-specific terminal snippets for the right-click menu.
+            {t('settings.terminal.quickCommands.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Quick Commands"
-          description="Create, edit, and remove scoped terminal command snippets for the right-click menu."
+          title={t('settings.terminal.quickCommands.title')}
+          description={t('settings.terminal.quickCommands.description')}
           keywords={[
             'terminal',
             'command',
@@ -311,19 +313,19 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, TERMINAL_TYPOGRAPHY_SEARCH_ENTRIES) ? (
       <section key="typography" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Typography</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.typography.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Default terminal typography for new panes and live updates.
+            {t('settings.terminal.typography.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Font Size"
-          description="Default terminal font size for new panes and live updates."
+          title={t('settings.terminal.typography.fontSize')}
+          description={t('settings.terminal.typography.description')}
           keywords={['terminal', 'typography', 'text size']}
           className="space-y-2"
         >
-          <Label>Font Size</Label>
+          <Label>{t('settings.terminal.typography.fontSize')}</Label>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -365,12 +367,12 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Font Family"
-          description="Default terminal font family for new panes and live updates."
+          title={t('settings.terminal.typography.fontFamily')}
+          description={t('settings.terminal.typography.description')}
           keywords={['terminal', 'typography', 'font']}
           className="space-y-2"
         >
-          <Label>Font Family</Label>
+          <Label>{t('settings.terminal.typography.fontFamily')}</Label>
           <FontAutocomplete
             value={settings.terminalFontFamily}
             suggestions={terminalFontSuggestions}
@@ -379,12 +381,12 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Font Weight"
-          description="Controls the terminal text font weight."
+          title={t('settings.terminal.typography.fontWeight')}
+          description={t('settings.terminal.typography.description')}
           keywords={['terminal', 'typography', 'weight']}
         >
           <NumberField
-            label="Font Weight"
+            label={t('settings.terminal.typography.fontWeight')}
             description="Controls the terminal text font weight."
             value={normalizeTerminalFontWeight(settings.terminalFontWeight)}
             defaultValue={DEFAULT_TERMINAL_FONT_WEIGHT}
@@ -401,12 +403,12 @@ export function TerminalPane({
         </SearchableSetting>
 
         <SearchableSetting
-          title="Line Height"
-          description="Controls the terminal line height multiplier."
+          title={t('settings.terminal.typography.lineHeight')}
+          description={t('settings.terminal.typography.description')}
           keywords={['terminal', 'typography', 'line height', 'spacing']}
         >
           <NumberField
-            label="Line Height"
+            label={t('settings.terminal.typography.lineHeight')}
             description="Controls the terminal line height multiplier."
             value={settings.terminalLineHeight}
             defaultValue={1}
@@ -484,14 +486,14 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, TERMINAL_RENDERING_SEARCH_ENTRIES) ? (
       <section key="rendering" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Rendering</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.rendering.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Terminal renderer behavior for live panes and new panes.
+            {t('settings.terminal.rendering.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="GPU Acceleration"
+          title={t('settings.terminal.rendering.gpuAcceleration')}
           description="Controls whether the terminal uses xterm.js WebGL rendering. Auto uses DOM on Linux to avoid driver glyph corruption, and otherwise tries WebGL with DOM fallback."
           keywords={[
             'terminal',
@@ -506,7 +508,7 @@ export function TerminalPane({
           ]}
           className="space-y-2"
         >
-          <Label>GPU Acceleration</Label>
+          <Label>{t('settings.terminal.rendering.gpuAcceleration')}</Label>
           <div className="flex w-fit gap-1 rounded-md border border-border/50 p-1">
             {(['auto', 'on', 'off'] as const).map((option) => (
               <button
@@ -536,16 +538,16 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, TERMINAL_CURSOR_SEARCH_ENTRIES) ? (
       <section key="cursor" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Cursor</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.cursor.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Default cursor appearance for Orca terminal panes.
+            {t('settings.terminal.cursor.description')}
           </p>
         </div>
 
         <div className="space-y-4">
           <SearchableSetting
-            title="Cursor Shape"
-            description="Default cursor appearance for Orca terminal panes."
+            title={t('settings.terminal.cursor.shape')}
+            description={t('settings.terminal.cursor.description')}
             keywords={['terminal', 'cursor', 'bar', 'block', 'underline']}
             className="space-y-2"
           >
@@ -628,9 +630,9 @@ export function TerminalPane({
       matchesSettingsSearch(searchQuery, TERMINAL_RIGHT_CLICK_TO_PASTE_SEARCH_ENTRY)) ? (
       <section key="pane-styling" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Pane Styling</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.paneStyling.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Control inactive pane dimming, divider thickness, mouse behavior, and transition timing.
+            {t('settings.terminal.paneStyling.description')}
           </p>
         </div>
 
@@ -870,9 +872,9 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, TERMINAL_SETUP_SCRIPT_SEARCH_ENTRIES) ? (
       <section key="setup-script" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Workspace Setup Script</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.setupScript.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Where the repository setup script runs when a new workspace is created.
+            {t('settings.terminal.setupScript.description')}
           </p>
         </div>
 
@@ -950,9 +952,9 @@ export function TerminalPane({
     (isMac && matchesSettingsSearch(searchQuery, TERMINAL_MAC_OPTION_SEARCH_ENTRIES)) ? (
       <section key="advanced" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Advanced</h3>
+          <h3 className="text-sm font-semibold">{t('settings.terminal.advanced.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Scrollback is bounded for stability. This setting applies to new terminal panes.
+            {t('settings.terminal.advanced.description')}
           </p>
         </div>
 

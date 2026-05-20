@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ExternalLink, FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -53,19 +54,22 @@ export function getWorktreeOpenInEntries(
   ]
 }
 
-function showOpenFailureToast(reason: ShellOpenLocalPathFailureReason): void {
+function showOpenFailureToast(
+  reason: ShellOpenLocalPathFailureReason,
+  t: (key: string, options?: Record<string, unknown>) => string
+): void {
   if (reason === 'not-absolute') {
-    toast.error('Workspace path is not a valid local path.')
+    toast.error(t('sidebar.openIn.pathNotAbsolute'))
     return
   }
   if (reason === 'not-found') {
-    toast.error('Workspace folder was not found.', {
-      description: 'It may have been moved or deleted. Refresh workspaces or remove it from Orca.'
+    toast.error(t('sidebar.openIn.folderNotFound'), {
+      description: t('sidebar.openIn.folderNotFoundDescription')
     })
     return
   }
-  toast.error('Could not open workspace folder.', {
-    description: 'Check the editor command or file manager configuration on this machine.'
+  toast.error(t('sidebar.openIn.openFailed'), {
+    description: t('sidebar.openIn.openFailedDescription')
   })
 }
 
@@ -78,6 +82,7 @@ export async function openWorktreePath(args: {
   worktreePath: string
   connectionId?: string | null
   command?: string
+  t: (key: string, options?: Record<string, unknown>) => string
 }): Promise<void> {
   if (
     isLocalPathOpenBlocked(useAppStore.getState().settings, {
@@ -93,7 +98,7 @@ export async function openWorktreePath(args: {
       ? await window.api.shell.openInFileManager(args.worktreePath)
       : await window.api.shell.openInExternalEditor(args.worktreePath, args.command)
   if (!result.ok) {
-    showOpenFailureToast(result.reason)
+    showOpenFailureToast(result.reason, args.t)
   }
 }
 
@@ -104,11 +109,12 @@ function useOpenInWorktreePath({
   target: 'file-manager' | 'external-editor',
   command?: string
 ) => Promise<void> {
+  const { t } = useTranslation()
   return useCallback(
     async (target, command) => {
-      await openWorktreePath({ target, worktreePath, connectionId, command })
+      await openWorktreePath({ target, worktreePath, connectionId, command, t })
     },
-    [connectionId, worktreePath]
+    [connectionId, worktreePath, t]
   )
 }
 
@@ -150,11 +156,12 @@ export function WorktreeOpenInSubMenu({
   connectionId,
   disabled
 }: WorktreeOpenInMenuItemsProps): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger disabled={disabled}>
         <FolderOpen className="size-3.5" />
-        Open in
+        {t('sidebar.openIn.openIn')}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent
         className="w-52"

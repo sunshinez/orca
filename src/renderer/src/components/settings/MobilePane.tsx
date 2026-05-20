@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check, Copy, Maximize2, Smartphone, Trash2 } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -88,6 +89,7 @@ type PairedDevice = {
 }
 
 export function MobilePane(): React.JSX.Element {
+  const { t } = useTranslation()
   const autoRestoreFitMs = useAppStore((s) => s.settings?.mobileAutoRestoreFitMs ?? null)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
@@ -110,22 +112,25 @@ export function MobilePane(): React.JSX.Element {
     }
   }, [])
 
-  const loadNetworkInterfaces = useCallback(async (opts: { notifyOnError?: boolean } = {}) => {
-    setRefreshingNetworkInterfaces(true)
-    try {
-      const result = await window.api.mobile.listNetworkInterfaces()
-      setNetworkInterfaces(result.interfaces)
-      setSelectedAddress((currentAddress) =>
-        selectRefreshedNetworkAddress(currentAddress, result.interfaces)
-      )
-    } catch {
-      if (opts.notifyOnError) {
-        toast.error('Failed to refresh network interfaces')
+  const loadNetworkInterfaces = useCallback(
+    async (opts: { notifyOnError?: boolean } = {}) => {
+      setRefreshingNetworkInterfaces(true)
+      try {
+        const result = await window.api.mobile.listNetworkInterfaces()
+        setNetworkInterfaces(result.interfaces)
+        setSelectedAddress((currentAddress) =>
+          selectRefreshedNetworkAddress(currentAddress, result.interfaces)
+        )
+      } catch {
+        if (opts.notifyOnError) {
+          toast.error(t('settings.mobile.networkRefreshError'))
+        }
+      } finally {
+        setRefreshingNetworkInterfaces(false)
       }
-    } finally {
-      setRefreshingNetworkInterfaces(false)
-    }
-  }, [])
+    },
+    [t]
+  )
 
   const generateQR = useCallback(
     async (opts: { rotate?: boolean } = {}) => {
@@ -145,15 +150,15 @@ export function MobilePane(): React.JSX.Element {
           setCodeCopied(false)
           void loadDevices()
         } else {
-          toast.error('WebSocket transport is not running')
+          toast.error(t('settings.mobile.wsNotRunning'))
         }
       } catch {
-        toast.error('Failed to generate QR code')
+        toast.error(t('settings.mobile.qrGenError'))
       } finally {
         setLoading(false)
       }
     },
-    [loadDevices, selectedAddress]
+    [loadDevices, selectedAddress, t]
   )
 
   useEffect(() => {
@@ -190,7 +195,7 @@ export function MobilePane(): React.JSX.Element {
       setCodeCopied(true)
       setTimeout(() => setCodeCopied(false), 2000)
     } catch {
-      toast.error('Failed to copy pairing code')
+      toast.error(t('settings.mobile.copyError'))
     }
   }
 
@@ -198,9 +203,9 @@ export function MobilePane(): React.JSX.Element {
     try {
       await window.api.mobile.revokeDevice({ deviceId })
       setDevices((prev) => prev.filter((d) => d.deviceId !== deviceId))
-      toast.success('Device revoked')
+      toast.success(t('settings.mobile.deviceRevoked'))
     } catch {
-      toast.error('Failed to revoke device')
+      toast.error(t('settings.mobile.revokeError'))
     }
   }
 
@@ -225,17 +230,17 @@ export function MobilePane(): React.JSX.Element {
             onClick={() => setQrEnlarged(true)}
             className="group relative cursor-pointer rounded-lg border border-border/60 bg-white p-3"
           >
-            <img src={qrDataUrl} alt="QR Code for mobile pairing" className="size-48" />
+            <img src={qrDataUrl} alt={t('settings.mobile.qrAlt')} className="size-48" />
             <Maximize2 className="absolute top-1.5 right-1.5 size-3 text-black/30 opacity-0 transition-opacity group-hover:opacity-100" />
           </button>
           {endpoint && <span className="text-muted-foreground font-mono text-xs">{endpoint}</span>}
           <p className="text-muted-foreground max-w-xs text-center text-xs">
-            Scan this code with the Orca mobile app. Each code creates a unique device token.
+            {t('settings.mobile.qrHint')}
           </p>
           {pairingUrl && (
             <div className="flex w-full max-w-lg flex-col gap-1.5 px-4">
               <div className="text-muted-foreground text-center text-xs">
-                Or paste this code in the mobile app:
+                {t('settings.mobile.pasteHint')}
               </div>
               <Button
                 variant="outline"
@@ -257,12 +262,10 @@ export function MobilePane(): React.JSX.Element {
 
       {/* Paired devices */}
       <div>
-        <h3 className="mb-2 text-sm font-medium">Paired Devices</h3>
+        <h3 className="mb-2 text-sm font-medium">{t('settings.mobile.pairedDevices')}</h3>
         {devices.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            {qrDataUrl
-              ? 'No devices paired yet. Scan the QR code with the Orca mobile app.'
-              : 'No devices paired yet.'}
+            {qrDataUrl ? t('settings.mobile.noDevicesQr') : t('settings.mobile.noDevices')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -274,7 +277,9 @@ export function MobilePane(): React.JSX.Element {
                 <div>
                   <div className="text-sm font-medium">{device.name}</div>
                   <div className="text-muted-foreground text-xs">
-                    Paired {new Date(device.pairedAt).toLocaleDateString()}
+                    {t('settings.mobile.pairedAt', {
+                      date: new Date(device.pairedAt).toLocaleDateString()
+                    })}
                   </div>
                 </div>
                 <Button
@@ -290,9 +295,7 @@ export function MobilePane(): React.JSX.Element {
           </div>
         )}
         {devices.length > 0 && (
-          <p className="text-muted-foreground mt-3 text-xs">
-            Revoking a device disconnects it immediately.
-          </p>
+          <p className="text-muted-foreground mt-3 text-xs">{t('settings.mobile.revokeHint')}</p>
         )}
       </div>
 
@@ -300,13 +303,10 @@ export function MobilePane(): React.JSX.Element {
       <div className="rounded-lg border border-border/60 p-4">
         <div className="mb-3 flex items-center gap-2">
           <Smartphone className="size-4 text-muted-foreground" />
-          <span className="text-sm font-medium">When you leave the mobile app</span>
+          <span className="text-sm font-medium">{t('settings.mobile.autoRestoreTitle')}</span>
         </div>
         <p className="text-muted-foreground mb-3 text-xs">
-          While you&apos;re using a terminal on your phone, Orca shrinks it to fit your phone
-          screen. When you close the app or switch away, this controls whether it stays at phone
-          size (so interactive CLI tools don&apos;t reflow) or resizes back to your desktop. You can
-          always click Restore on the terminal banner to resize it manually.
+          {t('settings.mobile.autoRestoreDescription')}
         </p>
         <Select
           value={autoRestoreValueFromMs(autoRestoreFitMs)}
@@ -335,12 +335,12 @@ export function MobilePane(): React.JSX.Element {
       <Dialog open={qrEnlarged} onOpenChange={setQrEnlarged}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Scan with Orca Mobile</DialogTitle>
+            <DialogTitle>{t('settings.mobile.qrDialogTitle')}</DialogTitle>
           </DialogHeader>
           {qrDataUrl && (
             <div className="flex flex-col items-center gap-3">
               <div className="rounded-lg bg-white p-4">
-                <img src={qrDataUrl} alt="QR Code for mobile pairing" className="size-72" />
+                <img src={qrDataUrl} alt={t('settings.mobile.qrAlt')} className="size-72" />
               </div>
               {endpoint && (
                 <span className="text-muted-foreground font-mono text-xs">{endpoint}</span>

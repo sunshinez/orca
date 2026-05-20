@@ -2,6 +2,7 @@
    splitting individual settings into separate files would scatter related controls without a
    meaningful abstraction boundary. */
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { GlobalSettings, OpenInApplication } from '../../../../shared/types'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -19,17 +20,22 @@ import {
 import { OPEN_IN_APPLICATIONS_MAX } from '../../../../shared/open-in-applications'
 import { clampNumber } from '@/lib/terminal-theme'
 import {
-  GENERAL_CACHE_TIMER_SEARCH_ENTRIES,
-  GENERAL_CLI_SEARCH_ENTRIES,
-  GENERAL_EDITOR_SEARCH_ENTRIES,
-  GENERAL_PANE_SEARCH_ENTRIES,
-  GENERAL_SUPPORT_SEARCH_ENTRIES,
-  GENERAL_UPDATE_SEARCH_ENTRIES,
-  GENERAL_WORKSPACE_SEARCH_ENTRIES
+  getGeneralCacheTimerSearchEntries,
+  getGeneralCliSearchEntries,
+  getGeneralEditorSearchEntries,
+  getGeneralPaneSearchEntries,
+  getGeneralSupportSearchEntries,
+  getGeneralUpdateSearchEntries,
+  getGeneralWorkspaceSearchEntries
 } from './general-search'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { SearchableSetting } from './SearchableSetting'
 import { matchesSettingsSearch } from './settings-search'
+import {
+  ORCA_LANGUAGES,
+  ORCA_LANGUAGE_LABELS,
+  resolveLanguagePreference
+} from '../../../../shared/i18n/languages'
 
 function createOpenInApplication(): OpenInApplication {
   return {
@@ -55,7 +61,7 @@ export function shouldCommitOpenInApplicationsDraft(applications: OpenInApplicat
   })
 }
 
-export { GENERAL_PANE_SEARCH_ENTRIES }
+export { getGeneralPaneSearchEntries }
 
 type GeneralPaneProps = {
   settings: GlobalSettings
@@ -203,23 +209,61 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
     void window.api.updater.quitAndInstall().catch(console.error)
   }
 
+  const { t } = useTranslation()
+
   const visibleSections = [
-    matchesSettingsSearch(searchQuery, GENERAL_WORKSPACE_SEARCH_ENTRIES) ? (
+    matchesSettingsSearch(searchQuery, getGeneralPaneSearchEntries(t)) ? (
+      <section key="language" className="space-y-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">{t('settings.general.title')}</h3>
+          <p className="text-xs text-muted-foreground">{t('settings.general.description')}</p>
+        </div>
+        <SearchableSetting
+          title={t('settings.general.language.label')}
+          description={t('settings.general.language.description')}
+          keywords={['language', 'locale', 'i18n', '中文', 'english']}
+          className="flex items-center justify-between gap-4 px-1 py-2"
+        >
+          <div className="space-y-0.5">
+            <Label>{t('settings.general.language.label')}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t('settings.general.language.description')}
+            </p>
+          </div>
+          <Select
+            value={resolveLanguagePreference(settings.language)}
+            onValueChange={(v) => updateSettings({ language: v })}
+          >
+            <SelectTrigger size="sm" className="h-7 text-xs w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ORCA_LANGUAGES.map((lang) => (
+                <SelectItem key={lang} value={lang}>
+                  {ORCA_LANGUAGE_LABELS[lang]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SearchableSetting>
+      </section>
+    ) : null,
+    matchesSettingsSearch(searchQuery, getGeneralWorkspaceSearchEntries(t)) ? (
       <section key="workspace" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Workspace</h3>
+          <h3 className="text-sm font-semibold">{t('settings.general.workspace.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Configure where new worktrees are created.
+            {t('settings.general.workspace.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Workspace Directory"
-          description="Root directory where worktree folders are created."
+          title={t('settings.general.workspace.directory.label')}
+          description={t('settings.general.workspace.directory.description')}
           keywords={['workspace', 'folder', 'path', 'worktree']}
           className="space-y-2"
         >
-          <Label>Workspace Directory</Label>
+          <Label>{t('settings.general.workspace.directory.label')}</Label>
           <div className="flex gap-2">
             <Input
               value={settings.workspaceDir}
@@ -233,24 +277,24 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
               className="shrink-0 gap-1.5"
             >
               <FolderOpen className="size-3.5" />
-              Browse
+              {t('common.browse')}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Root directory where worktree folders are created.
+            {t('settings.general.workspace.directory.description')}
           </p>
         </SearchableSetting>
 
         <SearchableSetting
-          title="Nest Workspaces"
-          description="Create worktrees inside a repo-named subfolder."
+          title={t('settings.general.workspace.nest.label')}
+          description={t('settings.general.workspace.nest.description')}
           keywords={['nested', 'subfolder', 'directory']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Nest Workspaces</Label>
+            <Label>{t('settings.general.workspace.nest.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Create worktrees inside a repo-named subfolder.
+              {t('settings.general.workspace.nest.description')}
             </p>
           </div>
           <button
@@ -278,16 +322,15 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
             breaks that toast action even though this pane still renders fine. */}
         <div id="general-skip-delete-worktree-confirm" className="scroll-mt-6">
           <SearchableSetting
-            title="Ask Before Deleting Worktrees"
-            description="Show a confirmation dialog before deleting a worktree."
+            title={t('settings.general.workspace.askBeforeDeletingWorktrees.label')}
+            description={t('settings.general.workspace.askBeforeDeletingWorktrees.description')}
             keywords={['delete', 'worktree', 'confirm', 'dialog', 'skip', 'prompt']}
             className="flex items-center justify-between gap-4 px-1 py-2"
           >
             <div className="space-y-0.5">
-              <Label>Ask Before Deleting Worktrees</Label>
+              <Label>{t('settings.general.workspace.skipDeleteWorktreeConfirm.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Show a confirmation before deleting a worktree from the context menu. Failed deletes
-                still surface a Force Delete fallback.
+                {t('settings.general.workspace.skipDeleteWorktreeConfirm.description')}
               </p>
             </div>
             <button
@@ -313,15 +356,15 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
 
         <div id="general-skip-delete-automation-confirm" className="scroll-mt-6">
           <SearchableSetting
-            title="Ask Before Deleting Automations"
-            description="Show a confirmation dialog before deleting an automation and its run history."
+            title={t('settings.general.workspace.skipDeleteAutomationConfirm.label')}
+            description={t('settings.general.workspace.skipDeleteAutomationConfirm.description')}
             keywords={['delete', 'automation', 'confirm', 'dialog', 'skip', 'prompt']}
             className="flex items-center justify-between gap-4 px-1 py-2"
           >
             <div className="space-y-0.5">
-              <Label>Ask Before Deleting Automations</Label>
+              <Label>{t('settings.general.workspace.skipDeleteAutomationConfirm.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Show a confirmation before deleting automations and their run history.
+                {t('settings.general.workspace.skipDeleteAutomationConfirm.description')}
               </p>
             </div>
             <button
@@ -346,20 +389,18 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
         </div>
 
         <SearchableSetting
-          title="Open In Menu"
-          description="Add custom launchers to the worktree Open in menu."
+          title={t('settings.general.openInMenu.title')}
+          description={t('settings.general.openInMenu.description')}
           keywords={['open in', 'editor', 'launcher', 'cursor', 'zed', 'command', 'vscode']}
           className="space-y-3"
         >
           <div className="space-y-1">
-            <Label>Open In Menu</Label>
+            <Label>{t('settings.general.openInMenu.title')}</Label>
             <p className="text-xs text-muted-foreground">
-              VS Code is always included first. Add executables to show extra entries in each
-              worktree&apos;s Open in menu.
+              {t('settings.general.openInMenu.vsCodeIncluded')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Commands are not shell-parsed. Use only an executable command name. For flags, use a
-              wrapper script.
+              {t('settings.general.openInMenu.commandNotShellParsed')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -373,7 +414,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
                 ])
               }
             >
-              Add Cursor
+              {t('settings.general.openInMenu.addCursor')}
             </Button>
             <Button
               variant="outline"
@@ -385,7 +426,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
                 ])
               }
             >
-              Add Zed
+              {t('settings.general.openInMenu.addZed')}
             </Button>
           </div>
           <div className="space-y-2">
@@ -393,7 +434,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
               <div key={app.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
                 <Input
                   value={app.label}
-                  placeholder="Label"
+                  placeholder={t('settings.general.openInMenu.labelPlaceholder')}
                   onChange={(event) => {
                     const next = [...openInApplicationsDraft]
                     next[index] = { ...app, label: event.target.value }
@@ -408,7 +449,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
                 />
                 <Input
                   value={app.command}
-                  placeholder="Executable command"
+                  placeholder={t('settings.general.openInMenu.commandPlaceholder')}
                   onChange={(event) => {
                     const next = [...openInApplicationsDraft]
                     next[index] = { ...app, command: event.target.value }
@@ -430,7 +471,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
                     commitOpenInApplications(next)
                   }}
                 >
-                  Remove
+                  {t('settings.general.openInMenu.remove')}
                 </Button>
               </div>
             ))}
@@ -443,28 +484,30 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
             }
             disabled={openInApplicationsDraft.length >= OPEN_IN_APPLICATIONS_MAX}
           >
-            Add Custom Launcher
+            {t('settings.general.openInMenu.addCustomLauncher')}
           </Button>
         </SearchableSetting>
       </section>
     ) : null,
-    matchesSettingsSearch(searchQuery, GENERAL_EDITOR_SEARCH_ENTRIES) ? (
+    matchesSettingsSearch(searchQuery, getGeneralEditorSearchEntries(t)) ? (
       <section key="editor" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Editor</h3>
-          <p className="text-xs text-muted-foreground">Configure how Orca persists file edits.</p>
+          <h3 className="text-sm font-semibold">{t('settings.general.editor.title')}</h3>
+          <p className="text-xs text-muted-foreground">
+            {t('settings.general.editor.description')}
+          </p>
         </div>
 
         <SearchableSetting
-          title="Auto Save Files"
-          description="Save editor and editable diff changes automatically after a short pause."
+          title={t('settings.general.editor.autoSave.label')}
+          description={t('settings.general.editor.autoSave.description')}
           keywords={['autosave', 'save']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Auto Save Files</Label>
+            <Label>{t('settings.general.editor.autoSave.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Save editor and editable diff changes automatically after a short pause.
+              {t('settings.general.editor.autoSave.description')}
             </p>
           </div>
           <button
@@ -488,16 +531,18 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
         </SearchableSetting>
 
         <SearchableSetting
-          title="Auto Save Delay"
-          description="How long Orca waits after your last edit before saving automatically."
+          title={t('settings.general.editor.autoSaveDelay.label')}
+          description={t('settings.general.editor.autoSaveDelay.description')}
           keywords={['autosave', 'delay', 'milliseconds']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Auto Save Delay</Label>
+            <Label>{t('settings.general.editor.autoSaveDelay.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              How long Orca waits after your last edit before saving automatically. First launch
-              defaults to {DEFAULT_EDITOR_AUTO_SAVE_DELAY_MS} ms.
+              {t('settings.general.editor.autoSaveDelay.description')}{' '}
+              {t('settings.general.editor.autoSaveDelay.firstLaunchDefault', {
+                default: DEFAULT_EDITOR_AUTO_SAVE_DELAY_MS
+              })}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -521,15 +566,15 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
         </SearchableSetting>
 
         <SearchableSetting
-          title="Default Diff View"
-          description="Preferred presentation format for showing git diffs by default."
+          title={t('settings.general.editor.defaultDiffView.label')}
+          description={t('settings.general.editor.defaultDiffView.description')}
           keywords={['diff', 'view', 'inline', 'side-by-side', 'split']}
           className="flex flex-col items-start gap-3 px-1 py-2 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="space-y-0.5">
-            <Label>Default Diff View</Label>
+            <Label>{t('settings.general.editor.defaultDiffView.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Preferred presentation format for showing git diffs by default.
+              {t('settings.general.editor.defaultDiffView.description')}
             </p>
           </div>
           <div className="flex shrink-0 items-center rounded-md border border-border/60 bg-background/50 p-0.5">
@@ -543,28 +588,36 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {option === 'inline' ? 'Inline' : 'Side-by-side'}
+                {option === 'inline'
+                  ? t('settings.general.editor.defaultDiffView.inline')
+                  : t('settings.general.editor.defaultDiffView.sideBySide')}
               </button>
             ))}
           </div>
         </SearchableSetting>
 
         <SearchableSetting
-          title="Default Diff File Tree"
-          description="Show or hide the file tree when opening combined diff views."
+          title={t('settings.general.editor.defaultDiffFileTree.label')}
+          description={t('settings.general.editor.defaultDiffFileTree.description')}
           keywords={['diff', 'tree', 'file tree', 'combined diff', 'sidebar']}
           className="flex flex-col items-start gap-3 px-1 py-2 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="space-y-0.5">
-            <Label>Default Diff File Tree</Label>
+            <Label>{t('settings.general.editor.defaultDiffFileTree.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Show or hide the file tree when opening combined diff views.
+              {t('settings.general.editor.defaultDiffFileTree.description')}
             </p>
           </div>
           <div className="flex shrink-0 items-center rounded-md border border-border/60 bg-background/50 p-0.5">
             {[
-              { label: 'Shown', value: true },
-              { label: 'Hidden', value: false }
+              {
+                label: t('settings.general.editor.defaultDiffFileTree.shown'),
+                value: true
+              },
+              {
+                label: t('settings.general.editor.defaultDiffFileTree.hidden'),
+                value: false
+              }
             ].map((option) => (
               <button
                 key={option.label}
@@ -585,15 +638,15 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
         </SearchableSetting>
 
         <SearchableSetting
-          title="Minimap"
-          description="Show the minimap overview when editing a file."
+          title={t('settings.general.editor.minimap.label')}
+          description={t('settings.general.editor.minimap.description')}
           keywords={['minimap', 'overview', 'code', 'scroll']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Minimap</Label>
+            <Label>{t('settings.general.editor.minimap.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Show the minimap overview when editing a file.
+              {t('settings.general.editor.minimap.description')}
             </p>
           </div>
           <button
@@ -617,15 +670,15 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
         </SearchableSetting>
 
         <SearchableSetting
-          title="Markdown Review Notes"
-          description="Show local markdown review note controls in rich editor mode."
+          title={t('settings.general.editor.markdownReviewNotes.label')}
+          description={t('settings.general.editor.markdownReviewNotes.description')}
           keywords={['markdown', 'review', 'notes', 'annotations', 'agents']}
           className="flex items-center justify-between gap-4 px-1 py-2"
         >
           <div className="space-y-0.5">
-            <Label>Markdown Review Notes</Label>
+            <Label>{t('settings.general.editor.markdownReviewNotes.label')}</Label>
             <p className="text-xs text-muted-foreground">
-              Show local markdown note controls in rich editor mode and agent handoff actions.
+              {t('settings.general.editor.markdownReviewNotes.description')}
             </p>
           </div>
           <button
@@ -649,31 +702,29 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
         </SearchableSetting>
       </section>
     ) : null,
-    matchesSettingsSearch(searchQuery, GENERAL_CLI_SEARCH_ENTRIES) ? (
+    matchesSettingsSearch(searchQuery, getGeneralCliSearchEntries(t)) ? (
       <CliSection
         key="cli"
         currentPlatform={navigator.userAgent.includes('Mac') ? 'darwin' : 'other'}
       />
     ) : null,
-    matchesSettingsSearch(searchQuery, GENERAL_CACHE_TIMER_SEARCH_ENTRIES) ? (
+    matchesSettingsSearch(searchQuery, getGeneralCacheTimerSearchEntries(t)) ? (
       <section key="cache-timer" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Prompt Cache Timer</h3>
+          <h3 className="text-sm font-semibold">{t('settings.general.cacheTimer.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Claude caches your conversation to reduce costs. When idle too long the cache expires
-            and the next message resends full context at higher cost. This shows a countdown so you
-            know when to resume.
+            {t('settings.general.cacheTimer.description')}
           </p>
         </div>
 
         <SearchableSetting
-          title="Cache Timer"
-          description="Show a countdown after a Claude agent becomes idle."
+          title={t('settings.general.cacheTimer.cacheTimer.label')}
+          description={t('settings.general.cacheTimer.cacheTimer.description')}
           // Why: this is the primary control for the section gated by
           // GENERAL_CACHE_TIMER_SEARCH_ENTRIES (title "Prompt Cache Timer").
           // Mirroring those keywords keeps a search for "Prompt Cache Timer"
           // from rendering the section header with no body underneath.
-          keywords={GENERAL_CACHE_TIMER_SEARCH_ENTRIES.flatMap((entry) => [
+          keywords={getGeneralCacheTimerSearchEntries(t).flatMap((entry) => [
             entry.title,
             entry.description ?? '',
             ...(entry.keywords ?? [])
@@ -683,16 +734,16 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Timer className="size-4" />
-              <Label>Cache Timer</Label>
+              <Label>{t('settings.general.cacheTimer.cacheTimer.label')}</Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Show a countdown in the sidebar after a Claude agent becomes idle.
+              {t('settings.general.cacheTimer.cacheTimer.description')}
             </p>
           </div>
           <button
             role="switch"
             aria-checked={settings.promptCacheTimerEnabled}
-            aria-label="Cache Timer"
+            aria-label={t('settings.general.cacheTimer.cacheTimer.label')}
             onClick={() => {
               const enabling = !settings.promptCacheTimerEnabled
               updateSettings({ promptCacheTimerEnabled: enabling })
@@ -717,15 +768,15 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
 
         {settings.promptCacheTimerEnabled && (
           <SearchableSetting
-            title="Timer Duration"
-            description="Match this to your provider's cache TTL."
+            title={t('settings.general.cacheTimer.timerDuration.label')}
+            description={t('settings.general.cacheTimer.timerDuration.description')}
             keywords={['cache', 'timer', 'duration', 'ttl']}
             className="flex items-center justify-between gap-4 px-1 py-2 pl-7"
           >
             <div className="space-y-0.5">
-              <Label>Timer Duration</Label>
+              <Label>{t('settings.general.cacheTimer.timerDuration.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Match this to your provider&apos;s cache TTL. The default is 5 minutes.
+                {t('settings.general.cacheTimer.timerDuration.description')}
               </p>
             </div>
             <Select
@@ -736,24 +787,26 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="300000">5 minutes</SelectItem>
-                <SelectItem value="3600000">1 hour</SelectItem>
+                <SelectItem value="300000">
+                  {t('settings.general.cacheTimer.fiveMinutes')}
+                </SelectItem>
+                <SelectItem value="3600000">{t('settings.general.cacheTimer.oneHour')}</SelectItem>
               </SelectContent>
             </Select>
           </SearchableSetting>
         )}
       </section>
     ) : null,
-    matchesSettingsSearch(searchQuery, GENERAL_UPDATE_SEARCH_ENTRIES) ? (
+    matchesSettingsSearch(searchQuery, getGeneralUpdateSearchEntries(t)) ? (
       <section key="updates" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Updates</h3>
+          <h3 className="text-sm font-semibold">{t('settings.general.updates.title')}</h3>
           <p className="text-xs text-muted-foreground">Current version: {appVersion ?? '…'}</p>
         </div>
 
         <SearchableSetting
-          title="Check for Updates"
-          description="Check for app updates and install a newer Orca version."
+          title={t('settings.general.updates.check.label')}
+          description={t('settings.general.updates.check.description')}
           keywords={['update', 'version', 'release notes', 'download']}
           className="space-y-3"
         >
@@ -777,7 +830,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
               ) : (
                 <RefreshCw className="size-3.5" />
               )}
-              Check for Updates
+              {t('settings.general.updates.check.label')}
             </Button>
 
             {updateStatus.state === 'available' ? (
@@ -870,7 +923,7 @@ export function GeneralPane({ settings, updateSettings }: GeneralPaneProps): Rea
           {section}
         </div>
       ))}
-      {matchesSettingsSearch(searchQuery, GENERAL_SUPPORT_SEARCH_ENTRIES) ? (
+      {matchesSettingsSearch(searchQuery, getGeneralSupportSearchEntries(t)) ? (
         <SupportSection
           state={starState}
           hasPrecedingSections={visibleSections.length > 0}
@@ -892,6 +945,7 @@ function SupportSection({
   hasPrecedingSections,
   onStarClick
 }: SupportSectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   // Why: 'hidden' means gh is unavailable or the user had already starred on a
   // previous session — in both cases we collapse the entire section (including
   // its leading Separator) so the settings pane doesn't carry an empty strip.
@@ -912,7 +966,7 @@ function SupportSection({
           {hasPrecedingSections ? <Separator /> : null}
           <div className="space-y-4">
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold">Support Orca</h3>
+              <h3 className="text-sm font-semibold">{t('settings.general.support.title')}</h3>
             </div>
             {state === 'loading' ? <SupportRowSkeleton /> : null}
             {state !== 'loading' && state !== 'hidden' ? (
@@ -941,6 +995,7 @@ function SupportRow({
   state: 'not-starred' | 'starring' | 'starred' | 'error'
   onStarClick: () => void | Promise<void>
 }): React.JSX.Element {
+  const { t } = useTranslation()
   // Why: the left-hand label is the setting's identity and must not change
   // when the user clicks — the row should still read "Star Orca on GitHub"
   // afterwards. The right-hand control is what changes: before starring it
@@ -949,12 +1004,12 @@ function SupportRow({
   // disabled button.
   return (
     <SearchableSetting
-      title="Star Orca on GitHub"
-      description="Support the project with a GitHub star via the gh CLI."
+      title={t('settings.general.support.starGithub.label')}
+      description={t('settings.general.support.starGithub.description')}
       keywords={['star', 'github', 'support', 'feedback', 'like']}
       className="flex items-center justify-between gap-4 px-1 py-2"
     >
-      <Label>Star Orca on GitHub</Label>
+      <Label>{t('settings.general.support.starGithub.label')}</Label>
       {state === 'starred' ? (
         <SupportRowThanks />
       ) : (
@@ -978,6 +1033,7 @@ function SupportRow({
 }
 
 function SupportRowThanks(): React.JSX.Element {
+  const { t } = useTranslation()
   // Why: match the size="sm" button's h-8 / gap-1.5 / px-3 dimensions so the
   // row height stays identical when the button is swapped out. Without the
   // fixed height, the text baseline collapses ~6px and the entire row
@@ -990,7 +1046,7 @@ function SupportRowThanks(): React.JSX.Element {
       aria-live="polite"
     >
       <Star className="size-3.5 fill-amber-400/80 text-amber-400/80" aria-hidden="true" />
-      Thanks for the support!
+      {t('settings.general.support.thanks')}
     </div>
   )
 }

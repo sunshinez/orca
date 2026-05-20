@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Import, Loader2, MousePointerClick } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
@@ -38,6 +39,7 @@ export function BrowserUseSetup({
   onConfigureMoreBrowsers,
   onOpenComputerUse
 }: BrowserUseSetupProps = {}): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((s) => s.settingsSearchQuery)
   const browserSessionProfiles = useAppStore((s) => s.browserSessionProfiles)
   const detectedBrowsers = useAppStore((s) => s.detectedBrowsers)
@@ -62,16 +64,16 @@ export function BrowserUseSetup({
     localStorage.setItem(BROWSER_USE_ENABLED_STORAGE_KEY, value ? '1' : '0')
   }
 
-  const refreshCli = async (): Promise<void> => {
+  const refreshCli = useCallback(async (): Promise<void> => {
     setCliLoading(true)
     try {
       setCliStatus(await window.api.cli.getInstallStatus())
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load CLI status.')
+      toast.error(error instanceof Error ? error.message : t('settings.browserUse.cliLoadError'))
     } finally {
       setCliLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     // Why: skip IPC work when the feature is toggled off — the component
@@ -81,7 +83,7 @@ export function BrowserUseSetup({
     }
     void refreshCli()
     void fetchBrowserSessionProfiles()
-  }, [browserUseEnabled, fetchBrowserSessionProfiles])
+  }, [browserUseEnabled, fetchBrowserSessionProfiles, refreshCli])
 
   const defaultProfile = browserSessionProfiles.find((p) => p.id === 'default')
   // Why: this step explicitly imports into the default profile, so completion
@@ -111,9 +113,11 @@ export function BrowserUseSetup({
     try {
       const next = await window.api.cli.install()
       setCliStatus(next)
-      toast.success('Registered `orca` in PATH.')
+      toast.success(t('settings.browserUse.cliRegistered'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to register `orca` in PATH.')
+      toast.error(
+        error instanceof Error ? error.message : t('settings.browserUse.cliRegisterFailed')
+      )
     } finally {
       setCliBusy(false)
     }
@@ -122,9 +126,9 @@ export function BrowserUseSetup({
   const handleCopySkillCommand = async (): Promise<void> => {
     try {
       await window.api.ui.writeClipboardText(ORCA_CLI_SKILL_INSTALL_COMMAND)
-      toast.success('Copied install command. Run it on this computer.')
+      toast.success(t('settings.browserUse.copySuccess'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to copy command.')
+      toast.error(error instanceof Error ? error.message : t('settings.browserUse.copyFailed'))
     }
   }
 
@@ -139,7 +143,11 @@ export function BrowserUseSetup({
     if (result.ok) {
       const browser = detectedBrowsers.find((b) => b.family === browserFamily)
       toast.success(
-        `Imported ${result.summary.importedCookies} cookies from ${browser?.label ?? browserFamily}${browserProfile ? ` (${browserProfile})` : ''}.`
+        t('settings.browserUse.importCookiesSuccess', {
+          count: result.summary.importedCookies,
+          browser: browser?.label ?? browserFamily,
+          profile: browserProfile ?? ''
+        })
       )
     } else {
       toast.error(result.reason)
@@ -149,7 +157,9 @@ export function BrowserUseSetup({
   const handleImportFromFile = async (): Promise<void> => {
     const result = await useAppStore.getState().importCookiesToProfile('default')
     if (result.ok) {
-      toast.success(`Imported ${result.summary.importedCookies} cookies from file.`)
+      toast.success(
+        t('settings.browserUse.importFileSuccess', { count: result.summary.importedCookies })
+      )
     } else if (result.reason !== 'canceled') {
       toast.error(result.reason)
     }
@@ -173,7 +183,7 @@ export function BrowserUseSetup({
     <button
       role="switch"
       aria-checked={browserUseEnabled}
-      aria-label="Enable Agent Browser Use"
+      aria-label={t('settings.browserUse.enableAria')}
       onClick={() => toggleBrowserUse(!browserUseEnabled)}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-colors ${
         browserUseEnabled ? 'bg-foreground' : 'bg-muted-foreground/30'
@@ -191,10 +201,8 @@ export function BrowserUseSetup({
     return (
       <div className="flex items-center justify-between gap-4 px-1 py-2">
         <div className="space-y-0.5">
-          <p className="text-sm font-medium">Agent Browser Use</p>
-          <p className="text-xs text-muted-foreground">
-            Let coding agents drive this browser with your logins.
-          </p>
+          <p className="text-sm font-medium">{t('settings.browserUse.title')}</p>
+          <p className="text-xs text-muted-foreground">{t('settings.browserUse.subtitleOff')}</p>
         </div>
         {toggleSwitch}
       </div>
@@ -205,10 +213,8 @@ export function BrowserUseSetup({
     <div className="space-y-3 rounded-2xl border border-border/60 bg-card/30 p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="text-sm font-semibold">Agent Browser Use</p>
-          <p className="text-xs text-muted-foreground">
-            Let coding agents drive this browser with your logins. Finish the three steps below.
-          </p>
+          <p className="text-sm font-semibold">{t('settings.browserUse.title')}</p>
+          <p className="text-xs text-muted-foreground">{t('settings.browserUse.subtitleOn')}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span
@@ -228,11 +234,9 @@ export function BrowserUseSetup({
         <div className="rounded-xl border border-border/60 bg-card/50 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-sm font-medium">Use an existing browser session</p>
+              <p className="text-sm font-medium">{t('settings.browserUse.existingSession')}</p>
               <p className="text-xs text-muted-foreground">
-                If cookie import is not the right fit, Computer Use can control local apps and may
-                use existing logged-in browser sessions where applicable. Install the Computer Use
-                skill; macOS also requires privacy permissions.
+                {t('settings.browserUse.existingSessionDescription')}
               </p>
             </div>
             <Button
@@ -243,7 +247,7 @@ export function BrowserUseSetup({
               className="shrink-0 gap-1.5 self-start"
             >
               <MousePointerClick className="size-3.5" />
-              Open Computer Use
+              {t('settings.browserUse.openComputerUse')}
             </Button>
           </div>
         </div>
@@ -251,8 +255,8 @@ export function BrowserUseSetup({
 
       {showStep1 ? (
         <SearchableSetting
-          title="Enable Orca CLI"
-          description="Register the orca shell command so agents can drive the browser."
+          title={t('settings.browserUse.step1.title')}
+          description={t('settings.browserUse.step1.description')}
           keywords={BROWSER_USE_PANE_SEARCH_ENTRIES[0].keywords}
           className="rounded-xl border border-border/60 bg-card/50 p-4"
         >
@@ -262,10 +266,9 @@ export function BrowserUseSetup({
               state={cliEnabled ? 'done' : cliBusy ? 'in-progress' : 'pending'}
             />
             <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-sm font-medium">Enable Orca CLI</p>
+              <p className="text-sm font-medium">{t('settings.browserUse.step1.label')}</p>
               <p className="text-xs text-muted-foreground">
-                Registers the <code className="rounded bg-muted px-1 py-0.5 text-[11px]">orca</code>{' '}
-                command so agents can orchestrate the browser from their shell.
+                {t('settings.browserUse.step1.helper')}
               </p>
               {cliStatus?.commandPath && cliEnabled ? (
                 <p className="text-[11px] text-muted-foreground">
@@ -284,7 +287,11 @@ export function BrowserUseSetup({
                       disabled={cliLoading || cliBusy || !cliSupported || cliEnabled}
                       onClick={() => void handleEnableCli()}
                     >
-                      {cliBusy ? 'Registering…' : cliEnabled ? 'Enabled' : 'Enable'}
+                      {cliBusy
+                        ? t('settings.browserUse.step1.registering')
+                        : cliEnabled
+                          ? t('settings.browserUse.step1.enabled')
+                          : t('settings.browserUse.step1.enable')}
                     </Button>
                   </span>
                 </TooltipTrigger>
@@ -301,8 +308,8 @@ export function BrowserUseSetup({
 
       {showStep2 ? (
         <SearchableSetting
-          title="Install Browser Use Skill"
-          description="Install the orca-cli agent skill so agents know how to use the browser."
+          title={t('settings.browserUse.step2.title')}
+          description={t('settings.browserUse.step2.description')}
           keywords={BROWSER_USE_PANE_SEARCH_ENTRIES[1].keywords}
           className={`rounded-xl border border-border/60 bg-card/50 p-4 ${
             cliEnabled ? '' : 'opacity-60'
@@ -320,8 +327,8 @@ export function BrowserUseSetup({
 
       {showStep3 ? (
         <SearchableSetting
-          title="Import Browser Cookies"
-          description="Import cookies from Chrome, Edge, or other browsers so agents can reuse your logins."
+          title={t('settings.browserUse.step3.title')}
+          description={t('settings.browserUse.step3.description')}
           keywords={BROWSER_USE_PANE_SEARCH_ENTRIES[2].keywords}
           className={`rounded-xl border border-border/60 bg-card/50 p-4 ${
             cliEnabled && skillInstalled ? '' : 'opacity-60'
@@ -333,14 +340,13 @@ export function BrowserUseSetup({
               state={cookiesImported ? 'done' : isImportingDefault ? 'in-progress' : 'pending'}
             />
             <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-sm font-medium">Import Browser Cookies</p>
+              <p className="text-sm font-medium">{t('settings.browserUse.step3.label')}</p>
               <p className="text-xs text-muted-foreground">
-                Bring your existing logins into Orca so agents can reach authenticated pages.
-                Imports into the default profile.
+                {t('settings.browserUse.step3.helper')}
               </p>
               {sourceLabel ? (
                 <p className="text-[11px] text-muted-foreground">
-                  Last imported from {sourceLabel}
+                  {t('settings.browserUse.lastImported', { source: sourceLabel })}
                 </p>
               ) : null}
               {onConfigureMoreBrowsers ? (
@@ -349,7 +355,7 @@ export function BrowserUseSetup({
                   onClick={onConfigureMoreBrowsers}
                   className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 >
-                  Manage profiles for separate logins
+                  {t('settings.browserUse.manageProfiles')}
                 </button>
               ) : null}
             </div>
@@ -374,14 +380,18 @@ export function BrowserUseSetup({
                   ) : (
                     <Import className="size-3.5" />
                   )}
-                  {cookiesImported ? 'Re-import' : 'Import'}
+                  {cookiesImported
+                    ? t('settings.browserUse.reimport')
+                    : t('settings.browserUse.import')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {detectedBrowsers.map((browser) =>
                   browser.profiles.length > 1 ? (
                     <DropdownMenuSub key={browser.family}>
-                      <DropdownMenuSubTrigger>From {browser.label}</DropdownMenuSubTrigger>
+                      <DropdownMenuSubTrigger>
+                        {t('settings.browserUse.fromBrowser', { browser: browser.label })}
+                      </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                           {browser.profiles.map((bp) => (
@@ -402,13 +412,13 @@ export function BrowserUseSetup({
                       key={browser.family}
                       onSelect={() => void handleImportFromBrowser(browser.family)}
                     >
-                      From {browser.label}
+                      {t('settings.browserUse.fromBrowser', { browser: browser.label })}
                     </DropdownMenuItem>
                   )
                 )}
                 {detectedBrowsers.length > 0 ? <DropdownMenuSeparator /> : null}
                 <DropdownMenuItem onSelect={() => void handleImportFromFile()}>
-                  From File…
+                  {t('settings.browserUse.fromFile')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

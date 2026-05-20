@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { CtrlTabOrderMode } from '../../../../shared/types'
 import { useAppStore } from '../../store'
 import { ShortcutKeyCombo } from '../ShortcutKeyCombo'
@@ -18,233 +19,225 @@ type ShortcutGroup = {
 }
 
 type ShortcutDefinition = {
-  action: string
+  actionKey: string
   searchKeywords: string[]
   keys: (labels: { mod: string; shift: string; enter: string }) => string[]
 }
 
 type ShortcutGroupDefinition = {
-  title: string
+  titleKey: string
   items: ShortcutDefinition[]
 }
 
 const SHORTCUT_GROUP_DEFINITIONS: ShortcutGroupDefinition[] = [
   {
-    title: 'Global',
+    titleKey: 'settings.shortcuts.groups.global',
     items: [
       {
-        action: 'Go to File',
+        actionKey: 'settings.shortcuts.actions.goToFile',
         searchKeywords: ['shortcut', 'global', 'file'],
         keys: ({ mod }) => [mod, 'P']
       },
       {
-        action: 'Switch worktree',
+        actionKey: 'settings.shortcuts.actions.switchWorktree',
         searchKeywords: ['shortcut', 'global', 'worktree', 'switch', 'jump'],
         keys: ({ mod, shift }) => (mod === '⌘' ? [mod, 'J'] : [mod, shift, 'J'])
       },
       {
-        action: 'Create worktree',
+        actionKey: 'settings.shortcuts.actions.createWorktree',
         searchKeywords: ['shortcut', 'global', 'worktree'],
         keys: ({ mod }) => [mod, 'N']
       },
       {
-        action: 'Toggle Sidebar',
+        actionKey: 'settings.shortcuts.actions.toggleSidebar',
         searchKeywords: ['shortcut', 'sidebar'],
         keys: ({ mod }) => [mod, 'B']
       },
       {
-        action: 'Toggle Right Sidebar',
+        actionKey: 'settings.shortcuts.actions.toggleRightSidebar',
         searchKeywords: ['shortcut', 'sidebar', 'right'],
         keys: ({ mod }) => [mod, 'L']
       },
       {
-        action: 'Move up worktree',
+        actionKey: 'settings.shortcuts.actions.moveUpWorktree',
         searchKeywords: ['shortcut', 'global', 'worktree', 'move'],
         keys: ({ mod, shift }) => [mod, shift, '↑']
       },
       {
-        action: 'Move down worktree',
+        actionKey: 'settings.shortcuts.actions.moveDownWorktree',
         searchKeywords: ['shortcut', 'global', 'worktree', 'move'],
         keys: ({ mod, shift }) => [mod, shift, '↓']
       },
       {
-        action: 'Toggle File Explorer',
+        actionKey: 'settings.shortcuts.actions.toggleFileExplorer',
         searchKeywords: ['shortcut', 'file explorer'],
         keys: ({ mod, shift }) => [mod, shift, 'E']
       },
       {
-        action: 'Toggle Search',
+        actionKey: 'settings.shortcuts.actions.toggleSearch',
         searchKeywords: ['shortcut', 'search'],
         keys: ({ mod, shift }) => [mod, shift, 'F']
       },
       {
-        action: 'Toggle Source Control',
+        actionKey: 'settings.shortcuts.actions.toggleSourceControl',
         searchKeywords: ['shortcut', 'source control'],
         keys: ({ mod, shift }) => [mod, shift, 'G']
       },
       {
-        action: 'Zoom In',
+        actionKey: 'settings.shortcuts.actions.zoomIn',
         searchKeywords: ['shortcut', 'zoom', 'in', 'scale'],
         keys: ({ mod, shift }) => (mod === 'Ctrl' ? [mod, shift, '+'] : [mod, '+'])
       },
       {
-        action: 'Zoom Out',
+        actionKey: 'settings.shortcuts.actions.zoomOut',
         searchKeywords: ['shortcut', 'zoom', 'out', 'scale'],
         keys: ({ mod, shift }) => (mod === 'Ctrl' ? [mod, shift, '-'] : [mod, '-'])
       },
       {
-        action: 'Reset Size',
+        actionKey: 'settings.shortcuts.actions.resetSize',
         searchKeywords: ['shortcut', 'zoom', 'reset', 'size', 'actual'],
         keys: ({ mod }) => [mod, '0']
       },
       {
-        action: 'Force Reload',
+        actionKey: 'settings.shortcuts.actions.forceReload',
         searchKeywords: ['shortcut', 'reload', 'refresh', 'force'],
         keys: ({ mod, shift }) => [mod, shift, 'R']
       },
       {
-        action: 'Dictation',
+        actionKey: 'settings.shortcuts.actions.dictation',
         searchKeywords: ['shortcut', 'dictation', 'voice', 'speech', 'microphone'],
         keys: ({ mod }) => [mod, 'E']
       }
     ]
   },
   {
-    title: 'Tabs',
+    titleKey: 'settings.shortcuts.groups.tabs',
     items: [
       {
-        action: 'New terminal tab',
+        actionKey: 'settings.shortcuts.actions.newTerminalTab',
         searchKeywords: ['shortcut', 'tab', 'terminal', 'new'],
         keys: ({ mod }) => [mod, 'T']
       },
       {
-        action: 'New browser tab',
+        actionKey: 'settings.shortcuts.actions.newBrowserTab',
         searchKeywords: ['shortcut', 'tab', 'browser', 'new'],
         keys: ({ mod, shift }) => [mod, shift, 'B']
       },
       {
-        action: 'New markdown tab',
+        actionKey: 'settings.shortcuts.actions.newMarkdownTab',
         searchKeywords: ['shortcut', 'tab', 'markdown', 'file', 'new'],
         keys: ({ mod, shift }) => [mod, shift, 'M']
       },
       {
-        action: 'Close active tab / pane',
+        actionKey: 'settings.shortcuts.actions.closeActiveTab',
         searchKeywords: ['shortcut', 'close', 'tab', 'pane'],
         keys: ({ mod }) => [mod, 'W']
       },
       {
-        action: 'Reopen closed tab',
+        actionKey: 'settings.shortcuts.actions.reopenClosedTab',
         searchKeywords: ['shortcut', 'tab', 'reopen', 'restore', 'closed'],
         keys: ({ mod, shift }) => [mod, shift, 'T']
       }
     ]
   },
   {
-    title: 'Tab Navigation',
+    titleKey: 'settings.shortcuts.groups.tabNavigation',
     items: [
       {
-        action: 'Cycle tabs forward',
+        actionKey: 'settings.shortcuts.actions.cycleTabsForward',
         searchKeywords: ['shortcut', 'tab', 'next', 'switch', 'cycle', 'recent', 'ctrl'],
         keys: () => ['Ctrl', 'Tab']
       },
       {
-        action: 'Cycle tabs backward',
+        actionKey: 'settings.shortcuts.actions.cycleTabsBackward',
         searchKeywords: ['shortcut', 'tab', 'previous', 'switch', 'cycle', 'recent', 'ctrl'],
         keys: ({ shift }) => ['Ctrl', shift, 'Tab']
       },
       {
-        action: 'Next tab (same type)',
+        actionKey: 'settings.shortcuts.actions.nextTabSameType',
         searchKeywords: ['shortcut', 'tab', 'next', 'switch', 'cycle'],
         keys: ({ mod, shift }) => [mod, shift, ']']
       },
       {
-        action: 'Previous tab (same type)',
+        actionKey: 'settings.shortcuts.actions.previousTabSameType',
         searchKeywords: ['shortcut', 'tab', 'previous', 'switch', 'cycle'],
         keys: ({ mod, shift }) => [mod, shift, '[']
       },
       {
-        action: 'Next tab (all types)',
+        actionKey: 'settings.shortcuts.actions.nextTabAllTypes',
         searchKeywords: ['shortcut', 'tab', 'next', 'switch', 'cycle', 'all', 'any'],
         keys: ({ mod }) => [mod, mod === '⌘' ? '⌥' : 'Alt', ']']
       },
       {
-        action: 'Previous tab (all types)',
+        actionKey: 'settings.shortcuts.actions.previousTabAllTypes',
         searchKeywords: ['shortcut', 'tab', 'previous', 'switch', 'cycle', 'all', 'any'],
         keys: ({ mod }) => [mod, mod === '⌘' ? '⌥' : 'Alt', '[']
       },
       {
-        action: 'Next terminal tab',
+        actionKey: 'settings.shortcuts.actions.nextTerminalTab',
         searchKeywords: ['shortcut', 'tab', 'terminal', 'next', 'switch'],
         keys: () => ['Ctrl', 'PageDown']
       },
       {
-        action: 'Previous terminal tab',
+        actionKey: 'settings.shortcuts.actions.previousTerminalTab',
         searchKeywords: ['shortcut', 'tab', 'terminal', 'previous', 'switch'],
         keys: () => ['Ctrl', 'PageUp']
       }
     ]
   },
   {
-    title: 'Terminal Panes',
+    titleKey: 'settings.shortcuts.groups.terminalPanes',
     items: [
       {
-        action: 'Split terminal right',
+        actionKey: 'settings.shortcuts.actions.splitTerminalRight',
         searchKeywords: ['shortcut', 'pane', 'split'],
         // Why: on Windows/Linux, Ctrl+D must pass through as EOF (#586),
         // so split-right requires Shift on non-Mac platforms.
         keys: ({ mod, shift }) => (mod === '⌘' ? [mod, 'D'] : [mod, shift, 'D'])
       },
       {
-        action: 'Split terminal down',
+        actionKey: 'settings.shortcuts.actions.splitTerminalDown',
         searchKeywords: ['shortcut', 'pane', 'split'],
         // Why: on Windows/Linux, Ctrl+Shift+D is taken by split-right (#586),
         // so split-down uses Alt+Shift+D following Windows Terminal convention.
         keys: ({ mod, shift }) => (mod === '⌘' ? [mod, shift, 'D'] : ['Alt', shift, 'D'])
       },
       {
-        action: 'Close pane (EOF)',
+        actionKey: 'settings.shortcuts.actions.closePane',
         searchKeywords: ['shortcut', 'pane', 'close', 'eof'],
         keys: () => ['Ctrl', 'D']
       },
       {
-        action: 'Focus next pane',
+        actionKey: 'settings.shortcuts.actions.focusNextPane',
         searchKeywords: ['shortcut', 'pane', 'focus', 'next'],
         keys: ({ mod }) => [mod, ']']
       },
       {
-        action: 'Focus previous pane',
+        actionKey: 'settings.shortcuts.actions.focusPreviousPane',
         searchKeywords: ['shortcut', 'pane', 'focus', 'previous'],
         keys: ({ mod }) => [mod, '[']
       },
       {
-        action: 'Clear active pane',
+        actionKey: 'settings.shortcuts.actions.clearActivePane',
         searchKeywords: ['shortcut', 'pane', 'clear'],
         keys: ({ mod }) => [mod, 'K']
       },
       {
-        action: 'Expand / collapse pane',
+        actionKey: 'settings.shortcuts.actions.expandCollapsePane',
         searchKeywords: ['shortcut', 'pane', 'expand', 'collapse'],
         keys: ({ mod, shift, enter }) => [mod, shift, enter]
       }
     ]
   },
   {
-    title: 'Editors',
+    titleKey: 'settings.shortcuts.groups.editors',
     items: [
       {
-        action: 'Show Markdown Preview',
+        actionKey: 'settings.shortcuts.actions.showMarkdownPreview',
         searchKeywords: ['shortcut', 'editor', 'markdown', 'preview'],
         keys: ({ mod, shift }) => [mod, shift, 'V']
       }
     ]
-  }
-]
-
-const CTRL_TAB_BEHAVIOR_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  {
-    title: 'Ctrl+Tab Order',
-    description: 'Choose recent or sequential tab switching.',
-    keywords: ['shortcut', 'tab', 'ctrl', 'control', 'recent', 'mru', 'sequential', 'switch']
   }
 ]
 
@@ -253,15 +246,20 @@ const CTRL_TAB_BEHAVIOR_SEARCH_ENTRIES: SettingsSearchEntry[] = [
 export const SHORTCUTS_PANE_SEARCH_ENTRIES: SettingsSearchEntry[] = [
   ...SHORTCUT_GROUP_DEFINITIONS.flatMap((group) =>
     group.items.map((item) => ({
-      title: item.action,
-      description: `${group.title} shortcut`,
+      title: item.actionKey,
+      description: `${group.titleKey} shortcut`,
       keywords: item.searchKeywords
     }))
   ),
-  ...CTRL_TAB_BEHAVIOR_SEARCH_ENTRIES
+  {
+    title: 'Ctrl+Tab Order',
+    description: 'Choose recent or sequential tab switching.',
+    keywords: ['shortcut', 'tab', 'ctrl', 'control', 'recent', 'mru', 'sequential', 'switch']
+  }
 ]
 
 export function ShortcutsPane(): React.JSX.Element {
+  const { t } = useTranslation()
   const searchQuery = useAppStore((state) => state.settingsSearchQuery)
   const ctrlTabOrderMode = useAppStore((state) => state.settings?.ctrlTabOrderMode ?? 'mru')
   const updateSettings = useAppStore((state) => state.updateSettings)
@@ -273,13 +271,13 @@ export function ShortcutsPane(): React.JSX.Element {
   const groups = useMemo<ShortcutGroup[]>(
     () =>
       SHORTCUT_GROUP_DEFINITIONS.map((group) => ({
-        title: group.title,
+        title: t(group.titleKey),
         items: group.items.map((item) => ({
-          action: item.action,
+          action: t(item.actionKey),
           keys: item.keys({ mod, shift, enter })
         }))
       })),
-    [mod, shift, enter]
+    [mod, shift, enter, t]
   )
 
   // Why: keywords here must match the ones used by SHORTCUTS_PANE_SEARCH_ENTRIES
@@ -290,38 +288,47 @@ export function ShortcutsPane(): React.JSX.Element {
     () =>
       Object.fromEntries(
         SHORTCUT_GROUP_DEFINITIONS.map((groupDef) => [
-          groupDef.title,
+          t(groupDef.titleKey),
           groupDef.items.map((defItem) => ({
-            title: defItem.action,
-            description: `${groupDef.title} shortcut`,
+            title: t(defItem.actionKey),
+            description: `${t(groupDef.titleKey)} ${t('settings.shortcuts.shortcut')}`,
             keywords: defItem.searchKeywords
           }))
         ])
       ),
-    []
+    [t]
+  )
+
+  const ctrlTabSearchEntries: SettingsSearchEntry[] = useMemo(
+    () => [
+      {
+        title: t('settings.shortcuts.ctrlTabOrder.title'),
+        description: t('settings.shortcuts.ctrlTabOrder.description'),
+        keywords: ['shortcut', 'tab', 'ctrl', 'control', 'recent', 'mru', 'sequential', 'switch']
+      }
+    ],
+    [t]
   )
 
   return (
     <div className="space-y-8">
       <section className="space-y-4">
         <div className="space-y-1">
-          <h2 className="text-sm font-semibold">Keyboard Shortcuts</h2>
-          <p className="text-xs text-muted-foreground">
-            View common hotkeys used across the application and configure tab switching.
-          </p>
+          <h2 className="text-sm font-semibold">{t('settings.shortcuts.title')}</h2>
+          <p className="text-xs text-muted-foreground">{t('settings.shortcuts.subtitle')}</p>
         </div>
 
-        {matchesSettingsSearch(searchQuery, CTRL_TAB_BEHAVIOR_SEARCH_ENTRIES) ? (
+        {matchesSettingsSearch(searchQuery, ctrlTabSearchEntries) ? (
           <SearchableSetting
-            title="Ctrl+Tab Order"
-            description="Choose recent or sequential tab switching."
-            keywords={CTRL_TAB_BEHAVIOR_SEARCH_ENTRIES[0].keywords}
+            title={t('settings.shortcuts.ctrlTabOrder.title')}
+            description={t('settings.shortcuts.ctrlTabOrder.description')}
+            keywords={ctrlTabSearchEntries[0].keywords}
             className="flex items-center justify-between gap-4 px-1 py-2"
           >
             <div className="space-y-0.5">
-              <Label>Ctrl+Tab Order</Label>
+              <Label>{t('settings.shortcuts.ctrlTabOrder.label')}</Label>
               <p className="text-xs text-muted-foreground">
-                Choose whether Ctrl+Tab follows recent use or the tab strip order.
+                {t('settings.shortcuts.ctrlTabOrder.helper')}
               </p>
             </div>
             <Select
@@ -334,8 +341,12 @@ export function ShortcutsPane(): React.JSX.Element {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="mru">Most recent</SelectItem>
-                <SelectItem value="sequential">Tab strip order</SelectItem>
+                <SelectItem value="mru">
+                  {t('settings.shortcuts.ctrlTabOrder.mostRecent')}
+                </SelectItem>
+                <SelectItem value="sequential">
+                  {t('settings.shortcuts.ctrlTabOrder.tabStripOrder')}
+                </SelectItem>
               </SelectContent>
             </Select>
           </SearchableSetting>
@@ -353,15 +364,17 @@ export function ShortcutsPane(): React.JSX.Element {
                   {group.items.map((item, idx) => {
                     // Why: look up the definition's searchKeywords so the inner
                     // SearchableSetting matches the same terms as the sidebar search.
-                    const defGroup = SHORTCUT_GROUP_DEFINITIONS.find((g) => g.title === group.title)
-                    const defItem = defGroup?.items.find((d) => d.action === item.action)
+                    const defGroup = SHORTCUT_GROUP_DEFINITIONS.find(
+                      (g) => t(g.titleKey) === group.title
+                    )
+                    const defItem = defGroup?.items.find((d) => t(d.actionKey) === item.action)
                     const keywords = defItem?.searchKeywords ?? item.keys
 
                     return (
                       <SearchableSetting
                         key={idx}
                         title={item.action}
-                        description={`${group.title} shortcut`}
+                        description={`${group.title} ${t('settings.shortcuts.shortcut')}`}
                         keywords={keywords}
                         className="flex items-center justify-between py-1"
                       >

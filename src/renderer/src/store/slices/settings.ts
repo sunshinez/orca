@@ -3,6 +3,7 @@ import type { AppState } from '../types'
 import type { GlobalSettings } from '../../../../shared/types'
 import { toast } from 'sonner'
 import { callRuntimeRpc, clearRuntimeCompatibilityCache } from '@/runtime/runtime-rpc-client'
+import { syncLanguageWithSettings, changeOrcaLanguage } from './language-sync'
 import {
   getRemoteRuntimePtyEnvironmentId,
   getRemoteRuntimeTerminalHandle
@@ -230,6 +231,7 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
   fetchSettings: async () => {
     try {
       const settings = await window.api.settings.get()
+      await syncLanguageWithSettings(settings, (u) => window.api.settings.set(u))
       set({ settings })
     } catch (err) {
       console.error('Failed to fetch settings:', err)
@@ -256,6 +258,9 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
             createId: createOpenInApplicationId
           }
         )
+      }
+      if (sanitizedUpdates.language) {
+        changeOrcaLanguage(sanitizedUpdates.language)
       }
       const nextSettings = await window.api.settings.set(sanitizedUpdates)
       set((s) => ({ settings: (nextSettings as GlobalSettings | undefined) ?? s.settings }))
