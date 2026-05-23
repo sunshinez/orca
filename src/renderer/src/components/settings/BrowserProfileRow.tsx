@@ -1,4 +1,5 @@
 import { Import, Loader2, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { BrowserCookieImportSummary, BrowserSessionProfile } from '../../../../shared/types'
 import { Button } from '../ui/button'
@@ -45,6 +46,7 @@ export function BrowserProfileRow({
   onSelect,
   isDefault
 }: BrowserProfileRowProps): React.JSX.Element {
+  const { t } = useTranslation()
   const isImporting = importState?.profileId === profile.id && importState.status === 'importing'
   const fetchDetectedBrowsers = useAppStore((s) => s.fetchDetectedBrowsers)
 
@@ -58,7 +60,11 @@ export function BrowserProfileRow({
     if (result.ok) {
       const browser = detectedBrowsers.find((b) => b.family === browserFamily)
       toast.success(
-        `Imported ${result.summary.importedCookies} cookies from ${browser?.label ?? browserFamily}${browserProfile ? ` (${browserProfile})` : ''} into ${profile.label}.`
+        t('browser.sessionCookies.importFromBrowserSuccess', {
+          count: result.summary.importedCookies,
+          browser: `${browser?.label ?? browserFamily}${browserProfile ? ` (${browserProfile})` : ''}`,
+          profile: profile.label
+        })
       )
     } else {
       toast.error(result.reason)
@@ -69,7 +75,10 @@ export function BrowserProfileRow({
     const result = await useAppStore.getState().importCookiesToProfile(profile.id)
     if (result.ok) {
       toast.success(
-        `Imported ${result.summary.importedCookies} cookies from file into ${profile.label}.`
+        t('browser.sessionCookies.importFromFileSuccess', {
+          count: result.summary.importedCookies,
+          profile: profile.label
+        })
       )
     } else if (result.reason !== 'canceled') {
       toast.error(result.reason)
@@ -105,14 +114,16 @@ export function BrowserProfileRow({
           <span className="truncate text-sm font-medium">{profile.label}</span>
           {isActive ? (
             <span className="shrink-0 rounded border border-border/50 px-1.5 text-[10px] font-medium leading-4 text-foreground/80">
-              Active
+              {t('browser.sessionCookies.active')}
             </span>
           ) : null}
         </div>
         {sourceLabel ? (
           <p className="truncate text-[11px] text-muted-foreground">{sourceLabel}</p>
         ) : (
-          <p className="text-[11px] text-muted-foreground">No cookies imported</p>
+          <p className="text-[11px] text-muted-foreground">
+            {t('browser.sessionCookies.noCookiesImported')}
+          </p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -137,14 +148,16 @@ export function BrowserProfileRow({
               ) : (
                 <Import className="size-3" />
               )}
-              Import Cookies
+              {t('browser.sessionCookies.importCookies')}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {detectedBrowsers.map((browser) =>
               browser.profiles.length > 1 ? (
                 <DropdownMenuSub key={browser.family}>
-                  <DropdownMenuSubTrigger>From {browser.label}</DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger>
+                    {t('browser.sessionCookies.fromBrowser', { browser: browser.label })}
+                  </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
                       {browser.profiles.map((bp) => (
@@ -165,13 +178,13 @@ export function BrowserProfileRow({
                   key={browser.family}
                   onSelect={() => void handleImportFromBrowser(browser.family)}
                 >
-                  From {browser.label}
+                  {t('browser.sessionCookies.fromBrowser', { browser: browser.label })}
                 </DropdownMenuItem>
               )
             )}
             {detectedBrowsers.length > 0 && <DropdownMenuSeparator />}
             <DropdownMenuItem onSelect={() => void handleImportFromFile()}>
-              From File…
+              {t('browser.sessionCookies.fromFile')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -184,7 +197,7 @@ export function BrowserProfileRow({
             onClick={async () => {
               const ok = await useAppStore.getState().clearDefaultSessionCookies()
               if (ok) {
-                toast.success('Default cookies cleared.')
+                toast.success(t('browser.sessionCookies.defaultCookiesCleared'))
               }
             }}
           >
@@ -198,7 +211,7 @@ export function BrowserProfileRow({
             onClick={async () => {
               const ok = await useAppStore.getState().deleteBrowserSessionProfile(profile.id)
               if (ok) {
-                toast.success(`Profile "${profile.label}" removed.`)
+                toast.success(t('browser.sessionCookies.profileRemoved', { label: profile.label }))
               }
             }}
           >

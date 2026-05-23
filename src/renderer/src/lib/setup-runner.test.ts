@@ -16,7 +16,7 @@ describe('buildSetupRunnerCommand', () => {
       buildSetupRunnerCommand(
         '\\\\wsl.localhost\\Ubuntu\\home\\jin\\repo\\.git\\worktrees\\feature\\orca\\setup-runner.sh'
       )
-    ).toBe("bash /home/jin/repo/.git/worktrees/feature/orca/setup-runner.sh")
+    ).toBe('bash /home/jin/repo/.git/worktrees/feature/orca/setup-runner.sh')
   })
 
   it('uses cmd.exe for native Windows runner scripts', () => {

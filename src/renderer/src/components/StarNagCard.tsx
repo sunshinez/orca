@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Star, X } from 'lucide-react'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
@@ -16,6 +17,7 @@ import { useAppStore } from '../store'
  * component does no threshold math or gh-CLI checks locally.
  */
 export function StarNagCard(): React.JSX.Element | null {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
@@ -92,7 +94,7 @@ export function StarNagCard(): React.JSX.Element | null {
             <div className="flex items-center gap-2">
               <Star className="size-4 fill-amber-400/60 text-amber-400/80" />
               <h3 id="star-nag-heading" className="text-sm font-semibold">
-                Enjoying Orca?
+                {t('starNag.heading')}
               </h3>
             </div>
             <Button
@@ -100,21 +102,16 @@ export function StarNagCard(): React.JSX.Element | null {
               size="icon"
               className="size-7 shrink-0"
               onClick={handleClose}
-              aria-label="Dismiss"
+              aria-label={t('starNag.dismiss')}
             >
               <X className="size-3.5" />
             </Button>
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            If Orca has saved you time, a GitHub star goes a long way. It helps other developers
-            discover the project and keeps the team motivated to ship improvements.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('starNag.description')}</p>
 
           {error ? (
-            <p className="text-xs text-destructive">
-              Could not star the repo. Make sure <code>gh</code> is authenticated and try again.
-            </p>
+            <p className="text-xs text-destructive">{t('starNag.error', { cli: 'gh' })}</p>
           ) : null}
 
           <Button
@@ -125,7 +122,7 @@ export function StarNagCard(): React.JSX.Element | null {
             className="mt-0.5 w-full gap-1.5"
           >
             <Star className="size-3.5" />
-            {busy ? 'Starring…' : 'Star on GitHub'}
+            {busy ? t('starNag.starring') : t('starNag.starOnGitHub')}
           </Button>
         </div>
       </Card>

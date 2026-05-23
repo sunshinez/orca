@@ -28,7 +28,7 @@ Use `orca` for:
 - reading Orca-managed terminals and sending input to non-agent terminals
 - stopping or waiting on Orca-managed terminals
 - accessing repos known to Orca
-Do not use `orca` when plain shell tools are simpler and Orca state does not matter.
+  Do not use `orca` when plain shell tools are simpler and Orca state does not matter.
 
 Examples:
 
@@ -476,12 +476,12 @@ orca exec --command "keyboard inserttext \"text\"" --json   # bypasses key event
 
 ### Browser Error Codes
 
-| Error Code | Meaning | Recovery |
-|-----------|---------|----------|
-| `browser_no_tab` | No browser tab is open in this worktree | Open a tab, or use `--worktree all` to check other worktrees |
-| `browser_stale_ref` | Ref is invalid (page changed since snapshot) | Run `orca snapshot` to get fresh refs |
-| `browser_tab_not_found` | Tab index does not exist | Run `orca tab list` to see available tabs |
-| `browser_error` | Error from the browser automation engine | Read the message for details; common causes: element not found, navigation timeout, JS error |
+| Error Code              | Meaning                                      | Recovery                                                                                     |
+| ----------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `browser_no_tab`        | No browser tab is open in this worktree      | Open a tab, or use `--worktree all` to check other worktrees                                 |
+| `browser_stale_ref`     | Ref is invalid (page changed since snapshot) | Run `orca snapshot` to get fresh refs                                                        |
+| `browser_tab_not_found` | Tab index does not exist                     | Run `orca tab list` to see available tabs                                                    |
+| `browser_error`         | Error from the browser automation engine     | Read the message for details; common causes: element not found, navigation timeout, JS error |
 
 ### Browser Worked Example
 

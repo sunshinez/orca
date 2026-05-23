@@ -1,5 +1,6 @@
 /* oxlint-disable max-lines */
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Globe, Plus, Server, ServerOff } from 'lucide-react'
 import { useAppStore } from '@/store'
@@ -139,6 +140,7 @@ function findBrowserSelection(
 }
 
 export default function WorktreeJumpPalette(): React.JSX.Element | null {
+  const { t } = useTranslation()
   const visible = useAppStore((s) => s.activeModal === 'worktree-palette')
   const closeModal = useAppStore((s) => s.closeModal)
   const openModal = useAppStore((s) => s.openModal)
@@ -417,7 +419,9 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
         entries.push({
           id: '__header_worktrees__',
           type: 'section-header',
-          label: hasQuery ? 'Worktrees' : 'Recent Worktrees'
+          label: hasQuery
+            ? t('jumpPalette.headerWorktrees')
+            : t('jumpPalette.headerRecentWorktrees')
         })
       }
       entries.push(...visibleWorktreeItems)
@@ -425,7 +429,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
         entries.push({
           id: '__hint_worktree_cap__',
           type: 'hint',
-          label: `Type to see all ${worktreeItems.length} worktrees`
+          label: t('jumpPalette.worktreeCapHint', { count: worktreeItems.length })
         })
       }
     }
@@ -434,13 +438,13 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
         entries.push({
           id: '__header_browser__',
           type: 'section-header',
-          label: 'Browser Tabs'
+          label: t('jumpPalette.headerBrowserTabs')
         })
       }
       entries.push(...visibleBrowserItems)
     }
     return entries
-  }, [worktreeItems, browserItems, hasQuery])
+  }, [worktreeItems, browserItems, hasQuery, t])
 
   const selectableItems = useMemo<PaletteItem[]>(
     () =>
@@ -582,7 +586,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
     (worktreeId: string) => {
       const worktree = findWorktreeById(useAppStore.getState().worktreesByRepo, worktreeId)
       if (!worktree) {
-        toast.error('Worktree no longer exists')
+        toast.error(t('jumpPalette.worktreeNoLongerExists'))
         return
       }
       activateAndRevealWorktree(worktreeId)
@@ -591,7 +595,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       setSelectedItemId('')
       focusFallbackSurface()
     },
-    [closeModal, focusFallbackSurface]
+    [closeModal, focusFallbackSurface, t]
   )
 
   const handleSelectBrowserPage = useCallback(
@@ -599,7 +603,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       const { pageId, workspaceId, worktreeId } = result
       const selection = findBrowserSelection(pageId, workspaceId, worktreeId)
       if (!selection) {
-        toast.error('Browser page no longer exists')
+        toast.error(t('jumpPalette.browserPageNoLongerExists'))
         return
       }
       // Why: capture the workspace and page info before activateAndRevealWorktree
@@ -608,7 +612,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       const { worktree, workspace, page } = selection
       const activated = activateAndRevealWorktree(worktree.id)
       if (!activated) {
-        toast.error('Worktree no longer exists')
+        toast.error(t('jumpPalette.worktreeNoLongerExists'))
         return
       }
 
@@ -623,7 +627,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
         target: isBlankBrowserUrl(page.url) ? 'address-bar' : 'webview'
       })
     },
-    [closeModal, requestBrowserFocus]
+    [closeModal, requestBrowserFocus, t]
   )
 
   const handleSelectItem = useCallback(
@@ -795,8 +799,8 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
   const emptyState = (() => {
     if ((hasAnyWorktrees || hasAnyBrowserPages) && hasQuery) {
       return {
-        title: 'No results match your search',
-        subtitle: 'Try a name, branch, repo, comment, PR, page title, or URL.'
+        title: t('jumpPalette.noResultsTitle'),
+        subtitle: t('jumpPalette.noResultsSubtitle')
       }
     }
     // Why: empty-query rows exclude the current worktree, so a single-worktree
@@ -805,13 +809,13 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
     // — misleading. See docs/cmd-j-empty-query-ordering.md.
     if (!hasQuery && hasAnyWorktrees && !hasAnyBrowserPages) {
       return {
-        title: 'No other worktrees to switch to',
-        subtitle: 'Type to search or create a new worktree.'
+        title: t('jumpPalette.noOtherWorktreesTitle'),
+        subtitle: t('jumpPalette.noOtherWorktreesSubtitle')
       }
     }
     return {
-      title: 'No active worktrees or browser tabs',
-      subtitle: 'Create a worktree or open a page in Orca to get started.'
+      title: t('jumpPalette.noActiveTitle'),
+      subtitle: t('jumpPalette.noActiveSubtitle')
     }
   })()
 
@@ -822,8 +826,8 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       shouldFilter={false}
       onOpenAutoFocus={handleOpenAutoFocus}
       onCloseAutoFocus={handleCloseAutoFocus}
-      title="Jump to..."
-      description="Search worktrees and browser tabs"
+      title={t('jumpPalette.title')}
+      description={t('jumpPalette.description')}
       overlayClassName="bg-black/55 backdrop-blur-[2px]"
       contentClassName="top-[13%] w-[736px] max-w-[94vw] overflow-hidden rounded-xl border border-border/70 bg-background/96 shadow-[0_26px_84px_rgba(0,0,0,0.32)] backdrop-blur-xl"
       commandProps={{
@@ -834,7 +838,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       }}
     >
       <CommandInput
-        placeholder={'Jump to worktree or browser tab\u2026  try "repo/worktree"'}
+        placeholder={t('jumpPalette.inputPlaceholder')}
         value={query}
         onValueChange={setQuery}
         wrapperClassName="mx-3 mt-3 rounded-lg border border-border/55 bg-muted/28 px-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
@@ -844,8 +848,8 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       <CommandList ref={listRef} className="max-h-[min(460px,62vh)] px-2.5 pb-2.5 pt-2">
         {isLoading ? (
           <PaletteState
-            title="Loading jump targets"
-            subtitle="Gathering your recent worktrees and open browser pages."
+            title={t('jumpPalette.loadingTitle')}
+            subtitle={t('jumpPalette.loadingSubtitle')}
           />
         ) : selectableItems.length === 0 && !showCreateAction ? (
           <CommandEmpty className="py-0">
@@ -918,7 +922,11 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
                           <div className="flex min-w-0 items-center gap-2">
                             {sshConnectionId && (
                               <span
-                                aria-label={isSshDisconnected ? 'SSH disconnected' : 'SSH remote'}
+                                aria-label={
+                                  isSshDisconnected
+                                    ? t('jumpPalette.sshDisconnected')
+                                    : t('jumpPalette.sshRemote')
+                                }
                                 className="shrink-0 inline-flex items-center"
                               >
                                 {isSshDisconnected ? (
@@ -943,12 +951,12 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
                             </span>
                             {isCurrentWorktree && (
                               <span className="shrink-0 self-center rounded-[6px] border border-border/60 bg-background/45 px-1.5 py-px text-[9px] font-medium leading-normal text-muted-foreground/88">
-                                Current
+                                {t('jumpPalette.currentBadge')}
                               </span>
                             )}
                             {worktree.isMainWorktree && (
                               <span className="shrink-0 self-center rounded border border-muted-foreground/30 bg-muted-foreground/5 px-1.5 py-px text-[9px] font-medium leading-normal text-muted-foreground">
-                                primary
+                                {t('jumpPalette.primaryBadge')}
                               </span>
                             )}
                             <span className="shrink-0 text-muted-foreground/45">·</span>
@@ -1035,12 +1043,12 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
                           </span>
                           {result.isCurrentPage && (
                             <span className="shrink-0 self-center rounded-[6px] border border-border/60 bg-background/45 px-1.5 py-px text-[9px] font-medium leading-normal text-muted-foreground/88">
-                              Current Tab
+                              {t('jumpPalette.currentTabBadge')}
                             </span>
                           )}
                           {!result.isCurrentPage && result.isCurrentWorktree && (
                             <span className="shrink-0 self-center rounded-[6px] border border-border/60 bg-background/45 px-1.5 py-px text-[9px] font-medium leading-normal text-muted-foreground/88">
-                              Current Worktree
+                              {t('jumpPalette.currentWorktreeBadge')}
                             </span>
                           )}
                           <span className="shrink-0 text-muted-foreground/45">·</span>
@@ -1099,7 +1107,7 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">
-                    {`Create worktree "${createWorktreeName}"`}
+                    {t('jumpPalette.createAction', { name: createWorktreeName })}
                   </div>
                 </div>
               </CommandItem>
@@ -1110,17 +1118,19 @@ export default function WorktreeJumpPalette(): React.JSX.Element | null {
       <div className="flex items-center justify-end border-t border-border/60 px-3.5 py-2.5 text-[11px] text-muted-foreground/82">
         <div className="flex items-center gap-2">
           <FooterKey>Enter</FooterKey>
-          <span>Open</span>
+          <span>{t('jumpPalette.footerOpen')}</span>
           <FooterKey>Esc</FooterKey>
-          <span>Close</span>
+          <span>{t('jumpPalette.footerClose')}</span>
           <FooterKey>↑↓</FooterKey>
-          <span>Move</span>
+          <span>{t('jumpPalette.footerMove')}</span>
         </div>
       </div>
       <div aria-live="polite" className="sr-only">
         {deferredQuery.trim()
-          ? `${resultCount} results found${showCreateAction ? ', create new worktree action available' : ''}`
-          : `${resultCount} items available${showCreateAction ? ', create new worktree action available' : ''}`}
+          ? t('jumpPalette.ariaResultsFound', { count: resultCount }) +
+            (showCreateAction ? t('jumpPalette.ariaCreateActionAvailable') : '')
+          : t('jumpPalette.ariaItemsAvailable', { count: resultCount }) +
+            (showCreateAction ? t('jumpPalette.ariaCreateActionAvailable') : '')}
       </div>
     </CommandDialog>
   )

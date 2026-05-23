@@ -34,6 +34,7 @@
 // (`optedIn === null`) clears in all three resolving paths.
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 
 import { Button } from './ui/button'
@@ -48,6 +49,7 @@ export function FirstLaunchBanner({
   onResolve,
   fetchSettings
 }: FirstLaunchBannerProps): React.JSX.Element {
+  const { t } = useTranslation()
   // Double-click guard. Without this, a fast second click on "Turn off"
   // would re-enter telemetrySetOptIn(false); on the second call, main's
   // deriveOptInVia sees currentOptedIn=false (just persisted by click 1)
@@ -117,23 +119,21 @@ export function FirstLaunchBanner({
     <div
       className="fixed left-1/2 top-2 z-40 flex w-[min(44.625rem,calc(100vw-2rem))] -translate-x-1/2 items-start gap-4 rounded-lg border border-border bg-card/95 py-3 pl-4 pr-3 shadow-lg backdrop-blur"
       role="region"
-      aria-label="Telemetry notice"
+      aria-label={t('telemetryBanner.ariaLabel')}
       aria-live="polite"
     >
       {/* Text column — title + body stack on the left, takes remaining
           width so the action column never pushes copy into a wrap. */}
       <div className="flex-1 space-y-0.5 pr-1 text-sm">
-        <p className="font-medium leading-snug">Help us decide what to build next</p>
+        <p className="font-medium leading-snug">{t('telemetryBanner.title')}</p>
         <p className="text-xs leading-snug text-muted-foreground">
-          Anonymous counts of which features you use help us prioritize what to build. No file
-          contents, prompts, terminal output, or anything that identifies you. Change anytime in
-          Settings &rarr; Privacy &amp; Telemetry.{' '}
+          {t('telemetryBanner.description')}{' '}
           <button
             type="button"
             className="underline underline-offset-2 hover:text-foreground"
             onClick={() => void window.api.shell.openUrl(PRIVACY_URL)}
           >
-            Privacy policy
+            {t('telemetryBanner.privacyPolicy')}
           </button>
           .
         </p>
@@ -152,17 +152,17 @@ export function FirstLaunchBanner({
           disabled={inFlight}
           className="border-border/60 text-muted-foreground"
         >
-          Opt out
+          {t('telemetryBanner.optOut')}
         </Button>
         <Button size="sm" onClick={handleAcknowledge} disabled={inFlight}>
-          Got it
+          {t('telemetryBanner.gotIt')}
         </Button>
       </div>
       {/* aria-label says "Dismiss" — the action persists silent opt-in,
           not just hides the UI. */}
       <button
         type="button"
-        aria-label="Dismiss notice"
+        aria-label={t('telemetryBanner.dismissNotice')}
         onClick={handleAcknowledge}
         disabled={inFlight}
         className="absolute right-1.5 top-1.5 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"

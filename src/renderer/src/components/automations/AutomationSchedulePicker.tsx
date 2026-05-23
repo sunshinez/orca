@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarClock, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,11 +41,11 @@ function parseTime(value: string): { hour: number; minute: number } {
   }
 }
 
-function getDraftScheduleLabel(draft: AutomationDraft): string {
+function getDraftScheduleLabel(draft: AutomationDraft, t: (key: string) => string): string {
   if (draft.preset === 'custom') {
     return draft.customSchedule.trim()
       ? formatAutomationSchedule(draft.customSchedule)
-      : 'Custom cron'
+      : t('automations.editor.customCron')
   }
   const { hour, minute } = parseTime(draft.time)
   return formatAutomationSchedule(
@@ -80,8 +81,9 @@ export function AutomationSchedulePicker({
   triggerClassName?: string
   onDraftChange: (updater: (current: AutomationDraft) => AutomationDraft) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
-  const label = getDraftScheduleLabel(draft)
+  const label = getDraftScheduleLabel(draft, t)
   const customSchedule = draft.customSchedule.trim()
   const customScheduleInvalid =
     draft.preset === 'custom' &&
@@ -110,7 +112,7 @@ export function AutomationSchedulePicker({
         className="w-[var(--radix-popover-trigger-width)] min-w-[19rem] p-3"
       >
         <div className="grid gap-3">
-          <Field label="Schedule">
+          <Field label={t('automations.editor.scheduleLabel')}>
             <Select
               value={draft.preset}
               onValueChange={(preset) =>
@@ -129,11 +131,11 @@ export function AutomationSchedulePicker({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="hourly">Hourly</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekdays">Weekdays</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="custom">Custom cron</SelectItem>
+                <SelectItem value="hourly">{t('automations.editor.hourly')}</SelectItem>
+                <SelectItem value="daily">{t('automations.editor.daily')}</SelectItem>
+                <SelectItem value="weekdays">{t('automations.editor.weekdays')}</SelectItem>
+                <SelectItem value="weekly">{t('automations.editor.weekly')}</SelectItem>
+                <SelectItem value="custom">{t('automations.editor.customCron')}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -153,11 +155,11 @@ export function AutomationSchedulePicker({
                 }))
               }
             >
-              Use custom cron
+              {t('automations.editor.useCustomCron')}
             </Button>
           ) : null}
           {draft.preset === 'custom' ? (
-            <Field label="Cron string">
+            <Field label={t('automations.editor.cronStringLabel')}>
               <Input
                 value={draft.customSchedule}
                 placeholder="0 9 * * 1-5"
@@ -173,17 +175,17 @@ export function AutomationSchedulePicker({
                 }
               />
               <div className="mt-1 text-[11px] text-muted-foreground">
-                Five fields: minute hour day month weekday.
+                {t('automations.editor.cronStringHelp')}
               </div>
               {customScheduleInvalid ? (
                 <div className="mt-1 text-[11px] text-destructive">
-                  Enter a valid 5-field cron expression.
+                  {t('automations.editor.cronStringError')}
                 </div>
               ) : null}
             </Field>
           ) : null}
           {draft.preset === 'weekly' ? (
-            <Field label="Day">
+            <Field label={t('automations.editor.dayLabel')}>
               <Select
                 value={draft.dayOfWeek}
                 onValueChange={(dayOfWeek) =>
@@ -194,9 +196,9 @@ export function AutomationSchedulePicker({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DAY_OPTIONS.map(([value, label]) => (
+                  {DAY_OPTIONS.map(([value, labelKey]) => (
                     <SelectItem key={value} value={value}>
-                      {label}
+                      {t(`automations.editor.${labelKey.toLowerCase()}` as never)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -204,7 +206,13 @@ export function AutomationSchedulePicker({
             </Field>
           ) : null}
           {draft.preset !== 'custom' ? (
-            <Field label={draft.preset === 'hourly' ? 'Minute' : 'Time'}>
+            <Field
+              label={
+                draft.preset === 'hourly'
+                  ? t('automations.editor.minuteLabel')
+                  : t('automations.editor.timeLabel')
+              }
+            >
               <Input
                 type="time"
                 value={draft.time}

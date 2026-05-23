@@ -10,6 +10,7 @@
    inline review-comment positioning / approvals are deferred to v1.5
    since they mirror substantial GitHub-side surface area. */
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CircleDot, ExternalLink, GitMerge, LoaderCircle, RefreshCw, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -67,6 +68,7 @@ function jobStatusTone(status: string): string {
 }
 
 function StateBadge({ state }: { state: GitLabWorkItem['state'] }): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <span
       className={cn(
@@ -74,12 +76,13 @@ function StateBadge({ state }: { state: GitLabWorkItem['state'] }): React.JSX.El
         STATE_TONE[state]
       )}
     >
-      {state}
+      {t(`gitlabItem.state.${state}`)}
     </span>
   )
 }
 
 function CommentCard({ comment }: { comment: MRComment }): React.JSX.Element {
+  const { t } = useTranslation()
   return (
     <div className="rounded-md border border-border/40 bg-muted/30 p-3">
       <div className="mb-1.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -97,7 +100,7 @@ function CommentCard({ comment }: { comment: MRComment }): React.JSX.Element {
           <span className="font-medium text-foreground">{comment.author}</span>
           {comment.isResolved ? (
             <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-              resolved
+              {t('gitlabItem.state.resolved')}
             </span>
           ) : null}
         </div>
@@ -150,6 +153,7 @@ export default function GitLabItemDialog({
   onClose,
   onCreateWorkspace
 }: Props): React.JSX.Element {
+  const { t } = useTranslation()
   const [details, setDetails] = useState<GitLabWorkItemDetails | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -175,7 +179,7 @@ export default function GitLabItemDialog({
           return
         }
         if (!data) {
-          setError('Item not found.')
+          setError(t('gitlabItem.dialog.itemNotFound'))
           return
         }
         setDetails(data as GitLabWorkItemDetails)
@@ -193,7 +197,7 @@ export default function GitLabItemDialog({
     return () => {
       stale = true
     }
-  }, [item, repoPath, refreshNonce])
+  }, [item, repoPath, refreshNonce, t])
 
   // Why: clear the comment draft when the sheet target changes so the
   // user doesn't accidentally post one MR's draft against another.
@@ -213,7 +217,7 @@ export default function GitLabItemDialog({
     try {
       const res = await window.api.gl.closeMR({ repoPath, iid: item.number })
       if (res.ok) {
-        toast.success(`Closed MR !${item.number}`)
+        toast.success(t('gitlabItem.toast.closedMR', { number: item.number }))
         handleRefresh()
       } else {
         toast.error(res.error)
@@ -221,7 +225,7 @@ export default function GitLabItemDialog({
     } finally {
       setActionInFlight(null)
     }
-  }, [item, repoPath, handleRefresh])
+  }, [item, repoPath, handleRefresh, t])
 
   const handleReopen = useCallback(async (): Promise<void> => {
     if (!item || !repoPath || item.type !== 'mr') {
@@ -231,7 +235,7 @@ export default function GitLabItemDialog({
     try {
       const res = await window.api.gl.reopenMR({ repoPath, iid: item.number })
       if (res.ok) {
-        toast.success(`Reopened MR !${item.number}`)
+        toast.success(t('gitlabItem.toast.reopenedMR', { number: item.number }))
         handleRefresh()
       } else {
         toast.error(res.error)
@@ -239,7 +243,7 @@ export default function GitLabItemDialog({
     } finally {
       setActionInFlight(null)
     }
-  }, [item, repoPath, handleRefresh])
+  }, [item, repoPath, handleRefresh, t])
 
   const handleMerge = useCallback(async (): Promise<void> => {
     if (!item || !repoPath || item.type !== 'mr') {
@@ -249,7 +253,7 @@ export default function GitLabItemDialog({
     try {
       const res = await window.api.gl.mergeMR({ repoPath, iid: item.number })
       if (res.ok) {
-        toast.success(`Merged MR !${item.number}`)
+        toast.success(t('gitlabItem.toast.mergedMR', { number: item.number }))
         handleRefresh()
       } else {
         toast.error(res.error)
@@ -257,7 +261,7 @@ export default function GitLabItemDialog({
     } finally {
       setActionInFlight(null)
     }
-  }, [item, repoPath, handleRefresh])
+  }, [item, repoPath, handleRefresh, t])
 
   const handleSubmitComment = useCallback(async (): Promise<void> => {
     const body = commentDraft.trim()
@@ -296,8 +300,8 @@ export default function GitLabItemDialog({
     <Sheet open={item !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
         <VisuallyHidden.Root>
-          <SheetTitle>{item ? item.title : 'Work item'}</SheetTitle>
-          <SheetDescription>GitLab work item detail</SheetDescription>
+          <SheetTitle>{item ? item.title : t('gitlabItem.dialog.fallbackTitle')}</SheetTitle>
+          <SheetDescription>{t('gitlabItem.dialog.description')}</SheetDescription>
         </VisuallyHidden.Root>
 
         {item ? (
@@ -312,7 +316,9 @@ export default function GitLabItemDialog({
                       {item.number}
                     </span>
                     <StateBadge state={item.state} />
-                    {item.author ? <span>by {item.author}</span> : null}
+                    {item.author ? (
+                      <span>{t('gitlabItem.dialog.byAuthor', { author: item.author })}</span>
+                    ) : null}
                   </div>
                   <h2 className="mt-1.5 text-lg font-semibold leading-tight text-foreground">
                     {item.title}
@@ -321,7 +327,7 @@ export default function GitLabItemDialog({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Refresh"
+                  aria-label={t('common.refresh')}
                   disabled={loading}
                   onClick={handleRefresh}
                   className="size-7"
@@ -337,9 +343,11 @@ export default function GitLabItemDialog({
 
             <Tabs defaultValue="description" className="flex min-h-0 flex-1 flex-col">
               <TabsList className="mx-5 mt-3 self-start">
-                <TabsTrigger value="description">Description</TabsTrigger>
+                <TabsTrigger value="description">
+                  {t('gitlabItem.dialog.tabs.description')}
+                </TabsTrigger>
                 <TabsTrigger value="conversation">
-                  Conversation
+                  {t('gitlabItem.dialog.tabs.conversation')}
                   {details?.comments?.length ? (
                     <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[10px] font-medium">
                       {details.comments.length}
@@ -348,7 +356,7 @@ export default function GitLabItemDialog({
                 </TabsTrigger>
                 {isMR ? (
                   <TabsTrigger value="pipeline">
-                    Pipeline
+                    {t('gitlabItem.dialog.tabs.pipeline')}
                     {details?.pipelineJobs?.length ? (
                       <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[10px] font-medium">
                         {details.pipelineJobs.length}
@@ -373,7 +381,9 @@ export default function GitLabItemDialog({
                   ) : details?.body ? (
                     <CommentMarkdown content={details.body} />
                   ) : (
-                    <p className="text-sm text-muted-foreground">No description.</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('gitlabItem.dialog.empty.noDescription')}
+                    </p>
                   )}
                 </TabsContent>
 
@@ -385,7 +395,9 @@ export default function GitLabItemDialog({
                   ) : details?.comments?.length ? (
                     details.comments.map((c) => <CommentCard key={c.id} comment={c} />)
                   ) : (
-                    <p className="text-sm text-muted-foreground">No comments yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('gitlabItem.dialog.empty.noComments')}
+                    </p>
                   )}
                 </TabsContent>
 
@@ -402,7 +414,9 @@ export default function GitLabItemDialog({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No pipeline runs for this MR.</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t('gitlabItem.dialog.empty.noPipelineRuns')}
+                      </p>
                     )}
                   </TabsContent>
                 ) : null}
@@ -416,7 +430,10 @@ export default function GitLabItemDialog({
                 <textarea
                   value={commentDraft}
                   onChange={(e) => setCommentDraft(e.target.value)}
-                  placeholder={`Comment on ${prefix}${item.number}…`}
+                  placeholder={t('gitlabItem.dialog.commentPlaceholder', {
+                    prefix,
+                    number: item.number
+                  })}
                   rows={2}
                   disabled={commentSubmitting}
                   className="min-h-9 w-full resize-none rounded-md border border-input bg-transparent px-2.5 py-1.5 text-sm shadow-xs focus:border-ring focus:outline-none focus:ring-[3px] focus:ring-ring/50"
@@ -446,7 +463,7 @@ export default function GitLabItemDialog({
                   ) : (
                     <Send className="size-3.5" />
                   )}
-                  Comment
+                  {t('gitlabItem.dialog.commentButton')}
                 </Button>
               </div>
 
@@ -458,12 +475,12 @@ export default function GitLabItemDialog({
                   className="gap-1.5"
                 >
                   <ExternalLink className="size-3.5" />
-                  Open in browser
+                  {t('gitlabItem.dialog.openInBrowser')}
                 </Button>
                 <div className="flex items-center gap-2">
                   {onCreateWorkspace ? (
                     <Button variant="outline" size="sm" onClick={() => onCreateWorkspace(item)}>
-                      Create workspace
+                      {t('gitlabItem.dialog.createWorkspace')}
                     </Button>
                   ) : null}
                   {canMerge ? (
@@ -475,7 +492,7 @@ export default function GitLabItemDialog({
                       {actionInFlight === 'merge' ? (
                         <LoaderCircle className="size-3.5 animate-spin" />
                       ) : null}
-                      Merge
+                      {t('gitlabItem.dialog.merge')}
                     </Button>
                   ) : null}
                   {canClose ? (
@@ -488,7 +505,7 @@ export default function GitLabItemDialog({
                       {actionInFlight === 'close' ? (
                         <LoaderCircle className="size-3.5 animate-spin" />
                       ) : null}
-                      Close
+                      {t('gitlabItem.dialog.close')}
                     </Button>
                   ) : null}
                   {canReopen ? (
@@ -501,7 +518,7 @@ export default function GitLabItemDialog({
                       {actionInFlight === 'reopen' ? (
                         <LoaderCircle className="size-3.5 animate-spin" />
                       ) : null}
-                      Reopen
+                      {t('gitlabItem.dialog.reopen')}
                     </Button>
                   ) : null}
                 </div>

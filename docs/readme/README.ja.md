@@ -28,7 +28,7 @@
 
 ## 対応するエージェント
 
-Orca は任意の CLI エージェントに対応しています（*このリストに限定されません*）。
+Orca は任意の CLI エージェントに対応しています（_このリストに限定されません_）。
 
 <p>
   <a href="https://docs.anthropic.com/claude/docs/claude-code"><kbd><img src="../assets/claude-logo.svg" width="16" valign="middle" /> Claude Code</kbd></a> &nbsp;
@@ -78,7 +78,7 @@ Orca は任意の CLI エージェントに対応しています（*このリス
 - **[onOrca.dev からダウンロード](https://onOrca.dev)**
 - または **[GitHub Releases ページ](https://github.com/stablyai/orca/releases/latest)** から入手
 
-*パッケージマネージャーからもインストールできます:*
+_パッケージマネージャーからもインストールできます:_
 
 ### macOS (Homebrew)
 

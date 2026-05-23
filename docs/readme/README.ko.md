@@ -28,7 +28,7 @@
 
 ## 지원 에이전트
 
-Orca는 모든 CLI 에이전트를 지원합니다(*아래 목록에만 한정되지 않습니다*).
+Orca는 모든 CLI 에이전트를 지원합니다(_아래 목록에만 한정되지 않습니다_).
 
 <p>
   <a href="https://docs.anthropic.com/claude/docs/claude-code"><kbd><img src="../assets/claude-logo.svg" width="16" valign="middle" /> Claude Code</kbd></a> &nbsp;
@@ -78,7 +78,7 @@ Orca는 모든 CLI 에이전트를 지원합니다(*아래 목록에만 한정�
 - **[onOrca.dev에서 다운로드](https://onOrca.dev)**
 - 또는 **[GitHub Releases 페이지](https://github.com/stablyai/orca/releases/latest)** 에서 받기
 
-*패키지 매니저로도 설치할 수 있습니다:*
+_패키지 매니저로도 설치할 수 있습니다:_
 
 ### macOS (Homebrew)
 

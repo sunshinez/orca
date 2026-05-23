@@ -2,6 +2,7 @@
    renderer surface. Keeping the state machine and its presentation variants together avoids
    scattering tightly coupled update behavior across multiple files. */
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
@@ -49,6 +50,7 @@ function CompactCardContent({
   onClose?: () => void
   action?: { label: string; url: string }
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-3 p-3">
       <div className="shrink-0 text-muted-foreground">
@@ -73,7 +75,7 @@ function CompactCardContent({
           size="icon"
           className="size-7 shrink-0"
           onClick={onClose}
-          aria-label="Dismiss"
+          aria-label={t('updatesCard.dismiss')}
         >
           <X className="size-3.5" />
         </Button>
@@ -85,6 +87,7 @@ function CompactCardContent({
 // ── Main component ──────────────────────────────────────────────────
 
 export function UpdateCard() {
+  const { t } = useTranslation()
   const status = useAppStore((s) => s.updateStatus)
   const storeChangelog = useAppStore((s) => s.updateChangelog)
   const dismissedVersion = useAppStore((s) => s.dismissedUpdateVersion)
@@ -318,10 +321,8 @@ export function UpdateCard() {
       ? {
           // Why: title is scoped to the operation that failed so check-time
           // failures (commonly GitHub-side) don't read as a bug in Orca.
-          title: cachedVersion ? 'Update Error' : 'Update Check Failed',
-          summary: cachedVersion
-            ? 'Could not complete the update.'
-            : 'Could not check for updates.',
+          title: cachedVersion ? t('updatesCard.errorTitle') : t('updatesCard.checkFailedTitle'),
+          summary: cachedVersion ? t('updatesCard.completeFailed') : t('updatesCard.checkFailed'),
           message: status.message,
           releaseUrl: releaseUrlForVersion(cachedVersion),
           // Why: check-time failures are often transient (offline, GitHub
@@ -329,11 +330,11 @@ export function UpdateCard() {
           // of forcing the user into the manual fallback.
           primaryAction: cachedVersion
             ? {
-                label: 'Retry Download',
+                label: t('updatesCard.retryDownload'),
                 onClick: handleUpdate
               }
             : {
-                label: 'Re-check',
+                label: t('updatesCard.recheck'),
                 onClick: () => {
                   void window.api.updater.check({ includePrerelease: false })
                 }
@@ -341,12 +342,12 @@ export function UpdateCard() {
         }
       : installError
         ? {
-            title: 'Update Error',
-            summary: 'Could not restart to install the update.',
+            title: t('updatesCard.errorTitle'),
+            summary: t('updatesCard.completeFailed'),
             message: installError,
             releaseUrl: releaseUrlForVersion(cachedVersion),
             primaryAction: {
-              label: 'Try Again',
+              label: t('updatesCard.tryAgain'),
               onClick: handleInstallRetry
             }
           }
@@ -396,18 +397,18 @@ export function UpdateCard() {
 
   const ariaLabel =
     status.state === 'checking'
-      ? 'Checking for updates'
+      ? t('updatesCard.checking')
       : status.state === 'not-available'
-        ? "You're on the latest version"
+        ? t('updatesCard.upToDate')
         : status.state === 'available'
-          ? 'Update available'
+          ? t('updatesCard.availableTitle')
           : status.state === 'downloading'
-            ? 'Downloading update'
+            ? t('updatesCard.downloadingTitle')
             : status.state === 'downloaded'
-              ? 'Update ready to install'
+              ? t('updatesCard.readyToInstallTitle')
               : status.state === 'error'
-                ? 'Update error'
-                : 'Update status'
+                ? t('updatesCard.errorTitle')
+                : t('updatesCard.downloadingTitle')
 
   // ── Card wrapper ──────────────────────────────────────────────────
 
@@ -421,11 +422,11 @@ export function UpdateCard() {
     // ── Compact transient states (user-initiated check feedback) ──────
 
     if (status.state === 'checking') {
-      return <CompactCardContent icon="spinner" text="Checking for updates..." />
+      return <CompactCardContent icon="spinner" text={t('updatesCard.checking')} />
     }
 
     if (status.state === 'not-available') {
-      return <CompactCardContent icon="check" text="You're on the latest version." />
+      return <CompactCardContent icon="check" text={t('updatesCard.upToDate')} />
     }
 
     // ── Error states ─────────────────────────────────────────────────
@@ -449,7 +450,7 @@ export function UpdateCard() {
       if (hasStartedDownload.current) {
         return (
           <div className="p-4">
-            <p className="text-sm">Installing...</p>
+            <p className="text-sm">{t('updatesCard.installing')}</p>
           </div>
         )
       }
@@ -532,16 +533,14 @@ export function UpdateCard() {
         <Card className={`py-0 gap-0 ${animationClass}`}>
           <div className="flex items-center gap-3 p-3">
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">
-                Your terminal sessions won&apos;t be interrupted during the update.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('updatesCard.reassuranceTip')}</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               className="size-7 shrink-0"
               onClick={markReassuranceSeen}
-              aria-label="Dismiss tip"
+              aria-label={t('updatesCard.dismissTip')}
             >
               <X className="size-3.5" />
             </Button>
@@ -585,6 +584,7 @@ function RichCardContent({
   onUpdate: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const showMedia =
     release.mediaUrl &&
     !mediaFailed &&
@@ -596,13 +596,15 @@ function RichCardContent({
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold">New: {release.title}</h3>
+        <h3 className="text-sm font-semibold">
+          {t('updatesCard.newVersion', { title: release.title })}
+        </h3>
         <Button
           variant="ghost"
           size="icon"
           className="size-7 shrink-0 min-w-[44px] min-h-[44px] -m-2"
           onClick={onClose}
-          aria-label="Dismiss update"
+          aria-label={t('updatesCard.dismissUpdate')}
         >
           <X className="size-3.5" />
         </Button>
@@ -637,7 +639,7 @@ function RichCardContent({
               className="text-xs text-muted-foreground/70 underline hover:text-foreground inline"
               onClick={() => void window.api.shell.openUrl(release.releaseNotesUrl)}
             >
-              +{releasesBehind - 1} more since your last update
+              {t('updatesCard.moreReleases', { count: releasesBehind - 1 })}
             </button>
           </>
         )}
@@ -647,11 +649,11 @@ function RichCardContent({
         className="text-xs text-muted-foreground underline hover:text-foreground self-start"
         onClick={() => void window.api.shell.openUrl(release.releaseNotesUrl)}
       >
-        Read the full release notes
+        {t('updatesCard.readNotes')}
       </button>
 
       <Button variant="default" size="sm" onClick={onUpdate} className="w-full cursor-pointer">
-        Update
+        {t('updatesCard.update')}
       </Button>
     </div>
   )
@@ -670,32 +672,33 @@ function SimpleCardContent({
   onUpdate: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2.5 p-3.5">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold">Update Available</h3>
+        <h3 className="text-sm font-semibold">{t('updatesCard.availableTitle')}</h3>
         <Button
           variant="ghost"
           size="icon"
           className="size-7 shrink-0 min-w-[44px] min-h-[44px] -m-2"
           onClick={onClose}
-          aria-label="Dismiss update"
+          aria-label={t('updatesCard.dismissUpdate')}
         >
           <X className="size-3.5" />
         </Button>
       </div>
 
-      <p className="text-sm text-muted-foreground">Orca v{version} is ready.</p>
+      <p className="text-sm text-muted-foreground">{t('updatesCard.readyVersion', { version })}</p>
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Sessions won&apos;t be interrupted.
+        {t('updatesCard.noInterruption')}
       </p>
 
       <button
         className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground self-start"
         onClick={() => void window.api.shell.openUrl(releaseUrl)}
       >
-        Release notes
+        {t('updatesCard.releaseNotes')}
       </button>
 
       <Button
@@ -704,7 +707,7 @@ function SimpleCardContent({
         onClick={onUpdate}
         className="mt-0.5 w-full cursor-pointer"
       >
-        Update
+        {t('updatesCard.update')}
       </Button>
     </div>
   )
@@ -733,6 +736,7 @@ function DownloadingContent({
   onMediaLoad: () => void
   onCollapse: () => void
 }) {
+  const { t } = useTranslation()
   const release = changelog?.release
   const showMedia =
     release?.mediaUrl && !mediaFailed && !(prefersReducedMotion && isAnimatedGif(release.mediaUrl))
@@ -741,16 +745,18 @@ function DownloadingContent({
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
         {release ? (
-          <h3 className="text-sm font-semibold">New: {release.title}</h3>
+          <h3 className="text-sm font-semibold">
+            {t('updatesCard.newVersion', { title: release.title })}
+          </h3>
         ) : (
-          <h3 className="text-sm font-semibold">Downloading Update</h3>
+          <h3 className="text-sm font-semibold">{t('updatesCard.downloadingTitle')}</h3>
         )}
         <Button
           variant="ghost"
           size="icon"
           className="size-7 shrink-0 min-w-[44px] min-h-[44px] -m-2"
           onClick={onCollapse}
-          aria-label="Minimize to status bar"
+          aria-label={t('updatesCard.minimize')}
         >
           <Minus className="size-3.5" />
         </Button>
@@ -776,7 +782,7 @@ function DownloadingContent({
       )}
 
       <p className="text-sm text-muted-foreground">
-        {release ? release.description : `Orca v${version} is downloading.`}
+        {release ? release.description : t('updatesCard.downloadingVersion', { version })}
       </p>
 
       <button
@@ -787,12 +793,14 @@ function DownloadingContent({
           )
         }
       >
-        {release ? 'Read the full release notes' : 'Release notes'}
+        {release ? t('updatesCard.readNotes') : t('updatesCard.releaseNotes')}
       </button>
 
       <div className="flex flex-col gap-2 mt-1">
         <Progress value={percent} className="h-1.5" />
-        <p className="text-xs text-muted-foreground">Downloading... {percent}%</p>
+        <p className="text-xs text-muted-foreground">
+          {t('updatesCard.downloadingProgress', { percent })}
+        </p>
       </div>
     </div>
   )
@@ -818,6 +826,7 @@ function ErrorCardContent({
   }
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
@@ -827,7 +836,7 @@ function ErrorCardContent({
           size="icon"
           className="size-7 shrink-0 min-w-[44px] min-h-[44px] -m-2"
           onClick={onClose}
-          aria-label="Minimize to status bar"
+          aria-label={t('updatesCard.minimize')}
         >
           <Minus className="size-3.5" />
         </Button>
@@ -849,7 +858,7 @@ function ErrorCardContent({
           onClick={() => void window.api.shell.openUrl(releaseUrl)}
           className={primaryAction ? 'flex-1' : 'w-full'}
         >
-          Download Manually
+          {t('updatesCard.downloadManually')}
         </Button>
       </div>
     </div>
@@ -867,27 +876,28 @@ function ReadyToInstallContent({
   onRestart: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold">Ready to Install</h3>
+        <h3 className="text-sm font-semibold">{t('updatesCard.readyToInstallTitle')}</h3>
         <Button
           variant="ghost"
           size="icon"
           className="size-7 shrink-0 min-w-[44px] min-h-[44px] -m-2"
           onClick={onClose}
-          aria-label="Minimize to status bar"
+          aria-label={t('updatesCard.minimize')}
         >
           <Minus className="size-3.5" />
         </Button>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Orca v{version} is downloaded. Restart when you&apos;re ready.
+        {t('updatesCard.downloadedRestart', { version })}
       </p>
 
       <Button variant="default" size="sm" onClick={onRestart} className="w-full">
-        Restart to Update
+        {t('updatesCard.restartToUpdate')}
       </Button>
     </div>
   )

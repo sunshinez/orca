@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +24,7 @@ export function WorkspaceCombobox({
   triggerClassName?: string
   onValueChange: (workspaceId: string) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement | null>(null)
   const selected = worktrees.find((worktree) => worktree.id === value) ?? null
@@ -46,7 +48,7 @@ export function WorkspaceCombobox({
           className={cn('h-9 w-full justify-between px-3 text-sm font-normal', triggerClassName)}
         >
           <span className={cn('truncate', !selected && 'text-muted-foreground')}>
-            {selected?.displayName ?? 'Select workspace'}
+            {selected?.displayName ?? t('automations.editor.selectWorkspace')}
           </span>
           <ChevronsUpDown className="size-4 opacity-50" />
         </Button>
@@ -57,9 +59,9 @@ export function WorkspaceCombobox({
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <Command>
-          <CommandInput ref={inputRef} placeholder="Search workspaces..." />
+          <CommandInput ref={inputRef} placeholder={t('automations.editor.searchWorkspaces')} />
           <CommandList className="max-h-72">
-            <CommandEmpty>No workspaces found.</CommandEmpty>
+            <CommandEmpty>{t('automations.editor.noWorkspacesFound')}</CommandEmpty>
             {worktrees.map((worktree) => (
               <CommandItem
                 key={worktree.id}

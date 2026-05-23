@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Info, Plus, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -109,6 +110,7 @@ export function AutomationEditorDialog({
   onApplyTemplate,
   onSave
 }: AutomationEditorDialogProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [templateOpen, setTemplateOpen] = React.useState(false)
   const isHermesCreate = !isEditing && createTarget === 'hermes'
 
@@ -125,15 +127,15 @@ export function AutomationEditorDialog({
             <div className="min-w-0 flex-1 space-y-2">
               <DialogTitle className="text-sm font-medium">
                 {isEditing
-                  ? 'Edit automation'
+                  ? t('automations.editor.editAutomation')
                   : isHermesCreate
-                    ? 'Create Hermes cron'
-                    : 'Create automation'}
+                    ? t('automations.editor.createHermesCron')
+                    : t('automations.editor.createAutomation')}
               </DialogTitle>
               <Input
                 value={draft.name}
-                placeholder="Weekday repo audit"
-                aria-label="Automation name"
+                placeholder={t('automations.editor.namePlaceholder')}
+                aria-label={t('automations.editor.nameAriaLabel')}
                 className="h-10 max-w-md border-input bg-input/30 px-3 text-lg font-semibold text-foreground shadow-xs placeholder:text-muted-foreground dark:bg-input/30"
                 onChange={(event) =>
                   onDraftChange((current) => ({ ...current, name: event.target.value }))
@@ -168,7 +170,7 @@ export function AutomationEditorDialog({
                       className={PICKER_TRIGGER_CLASS}
                     >
                       <Sparkles className="size-4" />
-                      Use template
+                      {t('automations.editor.useTemplate')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-96 p-3">
@@ -197,10 +199,10 @@ export function AutomationEditorDialog({
               {draft.scheduleWarning}
             </div>
           ) : null}
-          <Field label="Prompt">
+          <Field label={t('automations.editor.promptLabel')}>
             <textarea
               value={draft.prompt}
-              placeholder="Run the weekly dependency audit and summarize risky changes."
+              placeholder={t('automations.editor.promptPlaceholder')}
               onChange={(event) =>
                 onDraftChange((current) => ({ ...current, prompt: event.target.value }))
               }
@@ -217,12 +219,12 @@ export function AutomationEditorDialog({
                 : 'grid gap-3 lg:grid-cols-[minmax(9rem,1.1fr)_minmax(14rem,1.4fr)_minmax(12rem,1.2fr)_minmax(8rem,0.8fr)_minmax(9rem,1fr)]'
             }
           >
-            <Field label="Project">
+            <Field label={t('automations.editor.projectLabel')}>
               <RepoCombobox
                 repos={repos}
                 value={draft.projectId}
                 onValueChange={onProjectChange}
-                placeholder="Select project"
+                placeholder={t('automations.editor.selectProjectPlaceholder')}
                 triggerClassName={`h-9 w-full min-w-0 ${PICKER_TRIGGER_CLASS}`}
                 showStandaloneAddButton={false}
               />
@@ -230,10 +232,10 @@ export function AutomationEditorDialog({
             <Field
               label={
                 isHermesCreate
-                  ? 'Workspace'
+                  ? t('automations.editor.workspaceLabel')
                   : draft.workspaceMode === 'new_per_run'
-                    ? 'Start branch'
-                    : 'Workspace'
+                    ? t('automations.editor.startBranchLabel')
+                    : t('automations.editor.workspaceLabel')
               }
             >
               {isHermesCreate ? null : (
@@ -252,10 +254,10 @@ export function AutomationEditorDialog({
                   className="mb-2 grid w-full grid-cols-2"
                 >
                   <ToggleGroupItem value="existing" className={MODE_TOGGLE_ITEM_CLASS}>
-                    worktree
+                    {t('automations.editor.modeWorktree')}
                   </ToggleGroupItem>
                   <ToggleGroupItem value="new_per_run" className={MODE_TOGGLE_ITEM_CLASS}>
-                    New run
+                    {t('automations.editor.modeNewRun')}
                   </ToggleGroupItem>
                 </ToggleGroup>
               )}
@@ -282,7 +284,7 @@ export function AutomationEditorDialog({
               )}
             </Field>
             {isHermesCreate ? null : (
-              <Field label="Agent">
+              <Field label={t('automations.editor.agentLabel')}>
                 <AgentCombobox
                   agents={AGENT_CATALOG}
                   value={draft.agentId}
@@ -294,7 +296,7 @@ export function AutomationEditorDialog({
                 />
               </Field>
             )}
-            <Field label="Schedule">
+            <Field label={t('automations.editor.scheduleLabel')}>
               <AutomationSchedulePicker
                 draft={draft}
                 triggerClassName={PICKER_TRIGGER_CLASS}
@@ -305,21 +307,19 @@ export function AutomationEditorDialog({
               <Field
                 label={
                   <span className="inline-flex items-center gap-1">
-                    Grace
+                    {t('automations.editor.graceLabel')}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
                           type="button"
-                          aria-label="Missed-run grace help"
+                          aria-label={t('automations.editor.graceHelpAriaLabel')}
                           className="rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         >
                           <Info className="size-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="top" sideOffset={6} className="max-w-72">
-                        If Orca or the execution host was unavailable at the scheduled time, Orca
-                        runs one missed occurrence when it becomes available within this window.
-                        Older missed runs are skipped.
+                        {t('automations.editor.graceHelpTooltip')}
                       </TooltipContent>
                     </Tooltip>
                   </span>
@@ -335,13 +335,13 @@ export function AutomationEditorDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" side="bottom" align="start" sideOffset={4}>
-                    <SelectItem value="0">No grace</SelectItem>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="180">3 hours</SelectItem>
-                    <SelectItem value="720">12 hours</SelectItem>
-                    <SelectItem value="1440">24 hours</SelectItem>
-                    <SelectItem value="2880">48 hours</SelectItem>
+                    <SelectItem value="0">{t('automations.editor.noGrace')}</SelectItem>
+                    <SelectItem value="30">{t('automations.editor.minutes30')}</SelectItem>
+                    <SelectItem value="60">{t('automations.editor.hour1')}</SelectItem>
+                    <SelectItem value="180">{t('automations.editor.hours3')}</SelectItem>
+                    <SelectItem value="720">{t('automations.editor.hours12')}</SelectItem>
+                    <SelectItem value="1440">{t('automations.editor.hours24')}</SelectItem>
+                    <SelectItem value="2880">{t('automations.editor.hours48')}</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
@@ -349,7 +349,7 @@ export function AutomationEditorDialog({
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('automations.editor.cancel')}
             </Button>
             <Button
               variant="outline"
@@ -358,7 +358,11 @@ export function AutomationEditorDialog({
               className="border-foreground/25 bg-foreground/[0.04] text-foreground hover:bg-foreground/[0.08]"
             >
               {isEditing || isHermesCreate || isSaving ? null : <Plus className="size-4" />}
-              {isEditing ? 'Save Changes' : isSaving || isHermesCreate ? 'Save' : 'Create'}
+              {isEditing
+                ? t('automations.editor.saveChanges')
+                : isSaving || isHermesCreate
+                  ? t('automations.editor.save')
+                  : t('automations.editor.create')}
             </Button>
           </div>
         </div>

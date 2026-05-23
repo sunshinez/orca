@@ -824,11 +824,9 @@ describe('getPRForBranch', () => {
       remoteName: 'origin',
       branchName: 'feature/test'
     })
-    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
-      1,
-      ['api', 'repos/fork/orca/pulls/1849'],
-      { cwd: '/repo-root' }
-    )
+    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, ['api', 'repos/fork/orca/pulls/1849'], {
+      cwd: '/repo-root'
+    })
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       2,
       ['api', 'repos/stablyai/orca/pulls/1849'],

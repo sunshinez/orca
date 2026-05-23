@@ -28,7 +28,7 @@
 
 ## 支持的智能体
 
-Orca 支持任何 CLI 智能体（*不仅限于以下列表*）。
+Orca 支持任何 CLI 智能体（_不仅限于以下列表_）。
 
 <p>
   <a href="https://docs.anthropic.com/claude/docs/claude-code"><kbd><img src="../assets/claude-logo.svg" width="16" valign="middle" /> Claude Code</kbd></a> &nbsp;
@@ -78,7 +78,7 @@ Orca 支持任何 CLI 智能体（*不仅限于以下列表*）。
 - **[从 onOrca.dev 下载](https://onOrca.dev)**
 - 或通过 **[GitHub Releases 页面](https://github.com/stablyai/orca/releases/latest)** 获取
 
-*也可以通过包管理器安装：*
+_也可以通过包管理器安装：_
 
 ### macOS (Homebrew)
 

@@ -210,8 +210,8 @@ describe('TerminalPane PowerShell version setting', () => {
       pwshAvailable: false
     })
 
-    expect(collectText(element)).toContain('Auto uses Windows PowerShell now')
-    const link = findAnchorByText(element, 'Download PowerShell 7+')
+    expect(collectText(element)).toContain('settings.terminal.advanced.pwshNotAvailable')
+    const link = findAnchorByText(element, 'settings.terminal.advanced.pwshDownload')
     expect(link).not.toBeNull()
     expect(link?.props.href).toBe('https://github.com/PowerShell/PowerShell/releases/latest')
   })

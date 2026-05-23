@@ -93,7 +93,10 @@ describe('getSuggestedCreatureName', () => {
       getSuggestedCreatureName(
         'repo-1',
         {
-          'repo-1': [{ path: 'C:\\worktrees\\Nautilus\\\\' }, { path: '/tmp/worktrees/Seahorse///' }]
+          'repo-1': [
+            { path: 'C:\\worktrees\\Nautilus\\\\' },
+            { path: '/tmp/worktrees/Seahorse///' }
+          ]
         },
         true
       )

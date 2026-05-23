@@ -28,7 +28,7 @@
 
 ## Agentes compatibles
 
-Orca es compatible con cualquier agente CLI (*no solo los de esta lista*).
+Orca es compatible con cualquier agente CLI (_no solo los de esta lista_).
 
 <p>
   <a href="https://docs.anthropic.com/claude/docs/claude-code"><kbd><img src="../assets/claude-logo.svg" width="16" valign="middle" /> Claude Code</kbd></a> &nbsp;
@@ -78,7 +78,7 @@ Orca es compatible con cualquier agente CLI (*no solo los de esta lista*).
 - **[Descarga desde onOrca.dev](https://onOrca.dev)**
 - O desde la **[página de GitHub Releases](https://github.com/stablyai/orca/releases/latest)**
 
-*También puedes instalar desde un gestor de paquetes:*
+_También puedes instalar desde un gestor de paquetes:_
 
 ### macOS (Homebrew)
 

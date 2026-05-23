@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -38,6 +39,7 @@ export function CreateFromPicker({
   triggerClassName?: string
   onValueChange: (baseBranch: string) => void
 }): React.JSX.Element {
+  const { t } = useTranslation()
   const activeRuntimeEnvironmentId = useAppStore(
     (state) => state.settings?.activeRuntimeEnvironmentId ?? null
   )
@@ -51,7 +53,10 @@ export function CreateFromPicker({
   const effectiveDefault = repo?.worktreeBaseRef ?? defaultBaseRef
   const selectedValue = value || DEFAULT_VALUE
   const selectedLabel =
-    value || (effectiveDefault ? `${effectiveDefault} (default)` : 'Project default')
+    value ||
+    (effectiveDefault
+      ? `${effectiveDefault} ${t('automations.editor.defaultSuffix')}`
+      : t('automations.editor.projectDefault'))
   const branchOptions = React.useMemo(() => {
     const options = new Set<string>()
     if (effectiveDefault) {
@@ -152,7 +157,9 @@ export function CreateFromPicker({
             className={cn('h-9 w-full justify-between px-3 text-sm font-normal', triggerClassName)}
           >
             <span className="flex min-w-0 items-center gap-1.5">
-              <span className="shrink-0 text-muted-foreground">Branch from</span>
+              <span className="shrink-0 text-muted-foreground">
+                {t('automations.editor.branchFrom')}
+              </span>
               <span className="truncate">{selectedLabel}</span>
             </span>
             <ChevronsUpDown className="size-4 opacity-50" />
@@ -168,11 +175,13 @@ export function CreateFromPicker({
               ref={inputRef}
               value={query}
               onValueChange={setQuery}
-              placeholder="Search repo branches..."
+              placeholder={t('automations.editor.searchRepoBranches')}
             />
             <CommandList className="max-h-72">
               <CommandEmpty>
-                {isSearching ? 'Searching branches...' : 'No branches found.'}
+                {isSearching
+                  ? t('automations.editor.searchingBranches')
+                  : t('automations.editor.noBranchesFound')}
               </CommandEmpty>
               <CommandItem
                 value={effectiveDefault ? `${effectiveDefault} default` : 'project default'}
@@ -188,7 +197,9 @@ export function CreateFromPicker({
                   )}
                 />
                 <span className="truncate">
-                  {effectiveDefault ? `${effectiveDefault} (default)` : 'Project default'}
+                  {effectiveDefault
+                    ? `${effectiveDefault} ${t('automations.editor.defaultSuffix')}`
+                    : t('automations.editor.projectDefault')}
                 </span>
               </CommandItem>
               {branchOptions
